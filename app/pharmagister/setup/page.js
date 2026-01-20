@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { doc, updateDoc } from 'firebase/firestore';
@@ -7,7 +7,7 @@ import { db } from '@/lib/firebase';
 import RouteGuard from '@/app/components/RouteGuard';
 import { Loader2 } from 'lucide-react';
 
-export default function PharmagisterSetupPage() {
+function PharmagisterSetupContent() {
   const { user, userData } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -441,5 +441,21 @@ export default function PharmagisterSetupPage() {
         </div>
       </div>
     </RouteGuard>
+  );
+}
+
+// Wrapper with Suspense boundary
+export default function PharmagisterSetupPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
+          <p className="text-gray-300">Betöltés...</p>
+        </div>
+      </div>
+    }>
+      <PharmagisterSetupContent />
+    </Suspense>
   );
 }
