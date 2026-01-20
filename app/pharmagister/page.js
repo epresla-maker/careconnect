@@ -1,10 +1,10 @@
 "use client";
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, Suspense } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter, useSearchParams } from 'next/navigation';
 import RouteGuard from '@/app/components/RouteGuard';
 
-export default function PharmagisterPage() {
+function PharmagisterContent() {
   const { user, userData } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -380,4 +380,20 @@ function DashboardTab({ pharmaRole }) {
 function ProfileTab({ pharmaRole }) {
   const PharmaProfileEditor = require('@/app/components/PharmaProfileEditor').default;
   return <PharmaProfileEditor pharmaRole={pharmaRole} />;
+}
+
+// Wrapper with Suspense boundary
+export default function PharmagisterPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-[#F9FAFB] flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#6B46C1] mx-auto mb-4"></div>
+          <p className="text-[#6B7280]">Betöltés...</p>
+        </div>
+      </div>
+    }>
+      <PharmagisterContent />
+    </Suspense>
+  );
 }
