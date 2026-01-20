@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, Suspense } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter, useSearchParams } from 'next/navigation';
 import RouteGuard from '@/app/components/RouteGuard';
@@ -7,7 +7,7 @@ import TutoProfileEditor from '@/app/components/TutoProfileEditor';
 import TutoCalendar from '@/app/components/TutoCalendar';
 import TutoDashboard from '@/app/components/TutoDashboard';
 
-export default function TutomagisterPage() {
+function TutomagisterContent() {
   const { user, userData } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -356,4 +356,20 @@ function DashboardTab({ tutoRole }) {
 // Profile Tab Component
 function ProfileTab({ tutoRole }) {
   return <TutoProfileEditor />;
+}
+
+// Wrapper with Suspense boundary
+export default function TutomagisterPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-[#F9FAFB] flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-rose-600 mx-auto mb-4"></div>
+          <p className="text-[#6B7280]">Betöltés...</p>
+        </div>
+      </div>
+    }>
+      <TutomagisterContent />
+    </Suspense>
+  );
 }
