@@ -1,0 +1,70 @@
+"use client";
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
+import { Calendar, BarChart3, User, Info } from 'lucide-react';
+
+export default function PharmaNavbar({ isVisible = true }) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  
+  // Az aktív tab a ?tab= query paraméterből jön
+  const activeTab = searchParams.get('tab') || 'calendar';
+
+  const navItems = [
+    {
+      icon: Calendar,
+      label: 'Naptár',
+      tab: 'calendar'
+    },
+    {
+      icon: BarChart3,
+      label: 'Vezérlőpult',
+      tab: 'dashboard'
+    },
+    {
+      icon: User,
+      label: 'Pharma Profilom',
+      tab: 'profile'
+    },
+    {
+      icon: Info,
+      label: 'i',
+      tab: 'info'
+    }
+  ];
+
+  const handleTabChange = (tab) => {
+    // Navigálj a pharmagister oldalra a megfelelő tab paraméterrel
+    router.push(`/pharmagister?tab=${tab}`);
+  };
+
+  return (
+    <div 
+      className={`fixed bottom-[73px] left-0 right-0 bg-white border-t border-[#E5E7EB] transition-transform duration-300 z-50 ${
+        isVisible ? 'translate-y-0' : 'translate-y-full'
+      }`}
+    >
+      <div className="grid grid-cols-4 gap-1 px-2 py-2">
+        {navItems.map((item) => {
+          const isActive = activeTab === item.tab;
+          const Icon = item.icon;
+
+          return (
+            <button
+              key={item.tab}
+              onClick={() => handleTabChange(item.tab)}
+              className={`relative flex flex-col items-center justify-center py-2 px-1 rounded-lg transition-colors touch-manipulation ${
+                isActive
+                  ? 'bg-[#6B46C1] text-white'
+                  : 'text-[#6B7280] active:bg-[#F3F4F6]'
+              }`}
+            >
+              <Icon className="w-6 h-6" />
+              <span className="mt-1 text-xs font-medium">{item.label}</span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
