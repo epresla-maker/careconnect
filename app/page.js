@@ -8,8 +8,12 @@ export default function HomePage() {
   const router = useRouter();
 
   useEffect(() => {
-    if (!loading && user && userData) {
-      router.push('/pharmagister');
+    if (!loading) {
+      if (!user) {
+        router.push('/login');
+      } else if (userData) {
+        router.push('/pharmagister');
+      }
     }
   }, [user, userData, loading, router]);
 
