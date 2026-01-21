@@ -12,17 +12,11 @@ export const AuthProvider = ({ children }) => {
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true); 
 
-  console.log("[AuthContext] Render/Re-render", { loading, user: !!user, userData: !!userData });
-
   useEffect(() => {
-    console.log("[AuthContext] FŐ useEffect lefutott (CSAK EGYSZER KELL)");
     let unsubscribeSnapshot = null;
 
     const unsubscribeAuth = onAuthStateChanged(auth, (firebaseUser) => {
-      console.log(`[AuthContext] onAuthStateChanged futott. User van? ${!!firebaseUser}`);
-      
       if (unsubscribeSnapshot) {
-        console.log("[AuthContext] Régi snapshot leállítva.");
         unsubscribeSnapshot();
         unsubscribeSnapshot = null;
       }
@@ -34,35 +28,27 @@ export const AuthProvider = ({ children }) => {
         // Frissítjük a lastSeen értéket (setDoc merge-el hogy ne dobjon hibát ha nincs doc)
         setDoc(userDocRef, {
           lastSeen: serverTimestamp()
-        }, { merge: true }).catch(err => console.error('Error updating lastSeen:', err));
+        }, { merge: true });
 
-        console.log("[AuthContext] Snapshot figyelő indítása a profilra...");
         unsubscribeSnapshot = onSnapshot(
           userDocRef,
           (docSnap) => {
-            console.log("[AuthContext] Snapshot VÁLASZ megérkezett.");
             setUserData(docSnap.exists() ? docSnap.data() : null);
-            console.log("[AuthContext] *** BETÖLTÉS KÉSZ (van user, van profil-info) ***");
             setLoading(false); 
           },
           (error) => {
-            console.error("Hiba a user adatainak figyelésekor:", error);
             setUserData(null);
-            console.log("[AuthContext] *** BETÖLTÉS KÉSZ (hiba történt) ***");
             setLoading(false); 
           }
         );
       } else {
-        console.log("[AuthContext] Nincs user (kijelentkezett).");
         setUser(null);
         setUserData(null);
-        console.log("[AuthContext] *** BETÖLTÉS KÉSZ (nincs user) ***");
         setLoading(false);
       }
     });
 
     return () => {
-      console.log("[AuthContext] Fő listener leállítása.");
       unsubscribeAuth();
       if (unsubscribeSnapshot) unsubscribeSnapshot();
     };
@@ -76,18 +62,17 @@ export const AuthProvider = ({ children }) => {
       const userDocRef = doc(db, "users", user.uid);
       setDoc(userDocRef, {
         lastSeen: serverTimestamp()
-      }, { merge: true }).catch(err => console.error('Error updating lastSeen:', err));
+      }, { merge: true });
     }, 30000); // 30 másodperc
 
     return () => clearInterval(interval);
   }, [user]);
 
   const signOut = async () => {
-    console.log("[AuthContext] signOut() hívva.");
     try {
       await authSignOut(auth);
     } catch (error) {
-      console.error("Kijelentkezési hiba:", error);
+      // Silent fail
     }
   };
 
