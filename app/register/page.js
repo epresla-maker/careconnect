@@ -1,5 +1,5 @@
 "use client";
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
@@ -12,6 +12,18 @@ export default function RegisterPage() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [debugInfo, setDebugInfo] = useState('');
+
+  useEffect(() => {
+    // Debug: Kiírjuk milyen Firebase configot használ
+    const config = {
+      apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY?.substring(0, 15) + '...',
+      projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+      authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+    };
+    console.log('🔧 Firebase Config (debug):', config);
+    setDebugInfo(JSON.stringify(config, null, 2));
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -122,6 +134,11 @@ export default function RegisterPage() {
             Bejelentkezés
           </button>
         </p>
+
+        {/* Debug info - remove after testing */}
+        <div className="mt-4 p-2 bg-gray-100 rounded text-xs">
+          <pre>{debugInfo}</pre>
+        </div>
       </div>
     </div>
   );
