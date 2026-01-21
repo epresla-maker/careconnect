@@ -1,7 +1,7 @@
 "use client";
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { createUserWithEmailAndPassword, sendEmailVerification, signOut } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 
@@ -12,6 +12,7 @@ export default function RegisterPage() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -39,7 +40,15 @@ export default function RegisterPage() {
         pharmaProfileComplete: false
       });
 
-      router.push('/pharmagister/setup');
+      // Aktiváló email küldése
+      await sendEmailVerification(userCredential.user);
+
+      // Kijelentkeztetjük a usert
+      await signOut(auth);
+
+      // Success üzenet megjelenítése
+      setSuccess(true);
+      setLoading(false);
     } catch (err) {
       setLoading(false);
       
@@ -57,13 +66,32 @@ export default function RegisterPage() {
         <h1 className="text-3xl font-bold text-center mb-2">Regisztráció</h1>
         <p className="text-gray-600 text-center mb-6">Pharmagister</p>
 
-        {error && (
-          <div className="bg-red-50 text-red-600 p-3 rounded-lg mb-4 text-sm">
-            {error}
+        {success ? (
+          <div className="text-center py-6">
+            <div className="mb-4 text-6xl">✉️</div>
+            <h2 className="text-2xl font-bold mb-3 text-green-600">Regisztráció sikeres!</h2>
+            <p className="text-gray-700 mb-4">
+              Küldtünk egy aktiváló emailt a <strong>{email}</strong> címre.
+            </p>
+            <p className="text-gray-600 mb-6">
+              Kérjük, ellenőrizd a postaládádat és kattints az aktiváló linkre a folytatáshoz.
+            </p>
+            <button
+              onClick={() => router.push('/login')}
+              className="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700"
+            >
+              Vissza a bejelentkezéshez
+            </button>
           </div>
-        )}
+        ) : (
+          <>
+            {error && (
+              <div className="bg-red-50 text-red-600 p-3 rounded-lg mb-4 text-sm">
+                {error}
+              </div>
+            )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium mb-1">Email</label>
             <input
@@ -117,6 +145,8 @@ export default function RegisterPage() {
             Bejelentkezés
           </button>
         </p>
+        </>
+        )}
       </div>
     </div>
   );

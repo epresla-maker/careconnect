@@ -1,7 +1,7 @@
 "use client";
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { signInWithEmailAndPassword } from 'firebase/auth';
+import { signInWithEmailAndPassword, signOut } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 
 export default function LoginPage() {
@@ -17,7 +17,16 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      
+      // Ellenőrizzük, hogy az email megerősítve van-e
+      if (!userCredential.user.emailVerified) {
+        setError('Kérjük, először erősítsd meg az email címedet! Nézd meg a postaládádat.');
+        await signOut(auth); // Kijelentkeztetjük
+        setLoading(false);
+        return;
+      }
+
       router.push('/pharmagister');
     } catch (err) {
       setError('Hibás email vagy jelszó');
