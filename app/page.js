@@ -9,7 +9,10 @@ export default function HomePage() {
 
   useEffect(() => {
     if (!loading) {
-      if (user && userData) {
+      if (!user) {
+        // Ha nincs bejelentkezve, login oldalra irányít
+        router.push('/login');
+      } else if (userData) {
         // Ha be van jelentkezve, pharmagister-re irányít
         router.push('/pharmagister');
       }
