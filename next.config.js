@@ -1,14 +1,5 @@
 // next.config.js
 
-// 1. Behívjuk a PWA csomagot
-const withPWA = require('next-pwa')({
-  dest: 'public', // Ide generálja a PWA fájlokat
-  register: true,
-  skipWaiting: true,
-  disable: process.env.NODE_ENV === 'development' // Fejlesztés közben ne fusson
-});
-
-// 2. Az alap Next.js beállítások
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // Turbopack config (üres, mert a next-pwa webpack-et használ)
@@ -46,7 +37,4 @@ const nextConfig = {
   },
 };
 
-// 3. Fejlesztés alatt ne használjuk a PWA wrapper-t (eltávolítjuk a webpack módosítást),
-//    de éles környezetben bekapcsoljuk a PWA-t.
-module.exports =
-  process.env.NODE_ENV === 'development' ? nextConfig : withPWA(nextConfig);
+module.exports = nextConfig;

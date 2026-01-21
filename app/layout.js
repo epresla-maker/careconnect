@@ -4,7 +4,6 @@ import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
 import { ThemeProvider } from "@/context/ThemeContext";
 import { ToastProvider } from "@/context/ToastContext";
-import PWARegister from "@/app/components/PWARegister";
 import PushNotificationSetup from "@/app/components/PushNotificationSetup";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -39,7 +38,6 @@ export default function RootLayout({ children }) {
         <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
       </head>
       <body className={`${inter.className} bg-gray-50`}>
-        <PWARegister />
         <AuthProvider>
           <PushNotificationSetup />
           <ThemeProvider>

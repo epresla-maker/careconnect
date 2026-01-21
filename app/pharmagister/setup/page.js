@@ -56,12 +56,6 @@ function PharmagisterSetupContent() {
     if (userData?.pharmagisterRole) {
       router.push('/pharmagister');
     }
-
-    // Csak Full Tag státuszú tagok és adminok regisztrálhatnak szakmai app-okba
-    if (userData && userData.status !== 'Full Tag' && !userData.isAdmin) {
-      alert('⚠️ Csak Full Tag státuszú tagok regisztrálhatnak szakmai alkalmazásokba!');
-      router.push('/dashboard');
-    }
   }, [role, userData, router]);
 
   const handleSoftwareToggle = (software) => {

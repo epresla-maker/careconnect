@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { onAuthStateChanged, signOut as authSignOut } from "firebase/auth";
 import { auth, db } from "@/lib/firebase";
-import { doc, onSnapshot, updateDoc, serverTimestamp } from "firebase/firestore";
+import { doc, onSnapshot, setDoc, serverTimestamp } from "firebase/firestore";
 
 const AuthContext = createContext();
 
@@ -31,10 +31,10 @@ export const AuthProvider = ({ children }) => {
         setUser(firebaseUser);
         const userDocRef = doc(db, "users", firebaseUser.uid);
 
-        // Frissítjük a lastSeen értéket
-        updateDoc(userDocRef, {
+        // Frissítjük a lastSeen értéket (setDoc merge-el hogy ne dobjon hibát ha nincs doc)
+        setDoc(userDocRef, {
           lastSeen: serverTimestamp()
-        }).catch(err => console.error('Error updating lastSeen:', err));
+        }, { merge: true }).catch(err => console.error('Error updating lastSeen:', err));
 
         console.log("[AuthContext] Snapshot figyelő indítása a profilra...");
         unsubscribeSnapshot = onSnapshot(
@@ -74,9 +74,9 @@ export const AuthProvider = ({ children }) => {
 
     const interval = setInterval(() => {
       const userDocRef = doc(db, "users", user.uid);
-      updateDoc(userDocRef, {
+      setDoc(userDocRef, {
         lastSeen: serverTimestamp()
-      }).catch(err => console.error('Error updating lastSeen:', err));
+      }, { merge: true }).catch(err => console.error('Error updating lastSeen:', err));
     }, 30000); // 30 másodperc
 
     return () => clearInterval(interval);

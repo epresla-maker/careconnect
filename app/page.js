@@ -13,15 +13,8 @@ export default function HomePage() {
         // Ha nincs bejelentkezve, irányítsd a login oldalra
         router.push('/login');
       } else if (userData) {
-        // Ha van userData, irányítsd a megfelelő modulhoz
-        if (userData.pharmagisterRole) {
-          router.push('/pharmagister');
-        } else if (userData.tutomagisterRole) {
-          router.push('/tutomagister');
-        } else {
-          // Ha egyik sincs, irányítsd a választó oldalra
-          router.push('/valasztas');
-        }
+        // Mindig a Pharmagister-re irányítsd
+        router.push('/pharmagister');
       }
     }
   }, [user, userData, loading, router]);
