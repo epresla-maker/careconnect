@@ -30,7 +30,9 @@ export default function RegisterPage() {
     setLoading(true);
 
     try {
+      console.log('🚀 Regisztráció indítása...');
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      console.log('✅ User létrehozva:', userCredential.user.uid);
       
       await setDoc(doc(db, 'users', userCredential.user.uid), {
         email: userCredential.user.email,
@@ -38,16 +40,19 @@ export default function RegisterPage() {
         pharmagisterRole: null,
         pharmaProfileComplete: false
       });
+      console.log('✅ Firestore mentve');
 
+      console.log('🔄 Átirányítás setup oldalra...');
       router.push('/pharmagister/setup');
     } catch (err) {
+      console.error('❌ Regisztrációs hiba:', err);
+      setLoading(false);
+      
       if (err.code === 'auth/email-already-in-use') {
         setError('Ez az email cím már használatban van');
       } else {
-        setError('Hiba történt a regisztráció során');
+        setError('Hiba történt a regisztráció során: ' + err.message);
       }
-    } finally {
-      setLoading(false);
     }
   };
 
