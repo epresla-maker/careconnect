@@ -8,14 +8,8 @@ export default function HomePage() {
   const router = useRouter();
 
   useEffect(() => {
-    if (!loading) {
-      if (!user) {
-        // Ha nincs bejelentkezve, login oldalra irányít
-        router.push('/login');
-      } else if (userData) {
-        // Ha be van jelentkezve, pharmagister-re irányít
-        router.push('/pharmagister');
-      }
+    if (!loading && user && userData) {
+      router.push('/pharmagister');
     }
   }, [user, userData, loading, router]);
 
