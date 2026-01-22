@@ -36,8 +36,8 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-100 to-pink-100 p-4">
-      <div className="bg-white p-8 rounded-xl shadow-lg max-w-md w-full">
+    <div className="min-h-screen bg-gradient-to-br from-purple-100 to-pink-100 p-4 py-8 flex items-start justify-center overflow-auto">
+      <div className="bg-white p-6 sm:p-8 rounded-xl shadow-lg max-w-md w-full my-auto">
         <h1 className="text-3xl font-bold text-center mb-2">Bejelentkezés</h1>
         <p className="text-gray-600 text-center mb-6">Pharmagister</p>
 
