@@ -90,6 +90,14 @@ function PharmagisterContent() {
                 főoldal
               </button>
               <h1 className="text-xl font-bold">Pharmagister</h1>
+              {user?.email === 'epresla@icloud.com' && (
+                <button
+                  onClick={() => router.push('/admin')}
+                  className="text-red-600 font-bold text-sm"
+                >
+                  Admin
+                </button>
+              )}
             </div>
             <p className="text-sm text-[#6B7280]">(Gyógyszertári helyettesítési platform)</p>
           </div>
