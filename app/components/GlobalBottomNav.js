@@ -10,23 +10,18 @@ export default function GlobalBottomNav() {
   const pathname = usePathname();
   const { user, loading } = useAuth();
 
-  // Ne jelenjen meg, ha nincs bejelentkezve a felhasználó vagy még tölt
-  if (!user || loading) {
-    return null;
-  }
-
   // Chat oldalakon (lista és room) ne jelenjen meg - a chat lista saját navbart használ
   const isChatPage = pathname?.startsWith('/chat');
 
   useEffect(() => {
+    if (!user || loading) return;
+    
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
       
       if (currentScrollY < lastScrollY) {
-        // Lefelé húzás - mutasd a navigációt
         setShowBottomNav(true);
       } else if (currentScrollY > lastScrollY && currentScrollY > 100) {
-        // Felfelé görgetés - rejtsd el a navigációt
         setShowBottomNav(false);
       }
       
@@ -34,22 +29,15 @@ export default function GlobalBottomNav() {
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
-    
-    // Első betöltéskor is ellenőrizzük
     handleScroll();
     
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [lastScrollY]);
+  }, [lastScrollY, user, loading]);
 
-  // Ha chat oldalon vagyunk, ne jelenjen meg (a chat oldal saját navbart használ)
-  if (isChatPage) {
+  // Ne renderelj semmit ha nincs user vagy chat oldalon vagyunk
+  if (!user || loading || isChatPage) {
     return null;
   }
 
-  return (
-    <>
-      {/* Fő bottom navigation */}
-      <BottomNavigation isVisible={showBottomNav} />
-    </>
-  );
+  return <BottomNavigation isVisible={showBottomNav} />;
 }
