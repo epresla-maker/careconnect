@@ -32,116 +32,17 @@ export default function HomePage() {
           <div className="max-w-xl mx-auto px-4 py-3 flex items-center justify-between">
             {/* Logo with custom animations */}
             <div className="flex items-center gap-1 text-2xl font-bold">
-              <span 
-                className="inline-block text-green-600"
-                style={{ 
-                  display: 'inline-block',
-                  animation: 'float 3s ease-in-out infinite',
-                  animationDelay: '0s'
-                }}
-              >
-                C
-              </span>
-              <span 
-                className="inline-block text-green-600"
-                style={{ 
-                  display: 'inline-block',
-                  animation: 'float 3s ease-in-out infinite',
-                  animationDelay: '0.1s'
-                }}
-              >
-                a
-              </span>
-              <span 
-                className="inline-block text-green-600"
-                style={{ 
-                  display: 'inline-block',
-                  animation: 'float 3s ease-in-out infinite',
-                  animationDelay: '0.2s'
-                }}
-              >
-                r
-              </span>
-              <span 
-                className="inline-block text-green-600"
-                style={{ 
-                  display: 'inline-block',
-                  animation: 'float 3s ease-in-out infinite',
-                  animationDelay: '0.3s'
-                }}
-              >
-                e
-              </span>
-              <span 
-                className="inline-block text-blue-600"
-                style={{ 
-                  display: 'inline-block',
-                  animation: 'float 3s ease-in-out infinite',
-                  animationDelay: '0.4s'
-                }}
-              >
-                C
-              </span>
-              <span 
-                className="inline-block text-blue-600"
-                style={{ 
-                  display: 'inline-block',
-                  animation: 'float 3s ease-in-out infinite',
-                  animationDelay: '0.5s'
-                }}
-              >
-                o
-              </span>
-              <span 
-                className="inline-block text-blue-600"
-                style={{ 
-                  display: 'inline-block',
-                  animation: 'float 3s ease-in-out infinite',
-                  animationDelay: '0.6s'
-                }}
-              >
-                n
-              </span>
-              <span 
-                className="inline-block text-blue-600"
-                style={{ 
-                  display: 'inline-block',
-                  animation: 'float 3s ease-in-out infinite',
-                  animationDelay: '0.7s'
-                }}
-              >
-                n
-              </span>
-              <span 
-                className="inline-block text-blue-600"
-                style={{ 
-                  display: 'inline-block',
-                  animation: 'float 3s ease-in-out infinite',
-                  animationDelay: '0.8s'
-                }}
-              >
-                e
-              </span>
-              <span 
-                className="inline-block text-blue-600"
-                style={{ 
-                  display: 'inline-block',
-                  animation: 'float 3s ease-in-out infinite',
-                  animationDelay: '0.9s'
-                }}
-              >
-                c
-              </span>
-              <span 
-                className="inline-block text-blue-600"
-                style={{ 
-                  display: 'inline-block',
-                  animation: 'float 3s ease-in-out infinite',
-                  animationDelay: '1s'
-                }}
-              >
-                t
-              </span>
+              <span className="inline-block text-green-600 animate-float-0">C</span>
+              <span className="inline-block text-green-600 animate-float-1">a</span>
+              <span className="inline-block text-green-600 animate-float-2">r</span>
+              <span className="inline-block text-green-600 animate-float-3">e</span>
+              <span className="inline-block text-blue-600 animate-float-4">C</span>
+              <span className="inline-block text-blue-600 animate-float-5">o</span>
+              <span className="inline-block text-blue-600 animate-float-6">n</span>
+              <span className="inline-block text-blue-600 animate-float-7">n</span>
+              <span className="inline-block text-blue-600 animate-float-8">e</span>
+              <span className="inline-block text-blue-600 animate-float-9">c</span>
+              <span className="inline-block text-blue-600 animate-float-10">t</span>
             </div>
 
             {/* Profile Button */}
@@ -169,24 +70,6 @@ export default function HomePage() {
           <ModernServiceFeed />
         </div>
       </div>
-
-      {/* CSS Animations */}
-      <style jsx>{`
-        @keyframes float {
-          0%, 100% {
-            transform: translateY(0) rotate(0deg);
-          }
-          25% {
-            transform: translateY(-10px) rotate(5deg);
-          }
-          50% {
-            transform: translateY(-5px) rotate(-5deg);
-          }
-          75% {
-            transform: translateY(-10px) rotate(3deg);
-          }
-        }
-      `}</style>
     </RouteGuard>
   );
 }
