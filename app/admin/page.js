@@ -69,12 +69,20 @@ export default function AdminPage() {
         <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
           <h1 className="text-3xl font-bold mb-2">Admin Panel</h1>
           <p className="text-gray-600">Üdvözöl a CareConnect admin felület</p>
-          <button
-            onClick={() => router.push('/pharmagister')}
-            className="mt-4 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700"
-          >
-            ← Vissza a Pharmagister-hez
-          </button>
+          <div className="flex gap-2 mt-4">
+            <button
+              onClick={() => router.push('/pharmagister')}
+              className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700"
+            >
+              ← Vissza a Pharmagister-hez
+            </button>
+            <button
+              onClick={() => router.push('/admin/approvals')}
+              className="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700"
+            >
+              📋 NNK Jóváhagyások
+            </button>
+          </div>
         </div>
 
         <div className="bg-white rounded-lg shadow-lg p-6">
