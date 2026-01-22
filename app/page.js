@@ -1,28 +1,192 @@
 "use client";
-import { useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
+import RouteGuard from './components/RouteGuard';
+import ModernServiceFeed from './components/ModernServiceFeed';
+import { LayoutGrid } from 'lucide-react';
 
 export default function HomePage() {
   const { user, userData, loading } = useAuth();
   const router = useRouter();
+  const [showMiClyps, setShowMiClyps] = useState(true);
 
   useEffect(() => {
-    if (!loading) {
-      if (!user) {
-        router.push('/login');
-      } else if (userData) {
-        router.push('/pharmagister');
+    const handleScroll = () => {
+      if (window.scrollY < 50) {
+        setShowMiClyps(true);
+      } else {
+        setShowMiClyps(false);
       }
-    }
-  }, [user, userData, loading, router]);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 to-pink-50">
-      <div className="text-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto"></div>
-        <p className="mt-4 text-gray-600">Betöltés...</p>
+    <RouteGuard>
+      <div className="min-h-screen bg-gray-100 dark:bg-gray-900 pb-[40px]">
+        {/* Sticky Header */}
+        <div className="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 z-10 shadow-sm">
+          <div className="max-w-xl mx-auto px-4 py-3 flex items-center justify-between">
+            {/* Logo with custom animations */}
+            <div className="flex items-center gap-1 text-2xl font-bold">
+              <span 
+                className="inline-block text-green-600"
+                style={{ 
+                  display: 'inline-block',
+                  animation: 'float 3s ease-in-out infinite',
+                  animationDelay: '0s'
+                }}
+              >
+                C
+              </span>
+              <span 
+                className="inline-block text-green-600"
+                style={{ 
+                  display: 'inline-block',
+                  animation: 'float 3s ease-in-out infinite',
+                  animationDelay: '0.1s'
+                }}
+              >
+                a
+              </span>
+              <span 
+                className="inline-block text-green-600"
+                style={{ 
+                  display: 'inline-block',
+                  animation: 'float 3s ease-in-out infinite',
+                  animationDelay: '0.2s'
+                }}
+              >
+                r
+              </span>
+              <span 
+                className="inline-block text-green-600"
+                style={{ 
+                  display: 'inline-block',
+                  animation: 'float 3s ease-in-out infinite',
+                  animationDelay: '0.3s'
+                }}
+              >
+                e
+              </span>
+              <span 
+                className="inline-block text-blue-600"
+                style={{ 
+                  display: 'inline-block',
+                  animation: 'float 3s ease-in-out infinite',
+                  animationDelay: '0.4s'
+                }}
+              >
+                C
+              </span>
+              <span 
+                className="inline-block text-blue-600"
+                style={{ 
+                  display: 'inline-block',
+                  animation: 'float 3s ease-in-out infinite',
+                  animationDelay: '0.5s'
+                }}
+              >
+                o
+              </span>
+              <span 
+                className="inline-block text-blue-600"
+                style={{ 
+                  display: 'inline-block',
+                  animation: 'float 3s ease-in-out infinite',
+                  animationDelay: '0.6s'
+                }}
+              >
+                n
+              </span>
+              <span 
+                className="inline-block text-blue-600"
+                style={{ 
+                  display: 'inline-block',
+                  animation: 'float 3s ease-in-out infinite',
+                  animationDelay: '0.7s'
+                }}
+              >
+                n
+              </span>
+              <span 
+                className="inline-block text-blue-600"
+                style={{ 
+                  display: 'inline-block',
+                  animation: 'float 3s ease-in-out infinite',
+                  animationDelay: '0.8s'
+                }}
+              >
+                e
+              </span>
+              <span 
+                className="inline-block text-blue-600"
+                style={{ 
+                  display: 'inline-block',
+                  animation: 'float 3s ease-in-out infinite',
+                  animationDelay: '0.9s'
+                }}
+              >
+                c
+              </span>
+              <span 
+                className="inline-block text-blue-600"
+                style={{ 
+                  display: 'inline-block',
+                  animation: 'float 3s ease-in-out infinite',
+                  animationDelay: '1s'
+                }}
+              >
+                t
+              </span>
+            </div>
+
+            {/* Profile Button */}
+            <button
+              onClick={() => router.push('/notifications')}
+              className="w-10 h-10 rounded-full overflow-hidden border-2 border-green-500 hover:border-green-600 transition-colors"
+            >
+              {userData?.photoURL ? (
+                <img 
+                  src={userData.photoURL} 
+                  alt="Profile" 
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full bg-green-500 flex items-center justify-center text-white font-bold">
+                  {userData?.displayName?.[0] || 'P'}
+                </div>
+              )}
+            </button>
+          </div>
+        </div>
+
+        {/* Feed */}
+        <div className="max-w-xl mx-auto">
+          <ModernServiceFeed />
+        </div>
       </div>
-    </div>
+
+      {/* CSS Animations */}
+      <style jsx>{`
+        @keyframes float {
+          0%, 100% {
+            transform: translateY(0) rotate(0deg);
+          }
+          25% {
+            transform: translateY(-10px) rotate(5deg);
+          }
+          50% {
+            transform: translateY(-5px) rotate(-5deg);
+          }
+          75% {
+            transform: translateY(-10px) rotate(3deg);
+          }
+        }
+      `}</style>
+    </RouteGuard>
   );
 }

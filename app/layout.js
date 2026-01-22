@@ -5,6 +5,7 @@ import { AuthProvider } from "@/context/AuthContext";
 import { ThemeProvider } from "@/context/ThemeContext";
 import { ToastProvider } from "@/context/ToastContext";
 import PushNotificationSetup from "@/app/components/PushNotificationSetup";
+import GlobalBottomNav from "@/app/components/GlobalBottomNav";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -41,6 +42,7 @@ export default function RootLayout({ children }) {
           <ThemeProvider>
             <ToastProvider>
               {children}
+              <GlobalBottomNav />
             </ToastProvider>
           </ThemeProvider>
         </AuthProvider>
