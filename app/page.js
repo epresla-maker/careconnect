@@ -30,20 +30,11 @@ export default function HomePage() {
         {/* Sticky Header */}
         <div className="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 z-10 shadow-sm">
           <div className="max-w-xl mx-auto px-4 py-3 flex items-center justify-between">
-            {/* Logo with custom animations */}
-            <div className="flex items-center gap-1 text-2xl font-bold">
-              <span className="inline-block text-green-600 animate-float-0">C</span>
-              <span className="inline-block text-green-600 animate-float-1">a</span>
-              <span className="inline-block text-green-600 animate-float-2">r</span>
-              <span className="inline-block text-green-600 animate-float-3">e</span>
-              <span className="inline-block text-blue-600 animate-float-4">C</span>
-              <span className="inline-block text-blue-600 animate-float-5">o</span>
-              <span className="inline-block text-blue-600 animate-float-6">n</span>
-              <span className="inline-block text-blue-600 animate-float-7">n</span>
-              <span className="inline-block text-blue-600 animate-float-8">e</span>
-              <span className="inline-block text-blue-600 animate-float-9">c</span>
-              <span className="inline-block text-blue-600 animate-float-10">t</span>
-            </div>
+            {/* Logo */}
+            <h1 className="text-2xl font-bold">
+              <span className="text-green-600">Care</span>
+              <span className="text-blue-600">Connect</span>
+            </h1>
 
             {/* Profile Button */}
             <button
