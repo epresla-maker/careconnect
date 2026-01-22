@@ -3,6 +3,8 @@ import { useState, useEffect, useCallback, Suspense } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter, useSearchParams } from 'next/navigation';
 import RouteGuard from '@/app/components/RouteGuard';
+import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 function PharmagisterContent() {
   const { user, userData } = useAuth();
@@ -11,6 +13,7 @@ function PharmagisterContent() {
   const [isStandalone, setIsStandalone] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [showInstallButton, setShowInstallButton] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
   
   // Az aktív tab a query paraméterből jön (alapértelmezett: 'calendar')
   const activeTab = searchParams.get('tab') || 'calendar';
@@ -72,6 +75,23 @@ function PharmagisterContent() {
     }
   }, [searchParams, isStandalone, deferredPrompt, handleInstallClick]);
 
+  // Listen for unread notifications
+  useEffect(() => {
+    if (!user) return;
+
+    const q = query(
+      collection(db, 'notifications'),
+      where('userId', '==', user.uid),
+      where('read', '==', false)
+    );
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      setUnreadCount(snapshot.size);
+    });
+
+    return () => unsubscribe();
+  }, [user]);
+
   return (
     <RouteGuard>
       <div className={`min-h-screen bg-[#F9FAFB] text-[#111827] ${pharmaRole ? 'pb-[146px]' : 'pb-40'}`}>
@@ -90,14 +110,30 @@ function PharmagisterContent() {
                 főoldal
               </button>
               <h1 className="text-xl font-bold">Pharmagister</h1>
-              {user?.email === 'epresla@icloud.com' && (
+              <div className="flex items-center gap-2">
+                {/* Notifications button */}
                 <button
-                  onClick={() => router.push('/admin')}
-                  className="text-red-600 font-bold text-sm"
+                  onClick={() => router.push('/notifications')}
+                  className="relative p-2 text-gray-600 hover:text-purple-600"
                 >
-                  Admin
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                  </svg>
+                  {unreadCount > 0 && (
+                    <span className="absolute top-0 right-0 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
+                      {unreadCount}
+                    </span>
+                  )}
                 </button>
-              )}
+                {user?.email === 'epresla@icloud.com' && (
+                  <button
+                    onClick={() => router.push('/admin')}
+                    className="text-red-600 font-bold text-sm"
+                  >
+                    Admin
+                  </button>
+                )}
+              </div>
             </div>
             <p className="text-sm text-[#6B7280]">(Gyógyszertári helyettesítési platform)</p>
           </div>

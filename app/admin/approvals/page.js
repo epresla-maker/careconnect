@@ -2,7 +2,7 @@
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { collection, query, where, getDocs, doc, updateDoc, deleteDoc, orderBy } from "firebase/firestore";
+import { collection, query, where, getDocs, doc, updateDoc, deleteDoc, orderBy, addDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
 const ADMIN_EMAILS = ['epresla@icloud.com'];
@@ -80,6 +80,16 @@ export default function ApprovalsPage() {
         approvedBy: user.email
       });
 
+      // Értesítés küldése a usernek
+      await addDoc(collection(db, 'notifications'), {
+        userId: approval.userId,
+        type: 'approval_approved',
+        title: '✅ Pharmagister profil jóváhagyva!',
+        message: `Gratulálunk! A Pharmagister profilod sikeresen jóváhagyásra került. Most már teljes funkcióval használhatod a platformot.`,
+        read: false,
+        createdAt: serverTimestamp()
+      });
+
       alert('✅ Profil jóváhagyva!');
       loadApprovals();
     } catch (error) {
@@ -108,6 +118,16 @@ export default function ApprovalsPage() {
         pharmaProfileComplete: false,
         pharmaApproved: false,
         pharmaRejectionReason: reason
+      });
+
+      // Értesítés küldése a usernek
+      await addDoc(collection(db, 'notifications'), {
+        userId: approval.userId,
+        type: 'approval_rejected',
+        title: '❌ Pharmagister profil elutasítva',
+        message: `A Pharmagister profilod elutasításra került. Indok: ${reason}\n\nKérjük, javítsd a hibákat és küldd be újra!`,
+        read: false,
+        createdAt: serverTimestamp()
       });
 
       alert('❌ Profil elutasítva!');
