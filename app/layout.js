@@ -36,7 +36,7 @@ export default function RootLayout({ children }) {
         <meta name="mobile-web-app-capable" content="yes" />
         <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
       </head>
-      <body className={`${inter.className} bg-gray-50`}>
+      <body className={`${inter.className}`}>
         <AuthProvider>
           <PushNotificationSetup />
           <ThemeProvider>
