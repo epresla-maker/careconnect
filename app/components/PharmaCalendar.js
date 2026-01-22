@@ -1,12 +1,14 @@
 "use client";
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
+import { useTheme } from '@/context/ThemeContext';
 import { collection, addDoc, query, where, getDocs, deleteDoc, doc, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { ChevronLeft, ChevronRight, Plus, X, Loader2, Clock, MapPin } from 'lucide-react';
 
 export default function PharmaCalendar({ pharmaRole }) {
   const { user, userData } = useAuth();
+  const { darkMode } = useTheme();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(null);
   const [demands, setDemands] = useState([]);
@@ -156,7 +158,7 @@ export default function PharmaCalendar({ pharmaRole }) {
   return (
     <div>
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
-        <h2 className="text-2xl font-bold text-[#111827]">Naptár</h2>
+        <h2 className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-[#111827]'}`}>Naptár</h2>
         <div className="flex items-center gap-2 w-full sm:w-auto">
           <button
             onClick={goToToday}
@@ -166,18 +168,18 @@ export default function PharmaCalendar({ pharmaRole }) {
           </button>
           <button
             onClick={goToPreviousMonth}
-            className="p-2 bg-white hover:bg-[#F3F4F6] border border-[#E5E7EB] rounded-xl transition-colors flex-shrink-0"
+            className={`p-2 ${darkMode ? 'bg-gray-800 hover:bg-gray-700 border-gray-700' : 'bg-white hover:bg-[#F3F4F6] border-[#E5E7EB]'} border rounded-xl transition-colors flex-shrink-0`}
           >
-            <ChevronLeft className="w-5 h-5 text-[#6B7280]" />
+            <ChevronLeft className={`w-5 h-5 ${darkMode ? 'text-gray-400' : 'text-[#6B7280]'}`} />
           </button>
-          <div className="px-2 sm:px-4 py-2 font-semibold text-[#111827] min-w-[140px] sm:min-w-[200px] text-center flex-1 sm:flex-none text-lg">
+          <div className={`px-2 sm:px-4 py-2 font-semibold ${darkMode ? 'text-white' : 'text-[#111827]'} min-w-[140px] sm:min-w-[200px] text-center flex-1 sm:flex-none text-lg`}>
             {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
           </div>
           <button
             onClick={goToNextMonth}
-            className="p-2 bg-white hover:bg-[#F3F4F6] border border-[#E5E7EB] rounded-xl transition-colors flex-shrink-0"
+            className={`p-2 ${darkMode ? 'bg-gray-800 hover:bg-gray-700 border-gray-700' : 'bg-white hover:bg-[#F3F4F6] border-[#E5E7EB]'} border rounded-xl transition-colors flex-shrink-0`}
           >
-            <ChevronRight className="w-5 h-5 text-[#6B7280]" />
+            <ChevronRight className={`w-5 h-5 ${darkMode ? 'text-gray-400' : 'text-[#6B7280]'}`} />
           </button>
         </div>
       </div>
@@ -189,11 +191,11 @@ export default function PharmaCalendar({ pharmaRole }) {
       ) : (
         <>
           {/* Calendar Grid */}
-          <div className="bg-white rounded-2xl border border-[#E5E7EB] overflow-hidden shadow-sm">
+          <div className={`${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-[#E5E7EB]'} rounded-2xl border overflow-hidden shadow-sm`}>
             {/* Day names header */}
-            <div className="grid grid-cols-7 border-b border-[#E5E7EB] bg-[#F9FAFB]">
+            <div className={`grid grid-cols-7 border-b ${darkMode ? 'border-gray-700 bg-gray-900' : 'border-[#E5E7EB] bg-[#F9FAFB]'}`}>
               {dayNames.map((day, index) => (
-                <div key={index} className="p-3 text-center text-sm font-bold text-[#6B7280]">
+                <div key={index} className={`p-3 text-center text-sm font-bold ${darkMode ? 'text-gray-400' : 'text-[#6B7280]'}`}>
                   {day}
                 </div>
               ))}
@@ -210,16 +212,22 @@ export default function PharmaCalendar({ pharmaRole }) {
                   <div
                     key={index}
                     onClick={() => !isPast && handleDateClick(day.date)}
-                    className={`min-h-[100px] p-2 border-r border-b border-[#E5E7EB] ${
-                      !day.isCurrentMonth ? 'bg-[#F9FAFB]' : 'bg-white'
+                    className={`min-h-[100px] p-2 border-r border-b ${darkMode ? 'border-gray-700' : 'border-[#E5E7EB]'} ${
+                      !day.isCurrentMonth 
+                        ? darkMode ? 'bg-gray-900' : 'bg-[#F9FAFB]' 
+                        : darkMode ? 'bg-gray-800' : 'bg-white'
                     } ${
-                      !isPast && day.isCurrentMonth ? 'cursor-pointer hover:bg-[#F3F4F6]' : ''
+                      !isPast && day.isCurrentMonth 
+                        ? darkMode ? 'cursor-pointer hover:bg-gray-700' : 'cursor-pointer hover:bg-[#F3F4F6]' 
+                        : ''
                     } ${
                       isPast ? 'opacity-40 cursor-not-allowed' : ''
                     } transition-all duration-200`}
                   >
                     <div className={`text-sm font-bold mb-1 ${
-                      !day.isCurrentMonth ? 'text-[#9CA3AF]' : 'text-[#111827]'
+                      !day.isCurrentMonth 
+                        ? darkMode ? 'text-gray-600' : 'text-[#9CA3AF]' 
+                        : darkMode ? 'text-white' : 'text-[#111827]'
                     } ${
                       isToday ? 'bg-[#6B46C1] text-white w-8 h-8 rounded-full flex items-center justify-center' : ''
                     }`}>
@@ -232,9 +240,11 @@ export default function PharmaCalendar({ pharmaRole }) {
                           <div
                             key={demand.id}
                             className={`text-xs px-2 py-1 rounded-lg font-medium ${
-                              demand.status === 'open' ? 'bg-green-50 text-green-700 border border-green-200' :
-                              demand.status === 'filled' ? 'bg-blue-50 text-blue-700 border border-blue-200' :
-                              'bg-gray-100 text-gray-600 border border-gray-200'
+                              demand.status === 'open' 
+                                ? darkMode ? 'bg-green-900/50 text-green-400 border border-green-700' : 'bg-green-50 text-green-700 border border-green-200' 
+                                : demand.status === 'filled' 
+                                  ? darkMode ? 'bg-blue-900/50 text-blue-400 border border-blue-700' : 'bg-blue-50 text-blue-700 border border-blue-200'
+                                  : darkMode ? 'bg-gray-700 text-gray-400 border border-gray-600' : 'bg-gray-100 text-gray-600 border border-gray-200'
                             } truncate`}
                           >
                             {demand.position === 'pharmacist' ? '👨‍⚕️' : '🧑‍⚕️'} {demand.pharmacyName || 'Igény'}
@@ -256,16 +266,16 @@ export default function PharmaCalendar({ pharmaRole }) {
           {/* Legend */}
           <div className="mt-6 flex items-center gap-6 text-sm">
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-green-50 border-2 border-green-200 rounded"></div>
-              <span className="text-[#111827] font-medium">Nyitott</span>
+              <div className={`w-4 h-4 ${darkMode ? 'bg-green-900/50 border-green-700' : 'bg-green-50 border-green-200'} border-2 rounded`}></div>
+              <span className={`${darkMode ? 'text-white' : 'text-[#111827]'} font-medium`}>Nyitott</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-blue-50 border-2 border-blue-200 rounded"></div>
-              <span className="text-[#111827] font-medium">Betöltve</span>
+              <div className={`w-4 h-4 ${darkMode ? 'bg-blue-900/50 border-blue-700' : 'bg-blue-50 border-blue-200'} border-2 rounded`}></div>
+              <span className={`${darkMode ? 'text-white' : 'text-[#111827]'} font-medium`}>Betöltve</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-gray-100 border-2 border-gray-200 rounded"></div>
-              <span className="text-[#111827] font-medium">Törölve</span>
+              <div className={`w-4 h-4 ${darkMode ? 'bg-gray-700 border-gray-600' : 'bg-gray-100 border-gray-200'} border-2 rounded`}></div>
+              <span className={`${darkMode ? 'text-white' : 'text-[#111827]'} font-medium`}>Törölve</span>
             </div>
           </div>
         </>
@@ -277,6 +287,7 @@ export default function PharmaCalendar({ pharmaRole }) {
           date={selectedDate}
           demands={getDemandsForDate(selectedDate)}
           pharmaRole={pharmaRole}
+          darkMode={darkMode}
           onClose={() => {
             setShowModal(false);
             setShowCreateForm(false);
@@ -292,12 +303,12 @@ export default function PharmaCalendar({ pharmaRole }) {
 }
 
 // Date Modal Component
-function DateModal({ date, demands, pharmaRole, onClose, onDemandDeleted, onDemandCreated, showCreateForm, setShowCreateForm }) {
+function DateModal({ date, demands, pharmaRole, darkMode, onClose, onDemandDeleted, onDemandCreated, showCreateForm, setShowCreateForm }) {
   const dateStr = date.toLocaleDateString('hu-HU', { year: 'numeric', month: 'long', day: 'numeric' });
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className={`bg-white rounded-2xl shadow-xl w-full border border-[#E5E7EB] ${
+      <div className={`${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-[#E5E7EB]'} rounded-2xl shadow-xl w-full border ${
         showCreateForm ? 'fixed inset-0 rounded-none max-h-screen overflow-y-auto pb-48' : 'max-w-2xl max-h-[80vh] overflow-y-auto'
       }`}>
         <div className="sticky top-0 bg-[#6B46C1] px-6 py-4 flex items-center justify-between rounded-t-2xl z-10">
@@ -316,28 +327,30 @@ function DateModal({ date, demands, pharmaRole, onClose, onDemandDeleted, onDema
             <>
               {demands.length > 0 && !showCreateForm && (
                 <div className="mb-6">
-                  <h4 className="font-semibold text-[#111827] mb-3">Meglévő igények ezen a napon:</h4>
+                  <h4 className={`font-semibold ${darkMode ? 'text-white' : 'text-[#111827]'} mb-3`}>Meglévő igények ezen a napon:</h4>
                   <div className="space-y-3">
                     {demands.map(demand => (
-                      <div key={demand.id} className="border border-[#E5E7EB] bg-[#F9FAFB] rounded-xl p-4 hover:border-[#6B46C1] transition-colors">
+                      <div key={demand.id} className={`border ${darkMode ? 'border-gray-700 bg-gray-900' : 'border-[#E5E7EB] bg-[#F9FAFB]'} rounded-xl p-4 hover:border-[#6B46C1] transition-colors`}>
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-2">
                               <span className="text-2xl">{demand.position === 'pharmacist' ? '👨‍⚕️' : '🧑‍⚕️'}</span>
-                              <span className="font-semibold text-[#111827]">
+                              <span className={`font-semibold ${darkMode ? 'text-white' : 'text-[#111827]'}`}>
                                 {demand.position === 'pharmacist' ? 'Gyógyszerész' : 'Szakasszisztens'}
                               </span>
                               <span className={`px-3 py-1 rounded-lg text-xs font-medium ${
-                                demand.status === 'open' ? 'bg-green-50 text-green-700 border border-green-200' :
-                                demand.status === 'filled' ? 'bg-blue-50 text-blue-700 border border-blue-200' :
-                                'bg-gray-100 text-gray-600 border border-gray-200'
+                                demand.status === 'open' 
+                                  ? darkMode ? 'bg-green-900/50 text-green-400 border border-green-700' : 'bg-green-50 text-green-700 border border-green-200' 
+                                  : demand.status === 'filled' 
+                                    ? darkMode ? 'bg-blue-900/50 text-blue-400 border border-blue-700' : 'bg-blue-50 text-blue-700 border border-blue-200'
+                                    : darkMode ? 'bg-gray-700 text-gray-400 border border-gray-600' : 'bg-gray-100 text-gray-600 border border-gray-200'
                               }`}>
                                 {demand.status === 'open' ? 'Nyitott' :
                                  demand.status === 'filled' ? 'Betöltve' : 'Törölve'}
                               </span>
                             </div>
                             {demand.workHours && (
-                              <div className="flex items-center gap-2 text-sm text-[#6B7280] font-medium">
+                              <div className={`flex items-center gap-2 text-sm ${darkMode ? 'text-gray-400' : 'text-[#6B7280]'} font-medium`}>
                                 <Clock className="w-4 h-4" />
                                 {demand.workHours}
                               </div>
@@ -345,7 +358,7 @@ function DateModal({ date, demands, pharmaRole, onClose, onDemandDeleted, onDema
                           </div>
                           <button
                             onClick={() => onDemandDeleted(demand.id)}
-                            className="px-3 py-1 text-sm text-red-600 hover:bg-red-50 rounded-xl transition-colors border border-red-200"
+                            className={`px-3 py-1 text-sm text-red-600 ${darkMode ? 'hover:bg-red-900/30 border-red-700' : 'hover:bg-red-50 border-red-200'} rounded-xl transition-colors border`}
                           >
                             Törlés
                           </button>
@@ -367,6 +380,7 @@ function DateModal({ date, demands, pharmaRole, onClose, onDemandDeleted, onDema
               ) : (
                 <CreateDemandForm
                   date={date}
+                  darkMode={darkMode}
                   onSuccess={() => {
                     onDemandCreated();
                     setShowCreateForm(false);
@@ -381,11 +395,11 @@ function DateModal({ date, demands, pharmaRole, onClose, onDemandDeleted, onDema
               {demands.length > 0 ? (
                 <div className="space-y-4">
                   {demands.map(demand => (
-                    <DemandCard key={demand.id} demand={demand} pharmaRole={pharmaRole} />
+                    <DemandCard key={demand.id} demand={demand} pharmaRole={pharmaRole} darkMode={darkMode} />
                   ))}
                 </div>
               ) : (
-                <p className="text-[#6B7280] text-center py-8">Nincs elérhető igény ezen a napon.</p>
+                <p className={`${darkMode ? 'text-gray-400' : 'text-[#6B7280]'} text-center py-8`}>Nincs elérhető igény ezen a napon.</p>
               )}
             </>
           )}
@@ -396,7 +410,7 @@ function DateModal({ date, demands, pharmaRole, onClose, onDemandDeleted, onDema
 }
 
 // Create Demand Form
-function CreateDemandForm({ date, onSuccess, onCancel }) {
+function CreateDemandForm({ date, darkMode, onSuccess, onCancel }) {
   const { user, userData } = useAuth();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -482,16 +496,16 @@ function CreateDemandForm({ date, onSuccess, onCancel }) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <h4 className="font-semibold text-[#111827] mb-4 text-lg">Új igény létrehozása</h4>
+      <h4 className={`font-semibold ${darkMode ? 'text-white' : 'text-[#111827]'} mb-4 text-lg`}>Új igény létrehozása</h4>
 
       <div>
-        <label className="block text-sm font-semibold text-[#111827] mb-2">
+        <label className={`block text-sm font-semibold ${darkMode ? 'text-white' : 'text-[#111827]'} mb-2`}>
           Pozíció <span className="text-red-600">*</span>
         </label>
         <select
           value={formData.position}
           onChange={(e) => setFormData({ ...formData, position: e.target.value })}
-          className="w-full px-4 py-2 bg-white border border-[#E5E7EB] rounded-xl text-[#111827] focus:ring-2 focus:ring-[#6B46C1] focus:border-[#6B46C1]"
+          className={`w-full px-4 py-2 ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-[#E5E7EB] text-[#111827]'} border rounded-xl focus:ring-2 focus:ring-[#6B46C1] focus:border-[#6B46C1]`}
           required
         >
           <option value="pharmacist">Gyógyszerész</option>
@@ -500,7 +514,7 @@ function CreateDemandForm({ date, onSuccess, onCancel }) {
       </div>
 
       <div>
-        <label className="block text-sm font-semibold text-[#111827] mb-2">
+        <label className={`block text-sm font-semibold ${darkMode ? 'text-white' : 'text-[#111827]'} mb-2`}>
           Munkaidő
         </label>
         <input
@@ -508,18 +522,18 @@ function CreateDemandForm({ date, onSuccess, onCancel }) {
           value={formData.workHours}
           onChange={(e) => setFormData({ ...formData, workHours: e.target.value })}
           placeholder="pl. 8:00-16:00"
-          className="w-full px-4 py-2 bg-white border border-[#E5E7EB] rounded-xl text-[#111827] placeholder-[#9CA3AF] focus:ring-2 focus:ring-[#6B46C1] focus:border-[#6B46C1]"
+          className={`w-full px-4 py-2 ${darkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'bg-white border-[#E5E7EB] text-[#111827] placeholder-[#9CA3AF]'} border rounded-xl focus:ring-2 focus:ring-[#6B46C1] focus:border-[#6B46C1]`}
         />
       </div>
 
       <div>
-        <label className="block text-sm font-semibold text-[#111827] mb-2">
+        <label className={`block text-sm font-semibold ${darkMode ? 'text-white' : 'text-[#111827]'} mb-2`}>
           Minimum tapasztalat
         </label>
         <select
           value={formData.minExperience}
           onChange={(e) => setFormData({ ...formData, minExperience: e.target.value })}
-          className="w-full px-4 py-2 bg-white border border-[#E5E7EB] rounded-xl text-[#111827] focus:ring-2 focus:ring-[#6B46C1] focus:border-[#6B46C1]"
+          className={`w-full px-4 py-2 ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-[#E5E7EB] text-[#111827]'} border rounded-xl focus:ring-2 focus:ring-[#6B46C1] focus:border-[#6B46C1]`}
         >
           <option value="">Nincs követelmény</option>
           <option value="0-1">0-1 év</option>
@@ -531,7 +545,7 @@ function CreateDemandForm({ date, onSuccess, onCancel }) {
       </div>
 
       <div>
-        <label className="block text-sm font-semibold text-[#111827] mb-2">
+        <label className={`block text-sm font-semibold ${darkMode ? 'text-white' : 'text-[#111827]'} mb-2`}>
           Szükséges szoftverismeret
         </label>
         <div className="space-y-2">
@@ -541,9 +555,9 @@ function CreateDemandForm({ date, onSuccess, onCancel }) {
                 type="checkbox"
                 checked={formData.requiredSoftware.includes(software)}
                 onChange={() => handleSoftwareToggle(software)}
-                className="w-4 h-4 text-[#6B46C1] bg-white border-[#E5E7EB] rounded focus:ring-[#6B46C1]"
+                className={`w-4 h-4 text-[#6B46C1] ${darkMode ? 'bg-gray-700 border-gray-600' : 'bg-white border-[#E5E7EB]'} rounded focus:ring-[#6B46C1]`}
               />
-              <span className="ml-2 text-[#111827] text-sm font-medium">{software}</span>
+              <span className={`ml-2 ${darkMode ? 'text-white' : 'text-[#111827]'} text-sm font-medium`}>{software}</span>
             </label>
           ))}
         </div>
@@ -555,14 +569,14 @@ function CreateDemandForm({ date, onSuccess, onCancel }) {
               value={formData.otherSoftware}
               onChange={(e) => setFormData({ ...formData, otherSoftware: e.target.value })}
               placeholder="Add meg az egyéb szoftver nevét"
-              className="w-full px-4 py-2 bg-white border border-[#E5E7EB] rounded-xl text-[#111827] placeholder-[#9CA3AF] focus:ring-2 focus:ring-[#6B46C1] focus:border-[#6B46C1]"
+              className={`w-full px-4 py-2 ${darkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'bg-white border-[#E5E7EB] text-[#111827] placeholder-[#9CA3AF]'} border rounded-xl focus:ring-2 focus:ring-[#6B46C1] focus:border-[#6B46C1]`}
             />
           </div>
         )}
       </div>
 
       <div>
-        <label className="block text-sm font-semibold text-[#111827] mb-2">
+        <label className={`block text-sm font-semibold ${darkMode ? 'text-white' : 'text-[#111827]'} mb-2`}>
           Maximum órabér (Ft)
         </label>
         <input
@@ -570,20 +584,20 @@ function CreateDemandForm({ date, onSuccess, onCancel }) {
           value={formData.maxHourlyRate}
           onChange={(e) => setFormData({ ...formData, maxHourlyRate: e.target.value })}
           placeholder="pl. 5000"
-          className="w-full px-4 py-2 bg-white border border-[#E5E7EB] rounded-xl text-[#111827] placeholder-[#9CA3AF] focus:ring-2 focus:ring-[#6B46C1] focus:border-[#6B46C1]"
+          className={`w-full px-4 py-2 ${darkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'bg-white border-[#E5E7EB] text-[#111827] placeholder-[#9CA3AF]'} border rounded-xl focus:ring-2 focus:ring-[#6B46C1] focus:border-[#6B46C1]`}
           min="0"
         />
       </div>
 
       <div>
-        <label className="block text-sm font-semibold text-[#111827] mb-2">
+        <label className={`block text-sm font-semibold ${darkMode ? 'text-white' : 'text-[#111827]'} mb-2`}>
           További követelmények
         </label>
         <textarea
           value={formData.additionalRequirements}
           onChange={(e) => setFormData({ ...formData, additionalRequirements: e.target.value })}
           rows="3"
-          className="w-full px-4 py-2 bg-white border border-[#E5E7EB] rounded-xl text-[#111827] placeholder-[#9CA3AF] focus:ring-2 focus:ring-[#6B46C1] focus:border-[#6B46C1]"
+          className={`w-full px-4 py-2 ${darkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'bg-white border-[#E5E7EB] text-[#111827] placeholder-[#9CA3AF]'} border rounded-xl focus:ring-2 focus:ring-[#6B46C1] focus:border-[#6B46C1]`}
           placeholder="Egyéb elvárások..."
         />
       </div>
@@ -592,7 +606,7 @@ function CreateDemandForm({ date, onSuccess, onCancel }) {
         <button
           type="button"
           onClick={onCancel}
-          className="flex-1 px-4 py-2 border border-[#E5E7EB] rounded-xl text-[#6B7280] hover:bg-[#F3F4F6] transition-colors"
+          className={`flex-1 px-4 py-2 border ${darkMode ? 'border-gray-600 text-gray-400 hover:bg-gray-700' : 'border-[#E5E7EB] text-[#6B7280] hover:bg-[#F3F4F6]'} rounded-xl transition-colors`}
         >
           Mégse
         </button>
@@ -616,7 +630,7 @@ function CreateDemandForm({ date, onSuccess, onCancel }) {
 }
 
 // Demand Card for Substitutes
-function DemandCard({ demand, pharmaRole }) {
+function DemandCard({ demand, pharmaRole, darkMode }) {
   const { user, userData } = useAuth();
   const [showDetails, setShowDetails] = useState(false);
   const [applying, setApplying] = useState(false);
@@ -680,19 +694,19 @@ function DemandCard({ demand, pharmaRole }) {
   };
 
   return (
-    <div className="border border-[#E5E7EB] bg-[#F9FAFB] rounded-xl p-4 hover:border-[#6B46C1] transition-colors">
+    <div className={`border ${darkMode ? 'border-gray-700 bg-gray-900' : 'border-[#E5E7EB] bg-[#F9FAFB]'} rounded-xl p-4 hover:border-[#6B46C1] transition-colors`}>
       <div className="flex items-start gap-3">
         <span className="text-3xl">{demand.position === 'pharmacist' ? '👨‍⚕️' : '🧑‍⚕️'}</span>
         <div className="flex-1">
-          <h4 className="font-semibold text-[#111827] mb-1 text-lg">{demand.pharmacyName}</h4>
+          <h4 className={`font-semibold ${darkMode ? 'text-white' : 'text-[#111827]'} mb-1 text-lg`}>{demand.pharmacyName}</h4>
           {demand.pharmacyCity && (
-            <div className="flex items-center gap-1 text-sm text-[#6B7280] font-medium mb-2">
+            <div className={`flex items-center gap-1 text-sm ${darkMode ? 'text-gray-400' : 'text-[#6B7280]'} font-medium mb-2`}>
               <MapPin className="w-4 h-4" />
               {demand.pharmacyZipCode && `${demand.pharmacyZipCode} `}{demand.pharmacyCity}
             </div>
           )}
           {demand.workHours && (
-            <div className="flex items-center gap-1 text-sm text-[#6B7280] font-medium mb-2">
+            <div className={`flex items-center gap-1 text-sm ${darkMode ? 'text-gray-400' : 'text-[#6B7280]'} font-medium mb-2`}>
               <Clock className="w-4 h-4" />
               {demand.workHours}
             </div>
@@ -702,12 +716,12 @@ function DemandCard({ demand, pharmaRole }) {
             // Összefoglaló nézet
             <>
               {demand.minExperience && (
-                <p className="text-sm text-[#111827]">
+                <p className={`text-sm ${darkMode ? 'text-white' : 'text-[#111827]'}`}>
                   <strong>Minimum tapasztalat:</strong> {demand.minExperience}
                 </p>
               )}
               {demand.maxHourlyRate && (
-                <p className="text-sm text-[#111827]">
+                <p className={`text-sm ${darkMode ? 'text-white' : 'text-[#111827]'}`}>
                   <strong>Maximum órabér:</strong> {demand.maxHourlyRate} Ft
                 </p>
               )}
@@ -716,16 +730,16 @@ function DemandCard({ demand, pharmaRole }) {
             // Részletes nézet
             <>
               {demand.minExperience && (
-                <p className="text-sm text-[#111827] mb-1">
+                <p className={`text-sm ${darkMode ? 'text-white' : 'text-[#111827]'} mb-1`}>
                   <strong>Minimum tapasztalat:</strong> {demand.minExperience}
                 </p>
               )}
               {demand.requiredSoftware?.length > 0 && (
                 <div className="mb-2">
-                  <p className="text-sm text-[#111827] mb-1"><strong>Szoftverismeret:</strong></p>
+                  <p className={`text-sm ${darkMode ? 'text-white' : 'text-[#111827]'} mb-1`}><strong>Szoftverismeret:</strong></p>
                   <div className="flex flex-wrap gap-1">
                     {demand.requiredSoftware.map(sw => (
-                      <span key={sw} className="px-2 py-1 bg-blue-50 text-blue-700 border border-blue-200 rounded-lg text-xs font-medium">
+                      <span key={sw} className={`px-2 py-1 ${darkMode ? 'bg-blue-900/50 text-blue-400 border-blue-700' : 'bg-blue-50 text-blue-700 border-blue-200'} border rounded-lg text-xs font-medium`}>
                         {sw}
                       </span>
                     ))}
@@ -733,12 +747,12 @@ function DemandCard({ demand, pharmaRole }) {
                 </div>
               )}
               {demand.maxHourlyRate && (
-                <p className="text-sm text-[#111827] mb-1">
+                <p className={`text-sm ${darkMode ? 'text-white' : 'text-[#111827]'} mb-1`}>
                   <strong>Maximum órabér:</strong> {demand.maxHourlyRate} Ft
                 </p>
               )}
               {demand.additionalRequirements && (
-                <p className="text-sm text-[#111827] mt-2">
+                <p className={`text-sm ${darkMode ? 'text-white' : 'text-[#111827]'} mt-2`}>
                   <strong>További követelmények:</strong> {demand.additionalRequirements}
                 </p>
               )}
@@ -756,7 +770,7 @@ function DemandCard({ demand, pharmaRole }) {
         </button>
         <button 
           onClick={() => setShowDetails(!showDetails)}
-          className="px-4 py-2 border border-[#E5E7EB] rounded-xl text-[#111827] hover:bg-[#F3F4F6] transition-colors text-sm font-medium"
+          className={`px-4 py-2 border ${darkMode ? 'border-gray-600 text-white hover:bg-gray-700' : 'border-[#E5E7EB] text-[#111827] hover:bg-[#F3F4F6]'} rounded-xl transition-colors text-sm font-medium`}
         >
           {showDetails ? 'Kevesebb' : 'Részletek'}
         </button>
