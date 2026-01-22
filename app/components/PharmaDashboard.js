@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
+import { useTheme } from '@/context/ThemeContext';
 import { useRouter } from 'next/navigation';
 import { collection, query, where, getDocs, orderBy, updateDoc, doc, addDoc, deleteDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -8,6 +9,7 @@ import { Loader2, Search, ChevronDown, ChevronUp, MapPin, Clock, CheckCircle, XC
 
 export default function PharmaDashboard({ pharmaRole }) {
   const { user, userData } = useAuth();
+  const { darkMode } = useTheme();
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [myApplications, setMyApplications] = useState([]);
@@ -321,28 +323,28 @@ export default function PharmaDashboard({ pharmaRole }) {
 
   return (
     <div>
-      <h2 className="text-2xl font-bold text-gray-900 mb-6">Vezérlőpult</h2>
+      <h2 className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'} mb-6`}>Vezérlőpult</h2>
 
       {pharmaRole === 'pharmacy' ? (
         // Gyógyszertár Dashboard
         <div className="space-y-4">
-          <div className="bg-purple-50 border-l-4 border-[#6B46C1] p-3 rounded">
-            <h3 className="font-semibold text-[#111827] text-sm mb-1">Meghirdetett Igényeim Kezelése</h3>
-            <p className="text-xs text-purple-700">
+          <div className={`${darkMode ? 'bg-purple-900/30 border-purple-600' : 'bg-purple-50 border-[#6B46C1]'} border-l-4 p-3 rounded`}>
+            <h3 className={`font-semibold ${darkMode ? 'text-white' : 'text-[#111827]'} text-sm mb-1`}>Meghirdetett Igényeim Kezelése</h3>
+            <p className={`text-xs ${darkMode ? 'text-purple-300' : 'text-purple-700'}`}>
               Itt kezelheted az általad feladott igényeket és a jelentkezőket.
             </p>
           </div>
 
           {myDemands.length === 0 ? (
             <div className="text-center py-8">
-              <Calendar className="w-10 h-10 mx-auto text-[#6B7280] mb-2" />
-              <p className="text-[#6B7280] text-sm">Még nincs feladott igényed.</p>
-              <p className="text-xs text-[#6B7280] mt-1">Menj a Naptár fülre és adj fel egy igényt!</p>
+              <Calendar className={`w-10 h-10 mx-auto ${darkMode ? 'text-gray-400' : 'text-[#6B7280]'} mb-2`} />
+              <p className={`${darkMode ? 'text-gray-400' : 'text-[#6B7280]'} text-sm`}>Még nincs feladott igényed.</p>
+              <p className={`text-xs ${darkMode ? 'text-gray-500' : 'text-[#6B7280]'} mt-1`}>Menj a Naptár fülre és adj fel egy igényt!</p>
             </div>
           ) : (
             <div className="space-y-2">
               {myDemands.map(demand => (
-                <div key={demand.id} className="bg-white border-b border-[#E5E7EB] pb-3 pt-2">
+                <div key={demand.id} className={`${darkMode ? 'bg-gray-700 border-gray-600' : 'bg-white border-[#E5E7EB]'} border-b pb-3 pt-2`}>
                   <div
                     onClick={() => setExpandedDemand(expandedDemand === demand.id ? null : demand.id)}
                     className="cursor-pointer"
@@ -350,13 +352,13 @@ export default function PharmaDashboard({ pharmaRole }) {
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
-                          <h4 className="font-semibold text-[#111827] text-sm">
+                          <h4 className={`font-semibold ${darkMode ? 'text-white' : 'text-[#111827]'} text-sm`}>
                             {demand.position === 'pharmacist' ? 'Gyógyszerész' : 'Szakasszisztens'}
                           </h4>
                           <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                            demand.status === 'open' ? 'bg-green-100 text-green-700' :
-                            demand.status === 'filled' ? 'bg-blue-100 text-blue-700' :
-                            'bg-[#F3F4F6] text-[#111827]'
+                            demand.status === 'open' ? (darkMode ? 'bg-green-900/50 text-green-300' : 'bg-green-100 text-green-700') :
+                            demand.status === 'filled' ? (darkMode ? 'bg-blue-900/50 text-blue-300' : 'bg-blue-100 text-blue-700') :
+                            (darkMode ? 'bg-gray-600 text-gray-300' : 'bg-[#F3F4F6] text-[#111827]')
                           }`}>
                             {demand.status === 'open' ? 'Nyitott' :
                              demand.status === 'filled' ? 'Betöltve' : 'Törölve'}
@@ -378,7 +380,7 @@ export default function PharmaDashboard({ pharmaRole }) {
                             e.stopPropagation();
                             handleEditDemand(demand);
                           }}
-                          className="p-1 hover:bg-[#F3F4F6] rounded"
+                          className={`p-1 ${darkMode ? 'hover:bg-gray-600' : 'hover:bg-[#F3F4F6]'} rounded`}
                         >
                           <Edit2 className="w-3.5 h-3.5 text-blue-600" />
                         </button>
@@ -387,48 +389,48 @@ export default function PharmaDashboard({ pharmaRole }) {
                             e.stopPropagation();
                             handleDeleteDemand(demand.id);
                           }}
-                          className="p-1 hover:bg-[#F3F4F6] rounded"
+                          className={`p-1 ${darkMode ? 'hover:bg-gray-600' : 'hover:bg-[#F3F4F6]'} rounded`}
                         >
                           <Trash2 className="w-3.5 h-3.5 text-red-600" />
                         </button>
                         {expandedDemand === demand.id ? (
-                          <ChevronUp className="w-4 h-4 text-[#6B7280]" />
+                          <ChevronUp className={`w-4 h-4 ${darkMode ? 'text-gray-400' : 'text-[#6B7280]'}`} />
                         ) : (
-                          <ChevronDown className="w-4 h-4 text-[#6B7280]" />
+                          <ChevronDown className={`w-4 h-4 ${darkMode ? 'text-gray-400' : 'text-[#6B7280]'}`} />
                         )}
                       </div>
                     </div>
                   </div>
 
                   {expandedDemand === demand.id && (
-                    <div className="bg-[#F9FAFB] p-3 border-t border-[#E5E7EB] mt-2 rounded-b-xl">
+                    <div className={`${darkMode ? 'bg-gray-800 border-gray-600' : 'bg-[#F9FAFB] border-[#E5E7EB]'} p-3 border-t mt-2 rounded-b-xl`}>
                       {demand.applications?.length > 0 ? (
                         <div className="space-y-2">
-                          <h5 className="font-semibold text-[#111827] mb-2 text-sm">Jelentkezők:</h5>
+                          <h5 className={`font-semibold ${darkMode ? 'text-white' : 'text-[#111827]'} mb-2 text-sm`}>Jelentkezők:</h5>
                           {demand.applications.filter(app => app.status === 'pending').map(application => (
-                            <div key={application.id} className="bg-white rounded-lg p-3 border border-[#E5E7EB]">
+                            <div key={application.id} className={`${darkMode ? 'bg-gray-700 border-gray-600' : 'bg-white border-[#E5E7EB]'} rounded-lg p-3 border`}>
                               <div className="flex items-start justify-between mb-2">
                                 <div className="flex-1 min-w-0">
-                                  <span className="font-semibold text-[#111827] text-sm block truncate">{application.applicantName}</span>
-                                  <p className="text-xs text-[#6B7280]">
+                                  <span className={`font-semibold ${darkMode ? 'text-white' : 'text-[#111827]'} text-sm block truncate`}>{application.applicantName}</span>
+                                  <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-[#6B7280]'}`}>
                                     {new Date(application.createdAt).toLocaleDateString('hu-HU')}
                                   </p>
                                 </div>
-                                <span className="px-2 py-0.5 bg-yellow-100 text-yellow-700 rounded text-xs font-medium whitespace-nowrap ml-2">
+                                <span className={`px-2 py-0.5 ${darkMode ? 'bg-yellow-900/50 text-yellow-300' : 'bg-yellow-100 text-yellow-700'} rounded text-xs font-medium whitespace-nowrap ml-2`}>
                                   Függőben
                                 </span>
                               </div>
                               {application.message && (
-                                <p className="text-xs text-[#6B7280] mb-2 italic">"{application.message}"</p>
+                                <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-[#6B7280]'} mb-2 italic`}>"{application.message}"</p>
                               )}
                               <div className="grid grid-cols-2 gap-1.5">
                                 <button 
                                   onClick={() => router.push(`/profil/${application.applicantId}`)}
-                                  className="px-2 py-1.5 text-xs bg-[#F3F4F6] text-[#111827] rounded hover:bg-[#E5E7EB] transition-colors text-center"
+                                  className={`px-2 py-1.5 text-xs ${darkMode ? 'bg-gray-600 text-gray-200 hover:bg-gray-500' : 'bg-[#F3F4F6] text-[#111827] hover:bg-[#E5E7EB]'} rounded transition-colors text-center`}
                                 >
                                   Adatlap
                                 </button>
-                                <button className="px-2 py-1.5 text-xs bg-[#F3F4F6] text-[#111827] rounded hover:bg-[#E5E7EB] transition-colors flex items-center justify-center gap-1">
+                                <button className={`px-2 py-1.5 text-xs ${darkMode ? 'bg-gray-600 text-gray-200 hover:bg-gray-500' : 'bg-[#F3F4F6] text-[#111827] hover:bg-[#E5E7EB]'} rounded transition-colors flex items-center justify-center gap-1`}>
                                   <MessageCircle className="w-3 h-3" />
                                   Üzenet
                                 </button>
@@ -550,36 +552,36 @@ export default function PharmaDashboard({ pharmaRole }) {
 
           {/* Elérhető igények keresése */}
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Elérhető Igények Keresése</h3>
+            <h3 className={`text-lg font-semibold ${darkMode ? 'text-white' : 'text-gray-900'} mb-4`}>Elérhető Igények Keresése</h3>
             
             <div className="mb-4">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-[#6B7280]" />
+                <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${darkMode ? 'text-gray-400' : 'text-[#6B7280]'}`} />
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Keresés gyógyszertár neve vagy irányítószám alapján..."
-                  className="w-full pl-10 pr-4 py-2 border border-[#E5E7EB] rounded-lg focus:ring-2 focus:ring-[#6B46C1] focus:border-[#6B46C1]"
+                  className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#6B46C1] focus:border-[#6B46C1] ${darkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'bg-white border-[#E5E7EB] text-[#111827]'}`}
                 />
               </div>
             </div>
 
             {filteredDemands.length === 0 ? (
-              <div className="bg-[#F9FAFB] rounded-lg p-8 text-center">
-                <Calendar className="w-12 h-12 mx-auto text-[#6B7280] mb-3" />
-                <p className="text-[#6B7280]">
+              <div className={`${darkMode ? 'bg-gray-800' : 'bg-[#F9FAFB]'} rounded-lg p-8 text-center`}>
+                <Calendar className={`w-12 h-12 mx-auto ${darkMode ? 'text-gray-400' : 'text-[#6B7280]'} mb-3`} />
+                <p className={`${darkMode ? 'text-gray-400' : 'text-[#6B7280]'}`}>
                   {searchQuery ? 'Nincs találat a keresési feltételeknek megfelelően.' : 'Jelenleg nincs elérhető igény.'}
                 </p>
               </div>
             ) : (
               <div className="space-y-2">
                 {filteredDemands.map(demand => (
-                  <div key={demand.id} className="border-b border-[#E5E7EB] pb-3 pt-2 bg-white">
+                  <div key={demand.id} className={`border-b pb-3 pt-2 ${darkMode ? 'bg-gray-700 border-gray-600' : 'bg-white border-[#E5E7EB]'}`}>
                     <div className="flex items-start gap-2 mb-2">
                       <div className="flex-1 min-w-0">
-                        <h4 className="font-semibold text-[#111827] mb-1 text-sm">{demand.pharmacyName}</h4>
-                        <p className="text-xs text-[#6B7280]">
+                        <h4 className={`font-semibold ${darkMode ? 'text-white' : 'text-[#111827]'} mb-1 text-sm`}>{demand.pharmacyName}</h4>
+                        <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-[#6B7280]'}`}>
                           {new Date(demand.date).toLocaleDateString('hu-HU')}
                           {demand.workHours && ` • ${demand.workHours}`}
                           {demand.pharmacyCity && ` • ${demand.pharmacyZipCode && `${demand.pharmacyZipCode} `}${demand.pharmacyCity}`}
@@ -594,7 +596,7 @@ export default function PharmaDashboard({ pharmaRole }) {
                       >
                         Jelentkezem
                       </button>
-                      <button className="px-3 py-1.5 border border-[#E5E7EB] rounded text-[#111827] hover:bg-[#F9FAFB] text-xs font-medium">
+                      <button className={`px-3 py-1.5 border rounded text-xs font-medium ${darkMode ? 'border-gray-600 text-gray-200 hover:bg-gray-600' : 'border-[#E5E7EB] text-[#111827] hover:bg-[#F9FAFB]'}`}>
                         Részletek
                       </button>
                     </div>
