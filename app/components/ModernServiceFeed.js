@@ -839,7 +839,7 @@ export default function ModernServiceFeed() {
                     className="flex-1 flex justify-end gap-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors py-1 rounded"
                     onClick={(e) => {
                       e.stopPropagation();
-                      setShowComments({ ...showComments, [post.id]: !showComments[post.id] });
+                      router.push(`/post/${post.id}`);
                     }}
                   >
                     {commentsCount + totalReplies > 0 ? (
@@ -854,7 +854,7 @@ export default function ModernServiceFeed() {
               {/* Action Buttons */}
               <div className="border-t border-gray-200 dark:border-gray-700 py-2 flex items-center justify-center">
                 <button
-                  onClick={() => setShowComments({ ...showComments, [post.id]: !showComments[post.id] })}
+                  onClick={() => router.push(`/post/${post.id}`)}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400 transition-colors"
                 >
                   <MessageCircle size={16} />
@@ -862,56 +862,7 @@ export default function ModernServiceFeed() {
                 </button>
               </div>
 
-              {/* Comments Section */}
-              {showComments[post.id] && (
-                <div className="border-t border-gray-200 dark:border-gray-700 py-3 bg-gray-50 dark:bg-gray-900/50 px-3 sm:px-4">
-                  {/* Comment Input */}
-                  <div className="flex gap-2 mb-4">
-                    <img
-                      src={userData?.photoURL || user?.photoURL || '/default-avatar.svg'}
-                      alt="Your avatar"
-                      className="w-8 h-8 rounded-full object-cover"
-                    />
-                    <div className="flex-1 flex gap-2">
-                      <input
-                        type="text"
-                        value={commentText[post.id] || ''}
-                        onChange={(e) => setCommentText({ ...commentText, [post.id]: e.target.value })}
-                        onKeyPress={(e) => e.key === 'Enter' && handleComment(post.id)}
-                        placeholder="Írj egy hozzászólást..."
-                        className="flex-1 bg-gray-100 dark:bg-gray-800 rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-cyan-500 text-gray-900 dark:text-white text-sm"
-                      />
-                      <button
-                        onClick={() => handleComment(post.id)}
-                        disabled={!commentText[post.id]?.trim()}
-                        className="text-cyan-500 hover:text-cyan-600 disabled:text-gray-300 disabled:cursor-not-allowed p-2"
-                      >
-                        <Send size={20} />
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Comments List - Fa struktúra */}
-                  <div className="space-y-3">
-                    {(post.comments || []).map((comment) => (
-                      <CommentItem
-                        key={comment.id}
-                        comment={comment}
-                        postId={post.id}
-                        depth={0}
-                        onReply={handleReply}
-                        replyTo={replyTo}
-                        replyText={replyText}
-                        setReplyText={setReplyText}
-                        setReplyTo={setReplyTo}
-                        userData={userData}
-                        user={user}
-                        formatTime={formatTime}
-                      />
-                    ))}
-                  </div>
-                </div>
-              )}
+              {/* Comments megjelenítése eltávolítva - mostmár külön oldalon */}
             </div>
           );
         })
