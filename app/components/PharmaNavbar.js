@@ -1,11 +1,13 @@
 "use client";
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
-import { Calendar, BarChart3, User, Info } from 'lucide-react';
+import { useTheme } from '@/context/ThemeContext';
+import { Calendar, BarChart3, User, HelpCircle } from 'lucide-react';
 
 export default function PharmaNavbar({ isVisible = true }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const { darkMode } = useTheme();
   
   // Az aktív tab a ?tab= query paraméterből jön
   const activeTab = searchParams.get('tab') || 'calendar';
@@ -27,36 +29,42 @@ export default function PharmaNavbar({ isVisible = true }) {
       tab: 'profile'
     },
     {
-      icon: Info,
-      label: 'i',
-      tab: 'info'
+      icon: HelpCircle,
+      label: 'Súgó',
+      tab: 'help',
+      isLink: true
     }
   ];
 
-  const handleTabChange = (tab) => {
-    // Navigálj a pharmagister oldalra a megfelelő tab paraméterrel
-    router.push(`/pharmagister?tab=${tab}`);
+  const handleTabChange = (item) => {
+    if (item.isLink) {
+      router.push('/help');
+    } else {
+      router.push(`/pharmagister?tab=${item.tab}`);
+    }
   };
 
   return (
     <div 
-      className={`fixed bottom-[73px] left-0 right-0 bg-white border-t border-[#E5E7EB] transition-transform duration-300 z-50 ${
+      className={`fixed bottom-[73px] left-0 right-0 ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-[#E5E7EB]'} border-t transition-transform duration-300 z-50 ${
         isVisible ? 'translate-y-0' : 'translate-y-full'
       }`}
     >
       <div className="grid grid-cols-4 gap-1 px-2 py-2">
         {navItems.map((item) => {
-          const isActive = activeTab === item.tab;
+          const isActive = !item.isLink && activeTab === item.tab;
           const Icon = item.icon;
 
           return (
             <button
               key={item.tab}
-              onClick={() => handleTabChange(item.tab)}
+              onClick={() => handleTabChange(item)}
               className={`relative flex flex-col items-center justify-center py-2 px-1 rounded-lg transition-colors touch-manipulation ${
                 isActive
                   ? 'bg-[#6B46C1] text-white'
-                  : 'text-[#6B7280] active:bg-[#F3F4F6]'
+                  : darkMode 
+                    ? 'text-gray-400 active:bg-gray-700' 
+                    : 'text-[#6B7280] active:bg-[#F3F4F6]'
               }`}
             >
               <Icon className="w-6 h-6" />

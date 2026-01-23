@@ -736,10 +736,10 @@ export default function ModernServiceFeed() {
                 {/* Action Button */}
                 <div className="p-4 border-t border-gray-200 dark:border-gray-700">
                   <button
-                    onClick={() => router.push(`/pharmagister?demandId=${post.pharmaDemandId}`)}
+                    onClick={() => router.push(`/pharmagister/demand/${post.pharmaDemandId}`)}
                     className="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-4 rounded-lg transition-colors flex items-center justify-center gap-2"
                   >
-                    <span>Megtekintés és jelentkezés</span>
+                    <span>Megnézem</span>
                   </button>
                 </div>
               </div>

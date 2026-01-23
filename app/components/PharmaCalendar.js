@@ -33,10 +33,11 @@ export default function PharmaCalendar({ pharmaRole }) {
       let q;
 
       if (pharmaRole === 'pharmacy') {
-        // Gyógyszertár: saját igényei
+        // Gyógyszertár: saját igényei (nem törölt)
         q = query(
           demandsRef,
           where('pharmacyId', '==', user.uid),
+          where('status', 'in', ['open', 'filled']),
           orderBy('date', 'asc')
         );
       } else {
