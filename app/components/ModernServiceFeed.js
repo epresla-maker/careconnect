@@ -346,9 +346,7 @@ export default function ModernServiceFeed() {
           <p className="text-gray-500 dark:text-gray-400">Jelenleg nincsenek megjeleníthető posztok.</p>
         </div>
       ) : (
-        posts.map((originalPost) => {
-          // ✅ ÚJ: Alkalmazzuk a pending reakciókat
-          const post = getPostWithPendingReaction(originalPost);
+        posts.map((post) => {
           const reactionSummary = getReactionSummary(post.reactions);
           const userReaction = user && post.reactions?.[user.uid];
           const commentsCount = (post.comments || []).length;
