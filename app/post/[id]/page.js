@@ -261,7 +261,12 @@ export default function PostDetailPage() {
           >
             <ArrowLeft className="w-5 h-5 text-gray-900 dark:text-white" />
           </button>
-          <h1 className="text-lg font-semibold text-gray-900 dark:text-white">Poszt</h1>
+          <div className="flex-1 min-w-0">
+            <h1 className="text-lg font-semibold text-gray-900 dark:text-white truncate">
+              {post.authorData?.displayName || 'Névtelen'}
+            </h1>
+            <p className="text-xs text-gray-500">{formatTime(post.createdAt)}</p>
+          </div>
         </div>
       </div>
 
