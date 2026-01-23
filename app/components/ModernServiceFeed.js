@@ -31,95 +31,6 @@ const REACTIONS = [
   { type: 'angry', emoji: '😠', icon: Angry, label: 'Dühös', color: 'text-red-600' }
 ];
 
-// Rekurzív komment komponens
-function CommentItem({ comment, postId, depth = 0, onReply, replyTo, replyText, setReplyText, setReplyTo, userData, user, formatTime }) {
-  const maxDepth = 5;
-
-  return (
-    <div className={`${depth > 0 ? 'ml-10 border-l-2 border-gray-300 dark:border-gray-600 pl-4' : ''}`}>
-      {/* Komment */}
-      <div className="flex gap-2">
-        <img
-          src={comment.userPhoto || '/default-avatar.svg'}
-          alt="Commenter"
-          className="w-8 h-8 rounded-full object-cover flex-shrink-0"
-        />
-        <div className="flex-1 min-w-0">
-          <div className="bg-gray-100 dark:bg-gray-800 rounded-2xl px-4 py-2">
-            <p className="font-semibold text-sm text-gray-900 dark:text-white">
-              {comment.userName}
-            </p>
-            <p className="text-sm text-gray-900 dark:text-white break-words">
-              {comment.text}
-            </p>
-          </div>
-          <div className="flex items-center gap-4 mt-1 px-2 text-xs text-gray-500">
-            <span>{formatTime(comment.createdAt)}</span>
-            {depth < maxDepth && (
-              <button 
-                onClick={() => setReplyTo({ ...replyTo, [`${postId}-${comment.id}`]: !replyTo[`${postId}-${comment.id}`] })}
-                className="hover:underline font-semibold text-cyan-600 dark:text-cyan-400"
-              >
-                Válasz
-              </button>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Válasz Input */}
-      {replyTo[`${postId}-${comment.id}`] && (
-        <div className="flex gap-2 mt-2 ml-10">
-          <img
-            src={userData?.photoURL || user?.photoURL || '/default-avatar.svg'}
-            alt="Your avatar"
-            className="w-7 h-7 rounded-full object-cover flex-shrink-0"
-          />
-          <div className="flex-1 flex gap-2 min-w-0">
-            <input
-              type="text"
-              value={replyText[`${postId}-${comment.id}`] || ''}
-              onChange={(e) => setReplyText({ ...replyText, [`${postId}-${comment.id}`]: e.target.value })}
-              onKeyPress={(e) => e.key === 'Enter' && onReply(postId, comment.id)}
-              placeholder="Válasz"
-              className="flex-1 bg-gray-100 dark:bg-gray-800 rounded-full px-4 py-1.5 focus:outline-none focus:ring-2 focus:ring-cyan-500 text-gray-900 dark:text-white text-sm min-w-0"
-            />
-            <button
-              onClick={() => onReply(postId, comment.id)}
-              disabled={!replyText[`${postId}-${comment.id}`]?.trim()}
-              className="text-cyan-500 hover:text-cyan-600 disabled:text-gray-300 disabled:cursor-not-allowed p-1 flex-shrink-0"
-            >
-              <Send size={16} />
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Rekurzív válaszok */}
-      {comment.replies && comment.replies.length > 0 && (
-        <div className="mt-3 space-y-3">
-          {comment.replies.map((reply) => (
-            <CommentItem
-              key={reply.id}
-              comment={reply}
-              postId={postId}
-              depth={depth + 1}
-              onReply={onReply}
-              replyTo={replyTo}
-              replyText={replyText}
-              setReplyText={setReplyText}
-              setReplyTo={setReplyTo}
-              userData={userData}
-              user={user}
-              formatTime={formatTime}
-            />
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
 export default function ModernServiceFeed() {
   // ✅ ÚJ: Optimalizált feed hook használata (onSnapshot helyett)
   const { user, userData } = useAuth();
@@ -143,11 +54,6 @@ export default function ModernServiceFeed() {
   const fileInputRef = useRef(null);
   const [showReactions, setShowReactions] = useState({});
   const [hoveredReaction, setHoveredReaction] = useState({}); // Melyik emoji van hover alatt
-  const [showComments, setShowComments] = useState({});
-  const [commentText, setCommentText] = useState({});
-  const [replyTo, setReplyTo] = useState({});
-  const [replyText, setReplyText] = useState({});
-  const [pendingReactions, setPendingReactions] = useState({}); // Lokális reakció cache
   const [lightboxImage, setLightboxImage] = useState(null); // Kép modal
   const [showReactionModal, setShowReactionModal] = useState(false);
   const [selectedPostReactions, setSelectedPostReactions] = useState(null);
@@ -433,78 +339,6 @@ export default function ModernServiceFeed() {
         delete newPending[postId];
         return newPending;
       });
-    }
-  };
-
-  const handleComment = async (postId) => {
-    if (!commentText[postId]?.trim() || !user) return;
-
-    const postRef = doc(db, 'serviceFeedPosts', postId);
-    const newComment = {
-      id: Date.now().toString(),
-      userId: user.uid,
-      userName: userData?.displayName || user.displayName || 'Névtelen',
-      userPhoto: userData?.photoURL || user.photoURL,
-      text: commentText[postId].trim(),
-      createdAt: new Date().toISOString(),
-      replies: []
-    };
-
-    try {
-      await updateDoc(postRef, {
-        comments: arrayUnion(newComment)
-      });
-      setCommentText({ ...commentText, [postId]: '' });
-    } catch (error) {
-      console.error('Error adding comment:', error);
-    }
-  };
-
-  const handleReply = async (postId, commentId, parentPath = []) => {
-    if (!replyText[`${postId}-${commentId}`]?.trim() || !user) return;
-
-    const postRef = doc(db, 'serviceFeedPosts', postId);
-    const post = posts.find(p => p.id === postId);
-    let comments = [...(post.comments || [])];
-    
-    const newReply = {
-      id: Date.now().toString(),
-      userId: user.uid,
-      userName: userData?.displayName || user.displayName || 'Névtelen',
-      userPhoto: userData?.photoURL || user.photoURL,
-      text: replyText[`${postId}-${commentId}`].trim(),
-      createdAt: new Date().toISOString(),
-      replies: []
-    };
-
-    // Rekurzív függvény a megfelelő komment megtalálásához és frissítéséhez
-    const addReplyToComment = (commentsList, targetId, reply) => {
-      return commentsList.map(comment => {
-        if (comment.id === targetId) {
-          return {
-            ...comment,
-            replies: [...(comment.replies || []), reply]
-          };
-        } else if (comment.replies && comment.replies.length > 0) {
-          return {
-            ...comment,
-            replies: addReplyToComment(comment.replies, targetId, reply)
-          };
-        }
-        return comment;
-      });
-    };
-
-    const updatedComments = addReplyToComment(comments, commentId, newReply);
-
-    try {
-      await updateDoc(postRef, {
-        comments: updatedComments
-      });
-      setReplyText({ ...replyText, [`${postId}-${commentId}`]: '' });
-      setReplyTo({ ...replyTo, [`${postId}-${commentId}`]: false });
-    } catch (error) {
-      console.error('Error adding reply:', error);
     }
   };
 
@@ -926,7 +760,7 @@ export default function ModernServiceFeed() {
                 {/* Action Buttons */}
                 <div className="border-t border-gray-200 dark:border-gray-700 py-2 flex items-center justify-around px-4">
                   <button
-                    onClick={() => setShowComments({ ...showComments, [post.id]: !showComments[post.id] })}
+                    onClick={() => router.push(`/post/${post.id}`)}
                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400"
                   >
                     <MessageCircle size={16} />
@@ -942,53 +776,7 @@ export default function ModernServiceFeed() {
                   )}
                 </div>
 
-                {/* Comments Section */}
-                {showComments[post.id] && (
-                  <div className="border-t border-gray-200 dark:border-gray-700 py-3 bg-gray-50 dark:bg-gray-900/50 px-4">
-                    <div className="flex gap-2 mb-4">
-                      <img
-                        src={userData?.photoURL || user?.photoURL || '/default-avatar.svg'}
-                        alt="Your avatar"
-                        className="w-8 h-8 rounded-full object-cover"
-                      />
-                      <div className="flex-1 flex gap-2">
-                        <input
-                          type="text"
-                          value={commentText[post.id] || ''}
-                          onChange={(e) => setCommentText({ ...commentText, [post.id]: e.target.value })}
-                          onKeyPress={(e) => e.key === 'Enter' && handleComment(post.id)}
-                          placeholder="Írj egy hozzászólást..."
-                          className="flex-1 bg-gray-100 dark:bg-gray-800 rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-cyan-500 text-gray-900 dark:text-white text-sm"
-                        />
-                        <button
-                          onClick={() => handleComment(post.id)}
-                          disabled={!commentText[post.id]?.trim()}
-                          className="text-cyan-500 hover:text-cyan-600 disabled:text-gray-300 p-2"
-                        >
-                          <Send size={20} />
-                        </button>
-                      </div>
-                    </div>
-                    <div className="space-y-3">
-                      {(post.comments || []).map((comment) => (
-                        <CommentItem
-                          key={comment.id}
-                          comment={comment}
-                          postId={post.id}
-                          depth={0}
-                          onReply={handleReply}
-                          replyTo={replyTo}
-                          replyText={replyText}
-                          setReplyText={setReplyText}
-                          setReplyTo={setReplyTo}
-                          userData={userData}
-                          user={user}
-                          formatTime={formatTime}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                )}
+                {/* Comments megjelenítése eltávolítva - mostmár külön oldalon */}
               </div>
             );
           }
