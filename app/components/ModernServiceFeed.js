@@ -81,7 +81,7 @@ function CommentItem({ comment, postId, depth = 0, onReply, replyTo, replyText, 
               value={replyText[`${postId}-${comment.id}`] || ''}
               onChange={(e) => setReplyText({ ...replyText, [`${postId}-${comment.id}`]: e.target.value })}
               onKeyPress={(e) => e.key === 'Enter' && onReply(postId, comment.id)}
-              placeholder={`Válasz erre: ${comment.userName} - ${comment.text.split(' ').slice(0, 4).join(' ')}${comment.text.split(' ').length > 4 ? '...' : ''}`}
+              placeholder="Válasz"
               className="flex-1 bg-gray-100 dark:bg-gray-800 rounded-full px-4 py-1.5 focus:outline-none focus:ring-2 focus:ring-cyan-500 text-gray-900 dark:text-white text-sm min-w-0"
             />
             <button
