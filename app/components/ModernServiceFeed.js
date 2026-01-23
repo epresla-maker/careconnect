@@ -34,23 +34,11 @@ const REACTIONS = [
 // Rekurzív komment komponens
 function CommentItem({ comment, postId, depth = 0, onReply, replyTo, replyText, setReplyText, setReplyTo, userData, user, formatTime }) {
   const maxDepth = 5; // Maximum mélység
-  const leftPadding = depth * 12; // 12px per depth level
-
-  // Színes csík minden reply szinthez
-  const getBorderColor = (depth) => {
-    const colors = [
-      'border-l-cyan-500',
-      'border-l-blue-500', 
-      'border-l-purple-500',
-      'border-l-pink-500',
-      'border-l-orange-500'
-    ];
-    return colors[Math.min(depth, colors.length - 1)];
-  };
+  const leftPadding = depth > 0 ? 12 : 0; // 12px csak válaszoknál
 
   return (
     <div 
-      className={`${depth > 0 ? `border-l-4 ${getBorderColor(depth - 1)} pl-3` : ''}`}
+      className={`${depth > 0 ? 'border-l-2 border-gray-300 dark:border-gray-600 pl-3' : ''}`}
       style={{ marginLeft: `${leftPadding}px` }}
     >
       {/* Komment */}
