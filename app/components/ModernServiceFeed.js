@@ -91,22 +91,6 @@ export default function ModernServiceFeed() {
     return () => observer.disconnect();
   }, [hasMore, loadingMore, loadMore]);
 
-  // ✅ ÚJ: Pending reakciók alkalmazása a posztokra
-  const getPostWithPendingReaction = useCallback((post) => {
-    if (!user || pendingReactions[post.id] === undefined) {
-      return post;
-    }
-    
-    const reactions = { ...post.reactions };
-    if (pendingReactions[post.id] === null) {
-      delete reactions[user.uid];
-    } else {
-      reactions[user.uid] = pendingReactions[post.id];
-    }
-    
-    return { ...post, reactions };
-  }, [user, pendingReactions]);
-
   // Scroll letiltása amikor reakció picker látható
   useEffect(() => {
     const hasActiveReactions = Object.values(showReactions).some(val => val === true);
@@ -267,79 +251,7 @@ export default function ModernServiceFeed() {
     const postRef = doc(db, 'serviceFeedPosts', postId);
     const post = posts.find(p => p.id === postId);
     const reactions = post.reactions || {};
-    const userReactions = reactions[user.uid];
-    
-    // Azonnal beállítjuk a pending reakciót (social media stratégia)
-    if (userReactions === reactionType) {
-      // Töröljük a reakciót
-      setPendingReactions(prev => ({ ...prev, [postId]: null }));
-    } else {
-      // Hozzáadjuk/módosítjuk a reakciót
-      setPendingReactions(prev => ({ ...prev, [postId]: reactionType }));
-    }
-
-    try {
-      const isRemoving = userReactions === reactionType;
-      
-      if (isRemoving) {
-        // Remove reaction using deleteField
-        await updateDoc(postRef, {
-          [`reactions.${user.uid}`]: deleteField()
-        });
-      } else {
-        // Add/change reaction
-        await updateDoc(postRef, {
-          [`reactions.${user.uid}`]: reactionType
-        });
-        
-        // Facebook-style activity post létrehozása (csak ha új reakció, nem törlés)
-        // Ne hozzon létre activity-t saját poszthoz
-        if (post.userId !== user.uid) {
-          const reactionLabels = {
-            'like': 'tetszik neki',
-            'love': 'imádja',
-            'haha': 'vicces neki',
-            'wow': 'meghökkentette',
-            'sad': 'elszomorította',
-            'angry': 'feldühítette'
-          };
-          
-          await addDoc(collection(db, 'serviceFeedPosts'), {
-            postType: 'reactionActivity',
-            userId: user.uid,
-            targetPostId: postId,
-            targetUserId: post.userId,
-            reactionType: reactionType,
-            reactionLabel: reactionLabels[reactionType] || 'reagált rá',
-            originalPostText: post.text?.substring(0, 100) || '',
-            originalPostImage: post.rssImageUrl || null,
-            createdAt: serverTimestamp(),
-            reactions: {},
-            comments: [],
-            shares: 0
-          });
-        }
-      }
-      
-      // Firestore frissítés sikeres - a hook majd frissíti a listát refresh-kor
-      // 2 másodperc múlva töröljük a pending-et hogy a Firestore adat érvényesüljön
-      setTimeout(() => {
-        setPendingReactions(prev => {
-          const newPending = { ...prev };
-          delete newPending[postId];
-          return newPending;
-        });
-      }, 2000);
-      
-    } catch (error) {
-      console.error('Error updating reaction:', error);
-      // Hiba esetén azonnal töröljük a pending reakciót
-      setPendingReactions(prev => {
-        const newPending = { ...prev };
-        delete newPending[postId];
-        return newPending;
-      });
-    }
+    // Reakciók el lettek távolítva
   };
 
   const getReactionSummary = (reactions) => {
