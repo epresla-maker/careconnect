@@ -33,27 +33,23 @@ const REACTIONS = [
 
 // Rekurzív komment komponens
 function CommentItem({ comment, postId, depth = 0, onReply, replyTo, replyText, setReplyText, setReplyTo, userData, user, formatTime }) {
-  const maxDepth = 5; // Maximum mélység
-  const leftPadding = depth > 0 ? 12 : 0; // 12px csak válaszoknál
+  const maxDepth = 5;
 
   return (
-    <div 
-      className={`${depth > 0 ? 'border-l-2 border-gray-300 dark:border-gray-600 pl-3' : ''}`}
-      style={{ marginLeft: `${leftPadding}px` }}
-    >
+    <div className={`${depth > 0 ? 'ml-10 border-l-2 border-gray-300 dark:border-gray-600 pl-4' : ''}`}>
       {/* Komment */}
       <div className="flex gap-2">
         <img
           src={comment.userPhoto || '/default-avatar.svg'}
           alt="Commenter"
-          className={`${depth === 0 ? 'w-8 h-8' : 'w-7 h-7'} rounded-full object-cover flex-shrink-0`}
+          className="w-8 h-8 rounded-full object-cover flex-shrink-0"
         />
         <div className="flex-1 min-w-0">
           <div className="bg-gray-100 dark:bg-gray-800 rounded-2xl px-4 py-2">
-            <p className={`font-semibold ${depth === 0 ? 'text-sm' : 'text-xs'} text-gray-900 dark:text-white`}>
+            <p className="font-semibold text-sm text-gray-900 dark:text-white">
               {comment.userName}
             </p>
-            <p className={`${depth === 0 ? 'text-sm' : 'text-xs'} text-gray-900 dark:text-white break-words`}>
+            <p className="text-sm text-gray-900 dark:text-white break-words">
               {comment.text}
             </p>
           </div>
@@ -73,7 +69,7 @@ function CommentItem({ comment, postId, depth = 0, onReply, replyTo, replyText, 
 
       {/* Válasz Input */}
       {replyTo[`${postId}-${comment.id}`] && (
-        <div className="flex gap-2 mt-2 ml-3">
+        <div className="flex gap-2 mt-2 ml-10">
           <img
             src={userData?.photoURL || user?.photoURL || '/default-avatar.svg'}
             alt="Your avatar"
