@@ -33,13 +33,28 @@ const REACTIONS = [
 
 // Rekurzív komment komponens
 function CommentItem({ comment, postId, depth = 0, onReply, replyTo, replyText, setReplyText, setReplyTo, userData, user, formatTime }) {
-  const maxDepth = 5; // Maximum mélység a fa struktúrában
-  const leftMargin = Math.min(depth * 40, 200); // 40px per depth level
+  const maxDepth = 5; // Maximum mélység
+  const leftPadding = depth * 12; // 12px per depth level
+
+  // Színes csík minden reply szinthez
+  const getBorderColor = (depth) => {
+    const colors = [
+      'border-l-cyan-500',
+      'border-l-blue-500', 
+      'border-l-purple-500',
+      'border-l-pink-500',
+      'border-l-orange-500'
+    ];
+    return colors[Math.min(depth, colors.length - 1)];
+  };
 
   return (
-    <div className="relative">
+    <div 
+      className={`${depth > 0 ? `border-l-4 ${getBorderColor(depth - 1)} pl-3` : ''}`}
+      style={{ marginLeft: `${leftPadding}px` }}
+    >
       {/* Komment */}
-      <div className="flex gap-2" style={{ marginLeft: `${leftMargin}px` }}>
+      <div className="flex gap-2">
         <img
           src={comment.userPhoto || '/default-avatar.svg'}
           alt="Commenter"
@@ -70,7 +85,7 @@ function CommentItem({ comment, postId, depth = 0, onReply, replyTo, replyText, 
 
       {/* Válasz Input */}
       {replyTo[`${postId}-${comment.id}`] && (
-        <div className="flex gap-2 mt-2" style={{ marginLeft: `${leftMargin + 40}px` }}>
+        <div className="flex gap-2 mt-2 ml-3">
           <img
             src={userData?.photoURL || user?.photoURL || '/default-avatar.svg'}
             alt="Your avatar"
@@ -98,46 +113,23 @@ function CommentItem({ comment, postId, depth = 0, onReply, replyTo, replyText, 
 
       {/* Rekurzív válaszok */}
       {comment.replies && comment.replies.length > 0 && (
-        <div className="relative mt-3">
-          {/* Függőleges összekötő vonal a válaszok előtt */}
-          {depth > 0 && (
-            <div 
-              className="absolute top-0 bottom-0 w-0.5 bg-gray-300 dark:bg-gray-600"
-              style={{ 
-                left: `${leftMargin - 20}px`,
-                height: '100%'
-              }}
+        <div className="mt-3 space-y-3">
+          {comment.replies.map((reply) => (
+            <CommentItem
+              key={reply.id}
+              comment={reply}
+              postId={postId}
+              depth={depth + 1}
+              onReply={onReply}
+              replyTo={replyTo}
+              replyText={replyText}
+              setReplyText={setReplyText}
+              setReplyTo={setReplyTo}
+              userData={userData}
+              user={user}
+              formatTime={formatTime}
             />
-          )}
-          <div className="space-y-3">
-            {comment.replies.map((reply, index) => (
-              <div key={reply.id} className="relative">
-                {/* Vízszintes összekötő vonal az üzenethez */}
-                {depth > 0 && (
-                  <div 
-                    className="absolute w-5 h-0.5 bg-gray-300 dark:bg-gray-600"
-                    style={{ 
-                      left: `${leftMargin - 20}px`,
-                      top: '16px'
-                    }}
-                  />
-                )}
-                <CommentItem
-                  comment={reply}
-                  postId={postId}
-                  depth={depth + 1}
-                  onReply={onReply}
-                  replyTo={replyTo}
-                  replyText={replyText}
-                  setReplyText={setReplyText}
-                  setReplyTo={setReplyTo}
-                  userData={userData}
-                  user={user}
-                  formatTime={formatTime}
-                />
-              </div>
-            ))}
-          </div>
+          ))}
         </div>
       )}
     </div>
