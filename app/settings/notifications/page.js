@@ -13,6 +13,9 @@ export default function NotificationsSettingsPage() {
   const { user, userData } = useAuth();
   const { darkMode } = useTheme();
   const [saving, setSaving] = useState(false);
+  
+  const pharmaRole = userData?.pharmagisterRole;
+  
   const [settings, setSettings] = useState({
     pushEnabled: true,
     emailEnabled: true,
@@ -76,15 +79,17 @@ export default function NotificationsSettingsPage() {
       title: 'Új üzenetek',
       description: 'Értesítés új chat üzenetekről',
       color: 'text-blue-600',
-      bgColor: darkMode ? 'bg-blue-900/30' : 'bg-blue-100'
+      bgColor: darkMode ? 'bg-blue-900/30' : 'bg-blue-100',
+      showFor: ['pharmacy', 'pharmacist', 'assistant', null] // mindenki
     },
     {
       key: 'newApplication',
       icon: CheckCircle,
       title: 'Új jelentkezések',
-      description: 'Értesítés, ha valaki jelentkezik az igényedre (gyógyszertáraknak)',
+      description: 'Értesítés, ha valaki jelentkezik az igényedre',
       color: 'text-green-600',
-      bgColor: darkMode ? 'bg-green-900/30' : 'bg-green-100'
+      bgColor: darkMode ? 'bg-green-900/30' : 'bg-green-100',
+      showFor: ['pharmacy'] // csak gyógyszertáraknak
     },
     {
       key: 'applicationStatus',
@@ -92,7 +97,8 @@ export default function NotificationsSettingsPage() {
       title: 'Jelentkezés státusza',
       description: 'Értesítés, ha elfogadták vagy elutasították a jelentkezésed',
       color: 'text-orange-600',
-      bgColor: darkMode ? 'bg-orange-900/30' : 'bg-orange-100'
+      bgColor: darkMode ? 'bg-orange-900/30' : 'bg-orange-100',
+      showFor: ['pharmacist', 'assistant'] // csak helyettesítőknek
     },
     {
       key: 'newDemand',
@@ -100,7 +106,8 @@ export default function NotificationsSettingsPage() {
       title: 'Új igények',
       description: 'Értesítés új helyettesítési igényekről a környéken',
       color: 'text-purple-600',
-      bgColor: darkMode ? 'bg-purple-900/30' : 'bg-purple-100'
+      bgColor: darkMode ? 'bg-purple-900/30' : 'bg-purple-100',
+      showFor: ['pharmacist', 'assistant'] // csak helyettesítőknek
     },
     {
       key: 'reminders',
@@ -108,9 +115,10 @@ export default function NotificationsSettingsPage() {
       title: 'Emlékeztetők',
       description: 'Közelgő helyettesítések emlékeztetői',
       color: 'text-teal-600',
-      bgColor: darkMode ? 'bg-teal-900/30' : 'bg-teal-100'
+      bgColor: darkMode ? 'bg-teal-900/30' : 'bg-teal-100',
+      showFor: ['pharmacy', 'pharmacist', 'assistant', null] // mindenki
     }
-  ];
+  ].filter(item => item.showFor.includes(pharmaRole));
 
   return (
     <RouteGuard>

@@ -33,7 +33,7 @@ export default function PrivacySettingsPage() {
     shareWorkHours: true,
   });
 
-  const pharmaRole = userData?.pharmaRole;
+  const pharmaRole = userData?.pharmagisterRole;
 
   useEffect(() => {
     if (userData?.privacySettings) {
