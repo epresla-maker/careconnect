@@ -919,29 +919,9 @@ export default function ModernServiceFeed() {
                   )}
                 </div>
 
-                {/* Reaction Summary */}
-                {(reactionSummary || commentsCount + totalReplies > 0) && (
+                {/* Reaction Summary - csak hozzászólások */}
+                {(commentsCount + totalReplies > 0) && (
                   <div className="px-4 pb-1.5 flex items-center text-sm text-gray-500">
-                    <div className="flex-1 flex items-center gap-1">
-                      {reactionSummary ? (
-                        <>
-                          {Object.entries(reactionSummary).map(([type, count]) => {
-                            const reaction = REACTIONS.find(r => r.type === type);
-                            return (
-                              <span key={type} className="inline-flex items-center">
-                                {reaction?.emoji}
-                              </span>
-                            );
-                          })}
-                          <span className="ml-1">
-                            {Object.values(reactionSummary).reduce((a, b) => a + b, 0)}
-                          </span>
-                        </>
-                      ) : (
-                        <span>0</span>
-                      )}
-                    </div>
-                    <div className="w-px h-4 bg-gray-300 dark:bg-gray-600"></div>
                     <div className="flex-1 flex justify-end gap-3">
                       {commentsCount + totalReplies > 0 ? (
                         <span>{commentsCount + totalReplies} hozzászólás</span>
@@ -954,24 +934,6 @@ export default function ModernServiceFeed() {
 
                 {/* Action Buttons */}
                 <div className="border-t border-gray-200 dark:border-gray-700 py-2 flex items-center justify-around px-4">
-                  <button
-                    onClick={() => handleReaction(post.id, userReaction || 'like')}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${
-                      userReaction ? REACTIONS.find(r => r.type === userReaction)?.color : 'text-gray-600 dark:text-gray-400'
-                    }`}
-                  >
-                    {userReaction ? (
-                      <>
-                        <span className="text-xl leading-none">{REACTIONS.find(r => r.type === userReaction)?.emoji}</span>
-                        <span className="font-semibold text-sm">{REACTIONS.find(r => r.type === userReaction)?.label}</span>
-                      </>
-                    ) : (
-                      <>
-                        <Star size={16} />
-                        <span className="text-sm">Tetszik</span>
-                      </>
-                    )}
-                  </button>
                   <button
                     onClick={() => setShowComments({ ...showComments, [post.id]: !showComments[post.id] })}
                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400"
@@ -1091,56 +1053,11 @@ export default function ModernServiceFeed() {
                 )}
               </div>
 
-              {/* Reaction Summary */}
-              {(reactionSummary || commentsCount + totalReplies > 0) && (
+              {/* Hozzászólások summary */}
+              {(commentsCount + totalReplies > 0) && (
                 <div className="pb-1.5 flex items-center text-sm text-gray-500 px-3 sm:px-4">
-                  {/* Bal oldal - Reakciók */}
                   <div 
-                    className="flex-1 flex items-center gap-1 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors py-1 rounded-l"
-                    onClick={async (e) => {
-                      e.stopPropagation();
-                      if (!reactionSummary) return; // Ha nincs reakció, ne csináljunk semmit
-                      // Felhasználói adatok lekérése
-                      const reactionsData = [];
-                      for (const [userId, reactionType] of Object.entries(post.reactions || {})) {
-                        const userDoc = await getDoc(doc(db, 'users', userId));
-                        if (userDoc.exists()) {
-                          reactionsData.push({
-                            userId,
-                            reactionType,
-                            userData: userDoc.data()
-                          });
-                        }
-                      }
-                      setSelectedPostReactions(reactionsData);
-                      setShowReactionModal(true);
-                    }}
-                  >
-                    {reactionSummary ? (
-                      <>
-                        {Object.entries(reactionSummary).map(([type, count]) => {
-                          const reaction = REACTIONS.find(r => r.type === type);
-                          return (
-                            <span key={type} className="inline-flex items-center">
-                              {reaction?.emoji}
-                            </span>
-                          );
-                        })}
-                        <span className="ml-1">
-                          {Object.values(reactionSummary).reduce((a, b) => a + b, 0)}
-                        </span>
-                      </>
-                    ) : (
-                      <span>0</span>
-                    )}
-                  </div>
-                  
-                  {/* Vékony elválasztó */}
-                  <div className="w-px h-4 bg-gray-300 dark:bg-gray-600"></div>
-                  
-                  {/* Jobb oldal - Hozzászólások */}
-                  <div 
-                    className="flex-1 flex justify-end gap-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors py-1 rounded-r"
+                    className="flex-1 flex justify-end gap-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors py-1 rounded"
                     onClick={(e) => {
                       e.stopPropagation();
                       setShowComments({ ...showComments, [post.id]: !showComments[post.id] });
@@ -1151,353 +1068,18 @@ export default function ModernServiceFeed() {
                     ) : (
                       <span>Nincs még hozzászólás</span>
                     )}
-                    {post.shares > 0 && <span>{post.shares} megosztás</span>}
                   </div>
                 </div>
               )}
 
               {/* Action Buttons */}
-              <div className="border-t border-gray-200 dark:border-gray-700 py-0.5 flex items-center justify-around">
-                {/* Reaction Button */}
-                <div className="relative">
-                  <button
-                    onMouseEnter={() => {
-                      // Töröljük a korábbi timeout-ot
-                      if (reactionTimeouts.current[post.id]) {
-                        clearTimeout(reactionTimeouts.current[post.id]);
-                      }
-                      setShowReactions(prev => ({ ...prev, [post.id]: true }));
-                    }}
-                    onMouseLeave={() => {
-                      // Töröljük a korábbi timeout-ot
-                      if (reactionTimeouts.current[post.id]) {
-                        clearTimeout(reactionTimeouts.current[post.id]);
-                      }
-                      // Új timeout beállítása
-                      reactionTimeouts.current[post.id] = setTimeout(() => {
-                        setShowReactions(prev => ({ ...prev, [post.id]: false }));
-                      }, 500);
-                    }}
-                    onTouchStart={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      
-                      // Tároljuk a kezdő pozíciót
-                      const touch = e.touches[0];
-                      reactionTimeouts.current[`${post.id}_startX`] = touch.clientX;
-                      reactionTimeouts.current[`${post.id}_startY`] = touch.clientY;
-                      reactionTimeouts.current[`${post.id}_moved`] = false;
-                      reactionTimeouts.current[`${post.id}_pickerShown`] = false;
-                      
-                      // 200ms után megjelenítjük az emojikat (hosszú nyomás)
-                      reactionTimeouts.current[post.id] = setTimeout(() => {
-                        reactionTimeouts.current[`${post.id}_pickerShown`] = true;
-                        setShowReactions(prev => ({ ...prev, [post.id]: true }));
-                        setHoveredReaction(prev => ({ ...prev, [post.id]: null }));
-                      }, 200);
-                    }}
-                    onTouchMove={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      
-                      reactionTimeouts.current[`${post.id}_moved`] = true;
-                      
-                      // Ha a picker látható, keressük meg melyik emoji fölött van az ujj
-                      if (showReactions[post.id]) {
-                        const touch = e.touches[0];
-                        const positions = reactionPositions.current[post.id];
-                        const pickerRect = pickerContainerRefs.current[post.id]?.getBoundingClientRect();
-                        if (!positions || !pickerRect) return;
-                        
-                        let foundReaction = null;
-                        const emojiRadiusX = 35; // Oldalsó sugár
-                        const emojiRadiusTop = 35; // Felfélé
-                        const emojiRadiusBottom = 115; // Lefélé (1 emoji méret extra)
-                        
-                        REACTIONS.forEach(reaction => {
-                          const pos = positions[reaction.type];
-                          if (pos) {
-                            const absoluteX = pickerRect.left + pos.x;
-                            const absoluteY = pickerRect.top + pos.y;
-                            
-                            const deltaX = touch.clientX - absoluteX;
-                            const deltaY = touch.clientY - absoluteY;
-                            
-                            // Aszimmetrikus hitbox - alattuk több hely
-                            const inBoundsX = Math.abs(deltaX) <= emojiRadiusX;
-                            const inBoundsY = deltaY >= -emojiRadiusTop && deltaY <= emojiRadiusBottom;
-                            
-                            if (inBoundsX && inBoundsY) {
-                              foundReaction = reaction.type;
-                            }
-                          }
-                        });
-                        
-                        setHoveredReaction(prev => ({ ...prev, [post.id]: foundReaction }));
-                      }
-                    }}
-                    onTouchEnd={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      
-                      // Töröljük a timeout-ot
-                      if (reactionTimeouts.current[post.id]) {
-                        clearTimeout(reactionTimeouts.current[post.id]);
-                      }
-                      
-                      const pickerWasShown = reactionTimeouts.current[`${post.id}_pickerShown`];
-                      const moved = reactionTimeouts.current[`${post.id}_moved`];
-                      
-                      if (pickerWasShown && showReactions[post.id]) {
-                        // Hosszú nyomás volt, alkalmazzuk a kiválasztott reakciót
-                        const hovered = hoveredReaction[post.id];
-                        if (hovered) {
-                          handleReaction(post.id, hovered);
-                        }
-                        setShowReactions(prev => ({ ...prev, [post.id]: false }));
-                        setHoveredReaction(prev => ({ ...prev, [post.id]: null }));
-                      } else if (!pickerWasShown && !moved) {
-                        // Gyors tap volt - toggle reakció
-                        if (userReaction) {
-                          handleReaction(post.id, userReaction);
-                        } else {
-                          handleReaction(post.id, 'like');
-                        }
-                      }
-                      
-                      // Reset
-                      reactionTimeouts.current[`${post.id}_pickerShown`] = false;
-                      reactionTimeouts.current[`${post.id}_moved`] = false;
-                    }}
-                    onTouchCancel={(e) => {
-                      // Ha megszakad a touch, töröljük a timeout-ot és bezárjuk a pickert
-                      if (reactionTimeouts.current[post.id]) {
-                        clearTimeout(reactionTimeouts.current[post.id]);
-                      }
-                      setShowReactions(prev => ({ ...prev, [post.id]: false }));
-                    }}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      // Desktop-on: ha már van reakciónk, eltávolítjuk
-                      if (userReaction) {
-                        handleReaction(post.id, userReaction);
-                      } else {
-                        // Ha nincs, megjelenítjük a pickert
-                        setShowReactions(prev => ({ ...prev, [post.id]: !prev[post.id] }));
-                      }
-                    }}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors select-none ${
-                      userReaction ? REACTIONS.find(r => r.type === userReaction)?.color : 'text-gray-600 dark:text-gray-400'
-                    }`}
-                  >
-                    {userReaction ? (
-                      <>
-                        <span className="text-xl leading-none select-none">{REACTIONS.find(r => r.type === userReaction)?.emoji}</span>
-                        <span className="font-semibold text-sm select-none">{REACTIONS.find(r => r.type === userReaction)?.label}</span>
-                      </>
-                    ) : (
-                      <>
-                        <Star size={16} className="select-none" />
-                        <span className="select-none text-sm">Tetszik</span>
-                      </>
-                    )}
-                  </button>
-
-                  {/* Reaction Picker */}
-                  {showReactions[post.id] && (
-                    <>
-                      {/* Teljes képernyős overlay a touch események elkapásához */}
-                      <div 
-                        className="fixed inset-0 z-40"
-                        style={{ touchAction: 'none' }}
-                        onTouchMove={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          
-                          const touch = e.touches[0];
-                          const positions = reactionPositions.current[post.id];
-                          if (!positions) return;
-                          
-                          let foundReaction = null;
-                          const emojiRadiusX = 35;
-                          const emojiRadiusTop = 35;
-                          const emojiRadiusBottom = 115;
-                          const pickerRect = pickerContainerRefs.current[post.id]?.getBoundingClientRect();
-                          if (!pickerRect) return;
-                          
-                          REACTIONS.forEach(reaction => {
-                            const pos = positions[reaction.type];
-                            if (pos) {
-                              const absoluteX = pickerRect.left + pos.x;
-                              const absoluteY = pickerRect.top + pos.y;
-                              
-                              const deltaX = touch.clientX - absoluteX;
-                              const deltaY = touch.clientY - absoluteY;
-                              
-                              const inBoundsX = Math.abs(deltaX) <= emojiRadiusX;
-                              const inBoundsY = deltaY >= -emojiRadiusTop && deltaY <= emojiRadiusBottom;
-                              
-                              if (inBoundsX && inBoundsY) {
-                                foundReaction = reaction.type;
-                              }
-                            }
-                          });
-                          
-                          setHoveredReaction(prev => ({ ...prev, [post.id]: foundReaction }));
-                        }}
-                        onTouchEnd={(e) => {
-                          e.preventDefault();
-                          const hovered = hoveredReaction[post.id];
-                          if (hovered) {
-                            handleReaction(post.id, hovered);
-                          }
-                          setShowReactions(prev => ({ ...prev, [post.id]: false }));
-                          setHoveredReaction(prev => ({ ...prev, [post.id]: null }));
-                        }}
-                      />
-                      {/* Emoji picker */}
-                      <div 
-                        ref={(el) => { pickerContainerRefs.current[post.id] = el; }}
-                        className="absolute bottom-full left-0 mb-2 z-50"
-                        style={{ width: '320px', height: '140px', touchAction: 'none' }}
-                        onTouchMove={(e) => {
-                        // Megakadályozzuk a scroll-t és detektáljuk melyik emoji fölött van az ujj
-                        e.preventDefault();
-                        e.stopPropagation();
-                        
-                        const touch = e.touches[0];
-                        const positions = reactionPositions.current[post.id];
-                        if (!positions) return;
-                        
-                        let foundReaction = null;
-                        const emojiRadiusX = 35;
-                        const emojiRadiusTop = 35;
-                        const emojiRadiusBottom = 115;
-                        const pickerRect = pickerContainerRefs.current[post.id]?.getBoundingClientRect();
-                        if (!pickerRect) return;
-                        
-                        REACTIONS.forEach(reaction => {
-                          const pos = positions[reaction.type];
-                          if (pos) {
-                            const absoluteX = pickerRect.left + pos.x;
-                            const absoluteY = pickerRect.top + pos.y;
-                            
-                            const deltaX = touch.clientX - absoluteX;
-                            const deltaY = touch.clientY - absoluteY;
-                            
-                            const inBoundsX = Math.abs(deltaX) <= emojiRadiusX;
-                            const inBoundsY = deltaY >= -emojiRadiusTop && deltaY <= emojiRadiusBottom;
-                            
-                            if (inBoundsX && inBoundsY) {
-                              foundReaction = reaction.type;
-                            }
-                          }
-                        });
-                        
-                        setHoveredReaction(prev => ({ ...prev, [post.id]: foundReaction }));
-                      }}
-                      onTouchEnd={(e) => {
-                        // Ha a picker div-en engedjük el, alkalmazzuk a reakciót
-                        const hovered = hoveredReaction[post.id];
-                        if (hovered) {
-                          handleReaction(post.id, hovered);
-                        }
-                        setShowReactions(prev => ({ ...prev, [post.id]: false }));
-                        setHoveredReaction(prev => ({ ...prev, [post.id]: null }));
-                      }}
-                      onTouchStart={(e) => {
-                        e.stopPropagation();
-                      }}
-                      onMouseEnter={() => {
-                        // Töröljük a bezárási timeout-ot
-                        if (reactionTimeouts.current[post.id]) {
-                          clearTimeout(reactionTimeouts.current[post.id]);
-                        }
-                        setShowReactions(prev => ({ ...prev, [post.id]: true }));
-                      }}
-                      onMouseLeave={() => {
-                        // Töröljük a korábbi timeout-ot
-                        if (reactionTimeouts.current[post.id]) {
-                          clearTimeout(reactionTimeouts.current[post.id]);
-                        }
-                        // Új timeout beállítása
-                        reactionTimeouts.current[post.id] = setTimeout(() => {
-                          setShowReactions(prev => ({ ...prev, [post.id]: false }));
-                        }, 500);
-                      }}
-                    >
-                      {REACTIONS.map((reaction, index) => {
-                        // Egyenes vonal - egyenlő távolságra vízszintesen
-                        const spacing = 60; // Távolság az emojik között
-                        const yPosition = 60; // Fix magasság (körülbelül a szív magasságában)
-                        const offsetX = 20; // Fél emoji szélesség eltolás jobbra
-                        
-                        const posX = index * spacing + offsetX;
-                        const posY = yPosition;
-                        
-                        // Tároljuk a pozíciókat a hitbox detektáláshoz
-                        if (!reactionPositions.current[post.id]) {
-                          reactionPositions.current[post.id] = {};
-                        }
-                        reactionPositions.current[post.id][reaction.type] = { x: posX, y: posY };
-                        
-                        const isHovered = hoveredReaction[post.id] === reaction.type;
-                        
-                        return (
-                          <button
-                            key={reaction.type}
-                            ref={(el) => {
-                              if (!reactionRefs.current[post.id]) {
-                                reactionRefs.current[post.id] = {};
-                              }
-                              reactionRefs.current[post.id][reaction.type] = el;
-                            }}
-                            data-reaction-type={reaction.type}
-                            onTouchStart={(e) => {
-                              e.stopPropagation();
-                              setHoveredReaction(prev => ({ ...prev, [post.id]: reaction.type }));
-                            }}
-                            onTouchMove={(e) => {
-                              e.stopPropagation();
-                            }}
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              handleReaction(post.id, reaction.type);
-                              setShowReactions(prev => ({ ...prev, [post.id]: false }));
-                            }}
-                            className={`absolute transition-all duration-150 text-4xl select-none ${isHovered ? 'scale-[4]' : 'scale-100'}`}
-                            style={{
-                              left: `${posX}px`,
-                              top: `${posY}px`,
-                              pointerEvents: 'auto',
-                              touchAction: 'none',
-                              padding: '16px',
-                              margin: '-16px'
-                            }}
-                            title={reaction.label}
-                          >
-                            {reaction.emoji}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </>
-                  )}
-                </div>
-
+              <div className="border-t border-gray-200 dark:border-gray-700 py-2 flex items-center justify-center">
                 <button
                   onClick={() => setShowComments({ ...showComments, [post.id]: !showComments[post.id] })}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400 transition-colors"
                 >
                   <MessageCircle size={16} />
                   <span className="text-sm">Hozzászólás</span>
-                </button>
-
-                <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400 transition-colors">
-                  <Share2 size={16} />
-                  <span className="text-sm">Megosztás</span>
                 </button>
               </div>
 
