@@ -7,13 +7,14 @@ import { db } from '@/lib/firebase';
 import { useAuth } from '@/context/AuthContext';
 import { ArrowLeft, MessageCircle, Send, MoreHorizontal, Calendar, Clock, MapPin, Briefcase, User } from 'lucide-react';
 
-function CommentItem({ comment, postId, depth = 0, onReply, replyTo, replyText, setReplyText, setReplyTo, userData, user, formatTime }) {
+function CommentItem({ comment, postId, depth = 0, onReply, replyingTo, setReplyingTo, userData, user, formatTime }) {
   const maxDepth = 5;
+  const isHighlighted = replyingTo?.commentId === comment.id;
 
   return (
     <div className={`${depth > 0 ? 'ml-10 border-l-2 border-gray-300 dark:border-gray-600 pl-4' : ''}`}>
       {/* Komment */}
-      <div className="flex gap-2">
+      <div className={`flex gap-2 p-2 rounded-lg transition-colors ${isHighlighted ? 'bg-gray-200 dark:bg-gray-700' : ''}`}>
         <img
           src={comment.userPhoto || '/default-avatar.svg'}
           alt="Commenter"
@@ -32,7 +33,7 @@ function CommentItem({ comment, postId, depth = 0, onReply, replyTo, replyText, 
             <span>{formatTime(comment.createdAt)}</span>
             {depth < maxDepth && (
               <button 
-                onClick={() => setReplyTo({ ...replyTo, [`${postId}-${comment.id}`]: !replyTo[`${postId}-${comment.id}`] })}
+                onClick={() => setReplyingTo({ commentId: comment.id, userName: comment.userName })}
                 className="hover:underline font-semibold text-cyan-600 dark:text-cyan-400"
               >
                 Válasz
@@ -41,34 +42,6 @@ function CommentItem({ comment, postId, depth = 0, onReply, replyTo, replyText, 
           </div>
         </div>
       </div>
-
-      {/* Válasz Input */}
-      {replyTo[`${postId}-${comment.id}`] && (
-        <div className="flex gap-2 mt-2 ml-10">
-          <img
-            src={userData?.photoURL || user?.photoURL || '/default-avatar.svg'}
-            alt="Your avatar"
-            className="w-7 h-7 rounded-full object-cover flex-shrink-0"
-          />
-          <div className="flex-1 flex gap-2 min-w-0">
-            <input
-              type="text"
-              value={replyText[`${postId}-${comment.id}`] || ''}
-              onChange={(e) => setReplyText({ ...replyText, [`${postId}-${comment.id}`]: e.target.value })}
-              onKeyPress={(e) => e.key === 'Enter' && onReply(postId, comment.id)}
-              placeholder="Válasz"
-              className="flex-1 bg-gray-100 dark:bg-gray-800 rounded-full px-4 py-1.5 focus:outline-none focus:ring-2 focus:ring-cyan-500 text-gray-900 dark:text-white text-sm min-w-0"
-            />
-            <button
-              onClick={() => onReply(postId, comment.id)}
-              disabled={!replyText[`${postId}-${comment.id}`]?.trim()}
-              className="text-cyan-500 hover:text-cyan-600 disabled:text-gray-300 disabled:cursor-not-allowed p-1 flex-shrink-0"
-            >
-              <Send size={16} />
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* Rekurzív válaszok */}
       {comment.replies && comment.replies.length > 0 && (
@@ -80,10 +53,8 @@ function CommentItem({ comment, postId, depth = 0, onReply, replyTo, replyText, 
               postId={postId}
               depth={depth + 1}
               onReply={onReply}
-              replyTo={replyTo}
-              replyText={replyText}
-              setReplyText={setReplyText}
-              setReplyTo={setReplyTo}
+              replyingTo={replyingTo}
+              setReplyingTo={setReplyingTo}
               userData={userData}
               user={user}
               formatTime={formatTime}
@@ -102,6 +73,7 @@ export default function PostDetailPage() {
   const [post, setPost] = useState(null);
   const [loading, setLoading] = useState(true);
   const [commentText, setCommentText] = useState('');
+  const [replyingTo, setReplyingTo] = useState(null); // { commentId, userName }
   const [replyTo, setReplyTo] = useState({});
   const [replyText, setReplyText] = useState({});
 
@@ -170,13 +142,12 @@ export default function PostDetailPage() {
   };
 
   const handleReply = async (postId, parentCommentId) => {
-    const replyKey = `${postId}-${parentCommentId}`;
-    if (!replyText[replyKey]?.trim() || !user) return;
+    if (!commentText.trim() || !user) return;
 
     try {
       const newReply = {
         id: Date.now().toString(),
-        text: replyText[replyKey],
+        text: commentText,
         userId: user.uid,
         userName: userData?.displayName || 'Névtelen',
         userPhoto: userData?.photoURL || user.photoURL || '',
@@ -210,10 +181,19 @@ export default function PostDetailPage() {
       });
 
       setPost(prev => ({ ...prev, comments: updatedComments }));
-      setReplyText({ ...replyText, [replyKey]: '' });
-      setReplyTo({ ...replyTo, [replyKey]: false });
+      setCommentText('');
+      setReplyingTo(null);
     } catch (error) {
       console.error('Error adding reply:', error);
+    }
+  };
+
+  // Unified submit handler
+  const handleSubmit = () => {
+    if (replyingTo) {
+      handleReply(post.id, replyingTo.commentId);
+    } else {
+      handleComment();
     }
   };
 
@@ -412,33 +392,7 @@ export default function PostDetailPage() {
         </div>
 
         {/* Comments Section */}
-        <div className="bg-white dark:bg-gray-800 py-4 px-4">
-          {/* Comment Input */}
-          <div className="flex gap-2 mb-6">
-            <img
-              src={userData?.photoURL || user?.photoURL || '/default-avatar.svg'}
-              alt="Your avatar"
-              className="w-8 h-8 rounded-full object-cover"
-            />
-            <div className="flex-1 flex gap-2">
-              <input
-                type="text"
-                value={commentText}
-                onChange={(e) => setCommentText(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleComment()}
-                placeholder="Írj egy hozzászólást..."
-                className="flex-1 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-cyan-500 text-gray-900 dark:text-white text-sm"
-              />
-              <button
-                onClick={handleComment}
-                disabled={!commentText.trim()}
-                className="text-cyan-500 hover:text-cyan-600 disabled:text-gray-300 p-2"
-              >
-                <Send size={20} />
-              </button>
-            </div>
-          </div>
-
+        <div className="bg-white dark:bg-gray-800 py-4 px-4 pb-32">
           {/* Comments List */}
           <div className="space-y-4">
             {(post.comments || []).map((comment) => (
@@ -448,10 +402,8 @@ export default function PostDetailPage() {
                 postId={post.id}
                 depth={0}
                 onReply={handleReply}
-                replyTo={replyTo}
-                replyText={replyText}
-                setReplyText={setReplyText}
-                setReplyTo={setReplyTo}
+                replyingTo={replyingTo}
+                setReplyingTo={setReplyingTo}
                 userData={userData}
                 user={user}
                 formatTime={formatTime}
@@ -465,6 +417,50 @@ export default function PostDetailPage() {
               <p>Még nincs hozzászólás</p>
             </div>
           )}
+        </div>
+      </div>
+
+      {/* Fixed Bottom Comment Input */}
+      <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 safe-area-pb">
+        {/* Reply indicator */}
+        {replyingTo && (
+          <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+            <span className="text-sm text-gray-600 dark:text-gray-400">
+              Válasz <span className="font-semibold text-gray-900 dark:text-white">{replyingTo.userName}</span> számára
+            </span>
+            <button 
+              onClick={() => setReplyingTo(null)}
+              className="text-sm text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+            >
+              Mégsem
+            </button>
+          </div>
+        )}
+        
+        {/* Input area */}
+        <div className="px-4 py-3 flex items-center gap-3">
+          <img
+            src={userData?.photoURL || user?.photoURL || '/default-avatar.svg'}
+            alt="Your avatar"
+            className="w-8 h-8 rounded-full object-cover flex-shrink-0"
+          />
+          <div className="flex-1 flex items-center gap-2 bg-gray-100 dark:bg-gray-700 rounded-full px-4 py-2">
+            <input
+              type="text"
+              value={commentText}
+              onChange={(e) => setCommentText(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && handleSubmit()}
+              placeholder={replyingTo ? `${replyingTo.userName}` : "Írj egy hozzászólást..."}
+              className="flex-1 bg-transparent focus:outline-none text-gray-900 dark:text-white text-sm"
+            />
+          </div>
+          <button
+            onClick={handleSubmit}
+            disabled={!commentText.trim()}
+            className="text-cyan-500 hover:text-cyan-600 disabled:text-gray-300 p-2"
+          >
+            <Send size={22} />
+          </button>
         </div>
       </div>
     </div>
