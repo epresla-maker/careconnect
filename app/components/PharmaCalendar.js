@@ -19,7 +19,7 @@ export default function PharmaCalendar({ pharmaRole }) {
   // Load demands
   useEffect(() => {
     loadDemands();
-  }, [currentDate, user]);
+  }, [user]);
 
   const loadDemands = async () => {
     if (!user || !pharmaRole) {
