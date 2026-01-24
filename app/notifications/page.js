@@ -30,31 +30,45 @@ export default function NotificationsPage() {
       );
       
       const snapshot = await getDocs(q);
+      console.log(`📧 Betöltött értesítések száma: ${snapshot.size}`);
+      
       const notificationsData = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data(),
         createdAt: doc.data().createdAt?.toDate()
       }));
-      setNotifications(notificationsData);
-
+      
+      console.log('📧 Értesítések:', notificationsData);
+      
       // Jelöljük meg az olvasatlanokat olvasottnak
       const unreadNotifications = notificationsData.filter(n => !n.read);
+      console.log(`📧 Olvasatlan értesítések: ${unreadNotifications.length}`);
+      
       for (const notification of unreadNotifications) {
         await updateDoc(doc(db, 'notifications', notification.id), { read: true });
       }
+      
+      // Frissítjük a lokális state-et is az olvasott státusszal
+      const updatedNotifications = notificationsData.map(n => ({
+        ...n,
+        read: true
+      }));
+      setNotifications(updatedNotifications);
     } catch (error) {
-      console.error('Error loading notifications:', error);
+      console.error('❌ Error loading notifications:', error);
     } finally {
       setLoading(false);
     }
   };
 
   const deleteNotification = async (notificationId) => {
+    console.log(`🗑️ Törlés kérés: ${notificationId}`);
     try {
       await deleteDoc(doc(db, 'notifications', notificationId));
       setNotifications(notifications.filter(n => n.id !== notificationId));
+      console.log(`✅ Törölve: ${notificationId}`);
     } catch (error) {
-      console.error('Error deleting notification:', error);
+      console.error('❌ Error deleting notification:', error);
     }
   };
 
