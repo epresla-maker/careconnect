@@ -99,53 +99,83 @@ export default function AdminPage() {
           ) : users.length === 0 ? (
             <div className="text-center py-8 text-gray-500">Még nincsenek felhasználók</div>
           ) : (
-            <div className="overflow-x-auto -mx-3 sm:mx-0">
-              <table className="w-full min-w-max">
-                <thead>
-                  <tr className="border-b">
-                    <th className="text-left py-2 px-2 sm:py-3 sm:px-4 text-xs sm:text-sm">Email</th>
-                    <th className="text-left py-2 px-2 sm:py-3 sm:px-4 text-xs sm:text-sm">Szerep</th>
-                    <th className="text-left py-2 px-2 sm:py-3 sm:px-4 text-xs sm:text-sm">Profil</th>
-                    <th className="text-left py-2 px-2 sm:py-3 sm:px-4 text-xs sm:text-sm hidden sm:table-cell">Reg.</th>
-                    <th className="text-left py-2 px-2 sm:py-3 sm:px-4 text-xs sm:text-sm">Műv.</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {users.map(user => (
-                    <tr key={user.id} className="border-b hover:bg-gray-50">
-                      <td className="py-2 px-2 sm:py-3 sm:px-4 text-xs sm:text-sm break-all">{user.email}</td>
-                      <td className="py-2 px-2 sm:py-3 sm:px-4">
-                        {user.pharmagisterRole ? (
-                          <span className="bg-purple-100 text-purple-800 px-1 py-0.5 sm:px-2 sm:py-1 rounded text-[10px] sm:text-xs">
-                            {user.pharmagisterRole}
-                          </span>
-                        ) : (
-                          <span className="text-gray-400 text-xs">-</span>
-                        )}
-                      </td>
-                      <td className="py-2 px-2 sm:py-3 sm:px-4 text-xs sm:text-sm">
-                        {user.pharmaProfileComplete ? (
-                          <span className="text-green-600">✓</span>
-                        ) : (
-                          <span className="text-orange-600">⚠</span>
-                        )}
-                      </td>
-                      <td className="py-2 px-2 sm:py-3 sm:px-4 text-[10px] sm:text-sm text-gray-600 hidden sm:table-cell">
-                        {user.createdAt ? new Date(user.createdAt).toLocaleDateString('hu-HU') : '-'}
-                      </td>
-                      <td className="py-2 px-2 sm:py-3 sm:px-4">
-                        <button
-                          onClick={() => deleteUser(user.id)}
-                          className="text-red-600 hover:text-red-800 text-[10px] sm:text-xs"
-                        >
-                          🗑
-                        </button>
-                      </td>
+            <>
+              {/* Mobil nézet - Kártyák */}
+              <div className="sm:hidden space-y-3">
+                {users.map(user => (
+                  <div key={user.id} className="bg-gray-50 rounded-lg p-3 border">
+                    <div className="flex justify-between items-start mb-2">
+                      <div className="text-xs font-medium break-all pr-2">{user.email}</div>
+                      <button
+                        onClick={() => deleteUser(user.id)}
+                        className="text-red-600 hover:text-red-800 text-lg flex-shrink-0"
+                      >
+                        🗑
+                      </button>
+                    </div>
+                    <div className="flex gap-2 flex-wrap">
+                      {user.pharmagisterRole && (
+                        <span className="bg-purple-100 text-purple-800 px-2 py-0.5 rounded text-xs">
+                          {user.pharmagisterRole}
+                        </span>
+                      )}
+                      <span className={user.pharmaProfileComplete ? "text-green-600 text-xs" : "text-orange-600 text-xs"}>
+                        {user.pharmaProfileComplete ? "✓ Kész" : "⚠ Hiányos"}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Desktop nézet - Táblázat */}
+              <div className="hidden sm:block overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="text-left py-3 px-4 text-sm">Email</th>
+                      <th className="text-left py-3 px-4 text-sm">Szerep</th>
+                      <th className="text-left py-3 px-4 text-sm">Profil</th>
+                      <th className="text-left py-3 px-4 text-sm">Regisztráció</th>
+                      <th className="text-left py-3 px-4 text-sm">Műveletek</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {users.map(user => (
+                      <tr key={user.id} className="border-b hover:bg-gray-50">
+                        <td className="py-3 px-4 text-sm">{user.email}</td>
+                        <td className="py-3 px-4">
+                          {user.pharmagisterRole ? (
+                            <span className="bg-purple-100 text-purple-800 px-2 py-1 rounded text-xs">
+                              {user.pharmagisterRole}
+                            </span>
+                          ) : (
+                            <span className="text-gray-400 text-xs">-</span>
+                          )}
+                        </td>
+                        <td className="py-3 px-4 text-sm">
+                          {user.pharmaProfileComplete ? (
+                            <span className="text-green-600">✓ Kész</span>
+                          ) : (
+                            <span className="text-orange-600">⚠ Hiányos</span>
+                          )}
+                        </td>
+                        <td className="py-3 px-4 text-sm text-gray-600">
+                          {user.createdAt ? new Date(user.createdAt).toLocaleDateString('hu-HU') : '-'}
+                        </td>
+                        <td className="py-3 px-4">
+                          <button
+                            onClick={() => deleteUser(user.id)}
+                            className="text-red-600 hover:text-red-800 text-sm"
+                          >
+                            Törlés
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
           )}
         </div>
       </div>
