@@ -255,19 +255,6 @@ function PharmagisterContent() {
                 </div>
               )}
 
-              {/* Profil szerkesztés gomb */}
-              <div className="flex justify-end">
-                <button
-                  onClick={() => router.push('/pharmagister/setup?edit=true')}
-                  className={`flex items-center gap-2 px-4 py-2 ${darkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'} rounded-lg transition-colors text-sm`}
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                  </svg>
-                  Profil szerkesztése
-                </button>
-              </div>
-
               {activeTab === 'calendar' && (
                 <div className={`${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-[#E5E7EB]'} border rounded-xl p-6`}>
                   <CalendarTab pharmaRole={pharmaRole} />

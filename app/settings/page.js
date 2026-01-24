@@ -56,8 +56,8 @@ export default function SettingsPage() {
       items: [
         {
           icon: User,
-          label: 'Pharmagister profil',
-          onClick: () => router.push('/pharmagister/setup'),
+          label: 'Profil szerkesztése',
+          onClick: () => router.push('/pharmagister/setup?edit=true'),
           color: 'text-purple-600',
           bgColor: darkMode ? 'bg-purple-900/30' : 'bg-purple-100'
         }
