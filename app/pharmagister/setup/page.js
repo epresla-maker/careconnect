@@ -477,13 +477,15 @@ function PharmagisterSetupContent() {
                       onChange={(e) => setFormData({ ...formData, nkkNumber: e.target.value })}
                       className={`w-full px-4 py-3 border-2 rounded-lg focus:outline-none focus:ring-2 ${
                         userData?.pharmaApproved === true
-                          ? 'border-green-500 bg-green-50 text-green-900 focus:ring-green-500'
+                          ? 'border-green-500 bg-green-50 text-green-900 focus:ring-green-500 cursor-not-allowed'
                           : userData?.pharmaApproved === false
                           ? 'border-red-500 bg-red-50 text-red-900 focus:ring-red-500'
                           : 'border-orange-500 bg-orange-50 text-orange-900 focus:ring-orange-500'
                       }`}
                       placeholder="12345-6/7890/2024"
                       required
+                      readOnly={userData?.pharmaApproved === true}
+                      disabled={userData?.pharmaApproved === true}
                     />
                     <div className={`mt-2 p-3 border rounded-lg ${
                       userData?.pharmaApproved === true
@@ -627,13 +629,15 @@ function PharmagisterSetupContent() {
                       onChange={(e) => setFormData({ ...formData, nkkNumber: e.target.value })}
                       className={`w-full px-4 py-3 border-2 rounded-lg focus:outline-none focus:ring-2 ${
                         userData?.pharmaApproved === true
-                          ? 'border-green-500 bg-green-50 text-green-900 focus:ring-green-500'
+                          ? 'border-green-500 bg-green-50 text-green-900 focus:ring-green-500 cursor-not-allowed'
                           : userData?.pharmaApproved === false
                           ? 'border-red-500 bg-red-50 text-red-900 focus:ring-red-500'
                           : 'border-orange-500 bg-orange-50 text-orange-900 focus:ring-orange-500'
                       }`}
                       placeholder="12345-6/7890/2024"
                       required
+                      readOnly={userData?.pharmaApproved === true}
+                      disabled={userData?.pharmaApproved === true}
                     />
                     <div className={`mt-2 p-3 border rounded-lg ${
                       userData?.pharmaApproved === true
