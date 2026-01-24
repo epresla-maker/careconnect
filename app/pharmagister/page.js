@@ -4,6 +4,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useTheme } from '@/context/ThemeContext';
 import { useRouter, useSearchParams } from 'next/navigation';
 import RouteGuard from '@/app/components/RouteGuard';
+import PharmaNavbar from '@/app/components/PharmaNavbar';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
@@ -258,6 +259,9 @@ function PharmagisterContent() {
           )}
         </div>
       </div>
+      
+      {/* Pharma Navbar - csak ha van szerepkör */}
+      {pharmaRole && <PharmaNavbar />}
     </RouteGuard>
   );
 }
