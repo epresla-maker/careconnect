@@ -475,14 +475,36 @@ function PharmagisterSetupContent() {
                       type="text"
                       value={formData.nkkNumber}
                       onChange={(e) => setFormData({ ...formData, nkkNumber: e.target.value })}
-                      className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                      className={`w-full px-4 py-3 border-2 rounded-lg focus:outline-none focus:ring-2 ${
+                        userData?.pharmaApproved === true
+                          ? 'border-green-500 bg-green-50 text-green-900 focus:ring-green-500'
+                          : userData?.pharmaApproved === false
+                          ? 'border-red-500 bg-red-50 text-red-900 focus:ring-red-500'
+                          : 'border-orange-500 bg-orange-50 text-orange-900 focus:ring-orange-500'
+                      }`}
                       placeholder="12345-6/7890/2024"
                       required
                     />
-                    <div className="mt-2 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                      <p className="text-xs text-yellow-800">
-                        ⚠️ <strong>Fontos:</strong> Az NNK szám ellenőrzése után admin jóváhagyás szükséges. 
-                        Addig nem tudsz igényt feladni vagy jelentkezni.
+                    <div className={`mt-2 p-3 border rounded-lg ${
+                      userData?.pharmaApproved === true
+                        ? 'bg-green-50 border-green-200'
+                        : userData?.pharmaApproved === false
+                        ? 'bg-red-50 border-red-200'
+                        : 'bg-yellow-50 border-yellow-200'
+                    }`}>
+                      <p className={`text-xs ${
+                        userData?.pharmaApproved === true
+                          ? 'text-green-800'
+                          : userData?.pharmaApproved === false
+                          ? 'text-red-800'
+                          : 'text-yellow-800'
+                      }`}>
+                        {userData?.pharmaApproved === true
+                          ? '✅ Jóváhagyva! Az NNK számod ellenőrizve és megerősítve.'
+                          : userData?.pharmaApproved === false
+                          ? '❌ Elutasítva. Kérlek, javítsd az adatokat és próbáld újra!'
+                          : '⚠️ Fontos: Az NNK szám ellenőrzése után admin jóváhagyás szükséges. Addig nem tudsz igényt feladni vagy jelentkezni.'
+                        }
                       </p>
                     </div>
                   </div>
@@ -603,14 +625,36 @@ function PharmagisterSetupContent() {
                       type="text"
                       value={formData.nkkNumber}
                       onChange={(e) => setFormData({ ...formData, nkkNumber: e.target.value })}
-                      className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                      className={`w-full px-4 py-3 border-2 rounded-lg focus:outline-none focus:ring-2 ${
+                        userData?.pharmaApproved === true
+                          ? 'border-green-500 bg-green-50 text-green-900 focus:ring-green-500'
+                          : userData?.pharmaApproved === false
+                          ? 'border-red-500 bg-red-50 text-red-900 focus:ring-red-500'
+                          : 'border-orange-500 bg-orange-50 text-orange-900 focus:ring-orange-500'
+                      }`}
                       placeholder="12345-6/7890/2024"
                       required
                     />
-                    <div className="mt-2 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                      <p className="text-xs text-yellow-800">
-                        ⚠️ <strong>Fontos:</strong> Az NNK szám ellenőrzése után admin jóváhagyás szükséges. 
-                        Addig nem tudsz igényre jelentkezni.
+                    <div className={`mt-2 p-3 border rounded-lg ${
+                      userData?.pharmaApproved === true
+                        ? 'bg-green-50 border-green-200'
+                        : userData?.pharmaApproved === false
+                        ? 'bg-red-50 border-red-200'
+                        : 'bg-yellow-50 border-yellow-200'
+                    }`}>
+                      <p className={`text-xs ${
+                        userData?.pharmaApproved === true
+                          ? 'text-green-800'
+                          : userData?.pharmaApproved === false
+                          ? 'text-red-800'
+                          : 'text-yellow-800'
+                      }`}>
+                        {userData?.pharmaApproved === true
+                          ? '✅ Jóváhagyva! Az NNK számod ellenőrizve és megerősítve.'
+                          : userData?.pharmaApproved === false
+                          ? '❌ Elutasítva. Kérlek, javítsd az adatokat és próbáld újra!'
+                          : '⚠️ Fontos: Az NNK szám ellenőrzése után admin jóváhagyás szükséges. Addig nem tudsz igényre jelentkezni.'
+                        }
                       </p>
                     </div>
                   </div>
