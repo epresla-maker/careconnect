@@ -51,19 +51,29 @@ export default function ProfileEditPage() {
     try {
       const formDataUpload = new FormData();
       formDataUpload.append('file', file);
-      formDataUpload.append('upload_preset', 'careconnect_unsigned');
+      formDataUpload.append('upload_preset', 'careconnect_profiles');
+      formDataUpload.append('folder', 'profiles');
+
+      const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
+      if (!cloudName) {
+        throw new Error('Cloudinary nincs konfigurálva');
+      }
 
       const response = await fetch(
-        `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload`,
+        `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
         {
           method: 'POST',
           body: formDataUpload,
         }
       );
 
-      if (!response.ok) throw new Error('Upload failed');
-
       const data = await response.json();
+      
+      if (!response.ok) {
+        console.error('Cloudinary error:', data);
+        throw new Error(data.error?.message || 'Upload failed');
+      }
+
       const imageUrl = data.secure_url;
 
       await updateDoc(doc(db, 'users', user.uid), {
@@ -71,9 +81,10 @@ export default function ProfileEditPage() {
       });
 
       alert('✅ Profilkép sikeresen frissítve!');
+      window.location.reload();
     } catch (error) {
       console.error('Error uploading photo:', error);
-      alert('Hiba történt a kép feltöltése során.');
+      alert(`Hiba történt a kép feltöltése során: ${error.message}`);
     } finally {
       setUploadingPhoto(false);
     }
@@ -84,6 +95,7 @@ export default function ProfileEditPage() {
     try {
       await updateDoc(doc(db, 'users', user.uid), {
         displayName: formData.displayName,
+        email: formData.email || null,
         phone: formData.phone || null,
         bio: formData.bio || null,
       });
@@ -182,7 +194,7 @@ export default function ProfileEditPage() {
               />
             </div>
 
-            {/* Email (read-only) */}
+            {/* Email */}
             <div>
               <label className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-[#374151]'} mb-1`}>
                 E-mail cím
@@ -190,16 +202,14 @@ export default function ProfileEditPage() {
               <input
                 type="email"
                 value={formData.email}
-                disabled
-                className={`w-full px-4 py-3 rounded-xl border ${
+                onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                className={`w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-[#6B46C1] focus:border-[#6B46C1] ${
                   darkMode 
-                    ? 'bg-gray-700 border-gray-600 text-gray-400' 
-                    : 'bg-gray-100 border-[#E5E7EB] text-gray-500'
-                } cursor-not-allowed`}
+                    ? 'bg-gray-800 border-gray-600 text-white placeholder-gray-400' 
+                    : 'bg-white border-[#E5E7EB] text-[#111827]'
+                }`}
+                placeholder="email@example.com"
               />
-              <p className={`text-xs ${darkMode ? 'text-gray-500' : 'text-[#6B7280]'} mt-1`}>
-                Az e-mail cím nem módosítható
-              </p>
             </div>
 
             {/* Phone */}

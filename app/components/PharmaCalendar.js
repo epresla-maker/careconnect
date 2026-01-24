@@ -41,11 +41,10 @@ export default function PharmaCalendar({ pharmaRole }) {
           orderBy('date', 'asc')
         );
       } else {
-        // Helyettesítő: nyitott igények a pozíciójának megfelelően
+        // Helyettesítő: MINDEN nyitott igényt lát (gyógyszerész és asszisztens is)
         q = query(
           demandsRef,
           where('status', '==', 'open'),
-          where('position', '==', pharmaRole),
           orderBy('date', 'asc')
         );
       }
@@ -208,6 +207,7 @@ export default function PharmaCalendar({ pharmaRole }) {
                 const dateDemands = getDemandsForDate(day.date);
                 const isToday = day.date.toDateString() === today;
                 const isPast = day.date < new Date(new Date().setHours(0, 0, 0, 0));
+                const hasDemands = dateDemands.length > 0;
 
                 return (
                   <div
@@ -216,13 +216,17 @@ export default function PharmaCalendar({ pharmaRole }) {
                     className={`min-h-[100px] p-2 border-r border-b ${darkMode ? 'border-gray-700' : 'border-[#E5E7EB]'} ${
                       !day.isCurrentMonth 
                         ? darkMode ? 'bg-gray-900' : 'bg-[#F9FAFB]' 
-                        : darkMode ? 'bg-gray-800' : 'bg-white'
+                        : hasDemands && !isPast
+                          ? darkMode ? 'bg-purple-900/30' : 'bg-purple-50'
+                          : darkMode ? 'bg-gray-800' : 'bg-white'
                     } ${
                       !isPast && day.isCurrentMonth 
                         ? darkMode ? 'cursor-pointer hover:bg-gray-700' : 'cursor-pointer hover:bg-[#F3F4F6]' 
                         : ''
                     } ${
                       isPast ? 'opacity-40 cursor-not-allowed' : ''
+                    } ${
+                      hasDemands && !isPast ? 'ring-2 ring-inset ring-purple-400' : ''
                     } transition-all duration-200`}
                   >
                     <div className={`text-sm font-bold mb-1 ${
@@ -240,15 +244,13 @@ export default function PharmaCalendar({ pharmaRole }) {
                         {dateDemands.slice(0, 2).map(demand => (
                           <div
                             key={demand.id}
-                            className={`text-xs px-2 py-1 rounded-lg font-medium ${
-                              demand.status === 'open' 
-                                ? darkMode ? 'bg-green-900/50 text-green-400 border border-green-700' : 'bg-green-50 text-green-700 border border-green-200' 
-                                : demand.status === 'filled' 
-                                  ? darkMode ? 'bg-blue-900/50 text-blue-400 border border-blue-700' : 'bg-blue-50 text-blue-700 border border-blue-200'
-                                  : darkMode ? 'bg-gray-700 text-gray-400 border border-gray-600' : 'bg-gray-100 text-gray-600 border border-gray-200'
-                            } truncate`}
+                            className={`text-xs px-2 py-1 rounded-lg font-medium truncate ${
+                              demand.position === 'pharmacist'
+                                ? darkMode ? 'bg-blue-900/50 text-blue-400 border border-blue-700' : 'bg-blue-100 text-blue-700 border border-blue-300'
+                                : darkMode ? 'bg-green-900/50 text-green-400 border border-green-700' : 'bg-green-100 text-green-700 border border-green-300'
+                            }`}
                           >
-                            {demand.position === 'pharmacist' ? '👨‍⚕️' : '🧑‍⚕️'} {demand.pharmacyName || 'Igény'}
+                            {demand.position === 'pharmacist' ? '💊' : '🩺'} {demand.pharmacyName || 'Igény'}
                           </div>
                         ))}
                         {dateDemands.length > 2 && (
@@ -265,18 +267,18 @@ export default function PharmaCalendar({ pharmaRole }) {
           </div>
 
           {/* Legend */}
-          <div className="mt-6 flex items-center gap-6 text-sm">
+          <div className="mt-6 flex flex-wrap items-center gap-4 text-sm">
             <div className="flex items-center gap-2">
-              <div className={`w-4 h-4 ${darkMode ? 'bg-green-900/50 border-green-700' : 'bg-green-50 border-green-200'} border-2 rounded`}></div>
-              <span className={`${darkMode ? 'text-white' : 'text-[#111827]'} font-medium`}>Nyitott</span>
+              <div className={`w-4 h-4 ${darkMode ? 'bg-blue-900/50 border-blue-700' : 'bg-blue-100 border-blue-300'} border-2 rounded`}></div>
+              <span className={`${darkMode ? 'text-white' : 'text-[#111827]'} font-medium`}>💊 Gyógyszerész</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className={`w-4 h-4 ${darkMode ? 'bg-blue-900/50 border-blue-700' : 'bg-blue-50 border-blue-200'} border-2 rounded`}></div>
-              <span className={`${darkMode ? 'text-white' : 'text-[#111827]'} font-medium`}>Betöltve</span>
+              <div className={`w-4 h-4 ${darkMode ? 'bg-green-900/50 border-green-700' : 'bg-green-100 border-green-300'} border-2 rounded`}></div>
+              <span className={`${darkMode ? 'text-white' : 'text-[#111827]'} font-medium`}>🩺 Asszisztens</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className={`w-4 h-4 ${darkMode ? 'bg-gray-700 border-gray-600' : 'bg-gray-100 border-gray-200'} border-2 rounded`}></div>
-              <span className={`${darkMode ? 'text-white' : 'text-[#111827]'} font-medium`}>Törölve</span>
+              <div className={`w-4 h-4 ${darkMode ? 'bg-purple-900/30 ring-2 ring-purple-400' : 'bg-purple-50 ring-2 ring-purple-400'} rounded`}></div>
+              <span className={`${darkMode ? 'text-white' : 'text-[#111827]'} font-medium`}>Igényes nap</span>
             </div>
           </div>
         </>
@@ -340,11 +342,9 @@ function DateModal({ date, demands, pharmaRole, darkMode, onClose, onDemandDelet
                                 {demand.position === 'pharmacist' ? 'Gyógyszerész' : 'Szakasszisztens'}
                               </span>
                               <span className={`px-3 py-1 rounded-lg text-xs font-medium ${
-                                demand.status === 'open' 
-                                  ? darkMode ? 'bg-green-900/50 text-green-400 border border-green-700' : 'bg-green-50 text-green-700 border border-green-200' 
-                                  : demand.status === 'filled' 
-                                    ? darkMode ? 'bg-blue-900/50 text-blue-400 border border-blue-700' : 'bg-blue-50 text-blue-700 border border-blue-200'
-                                    : darkMode ? 'bg-gray-700 text-gray-400 border border-gray-600' : 'bg-gray-100 text-gray-600 border border-gray-200'
+                                demand.position === 'pharmacist'
+                                  ? darkMode ? 'bg-blue-900/50 text-blue-400 border border-blue-700' : 'bg-blue-100 text-blue-700 border border-blue-300'
+                                  : darkMode ? 'bg-green-900/50 text-green-400 border border-green-700' : 'bg-green-100 text-green-700 border border-green-300'
                               }`}>
                                 {demand.status === 'open' ? 'Nyitott' :
                                  demand.status === 'filled' ? 'Betöltve' : 'Törölve'}
