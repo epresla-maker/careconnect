@@ -279,10 +279,6 @@ export default function PharmaCalendar({ pharmaRole }) {
               <div className={`w-4 h-4 ${darkMode ? 'bg-green-900/50 border-green-700' : 'bg-green-100 border-green-300'} border-2 rounded`}></div>
               <span className={`${darkMode ? 'text-white' : 'text-[#111827]'} font-medium`}>🩺 Asszisztens</span>
             </div>
-            <div className="flex items-center gap-2">
-              <div className={`w-4 h-4 ${darkMode ? 'bg-purple-900/30 ring-2 ring-purple-400' : 'bg-purple-50 ring-2 ring-purple-400'} rounded`}></div>
-              <span className={`${darkMode ? 'text-white' : 'text-[#111827]'} font-medium`}>Igényes nap</span>
-            </div>
           </div>
         </>
       )}
