@@ -250,9 +250,9 @@ export default function ApprovalsPage() {
                   <div>
                     <label className="text-sm font-medium text-gray-600">Szerep</label>
                     <p className="text-lg">
-                      {approval.role === 'pharmacy' && '🏥 Gyógyszertár'}
-                      {approval.role === 'pharmacist' && '💊 Gyógyszerész'}
-                      {approval.role === 'assistant' && '🩺 Szakasszisztens'}
+                      {approval.role === 'pharmacy' && 'Gyógysztár'}
+                      {approval.role === 'pharmacist' && 'Gyógyszerész'}
+                      {approval.role === 'assistant' && 'Szakasszisztens'}
                     </p>
                   </div>
                   <div>

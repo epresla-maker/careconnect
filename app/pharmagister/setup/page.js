@@ -256,8 +256,8 @@ function PharmagisterSetupContent() {
             <p className="text-gray-600 mt-1">
               {step === 1 ? 'Válaszd ki a szerepkörödet' : 
                selectedRole === 'pharmacy' ? '🏢 Gyógyszertár adatok' :
-               selectedRole === 'pharmacist' ? '💊 Gyógyszerész adatok' :
-               '🩺 Szakasszisztens adatok'}
+               selectedRole === 'pharmacist' ? 'Gyógyszerész adatok' :
+               'Szakasszisztens adatok'}
             </p>
           </div>
 
