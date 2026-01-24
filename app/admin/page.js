@@ -64,35 +64,35 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4">
-      <div className="max-w-7xl mx-auto">
-        <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
-          <h1 className="text-3xl font-bold mb-2">Admin Panel</h1>
-          <p className="text-gray-600">Üdvözöl a CareConnect admin felület</p>
-          <div className="flex gap-2 mt-4">
+    <div className="min-h-screen bg-gray-50 p-2 sm:p-4">
+      <div className="max-w-[420px] sm:max-w-3xl lg:max-w-6xl xl:max-w-7xl mx-auto">
+        <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 mb-4 sm:mb-6">
+          <h1 className="text-2xl sm:text-3xl font-bold mb-2">Admin Panel</h1>
+          <p className="text-sm sm:text-base text-gray-600">Üdvözöl a CareConnect admin felület</p>
+          <div className="flex flex-col sm:flex-row gap-2 mt-4">
             <button
               onClick={() => router.push('/pharmagister')}
-              className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700"
+              className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 text-sm sm:text-base"
             >
               ← Vissza a Pharmagister-hez
             </button>
             <button
               onClick={() => router.push('/admin/approvals')}
-              className="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700"
+              className="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 text-sm sm:text-base"
             >
               📋 NNK Jóváhagyások
             </button>
             <button
               onClick={() => router.push('/admin/posts')}
-              className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700"
+              className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 text-sm sm:text-base"
             >
               📝 Posztok kezelése
             </button>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow-lg p-6">
-          <h2 className="text-2xl font-bold mb-4">Regisztrált felhasználók ({users.length})</h2>
+        <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6">
+          <h2 className="text-xl sm:text-2xl font-bold mb-4">Regisztrált felhasználók ({users.length})</h2>
           
           {loadingUsers ? (
             <div className="text-center py-8">Betöltés...</div>

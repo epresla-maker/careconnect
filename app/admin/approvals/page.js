@@ -159,13 +159,13 @@ export default function ApprovalsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 sm:p-6 lg:p-8">
+    <div className="min-h-screen bg-gray-50 p-2 sm:p-4 lg:p-6">
       <div className="max-w-[420px] sm:max-w-3xl lg:max-w-6xl xl:max-w-7xl mx-auto">
-        <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
-          <h1 className="text-3xl font-bold mb-2">NNK Jóváhagyások</h1>
-          <p className="text-gray-600 mb-4">Pharmagister profil jóváhagyások NNK szám ellenőrzéssel</p>
+        <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 mb-4 sm:mb-6">
+          <h1 className="text-2xl sm:text-3xl font-bold mb-2">NNK Jóváhagyások</h1>
+          <p className="text-sm sm:text-base text-gray-600 mb-4">Pharmagister profil jóváhagyások NNK szám ellenőrzéssel</p>
           
-          <div className="flex gap-2">
+          <div className="flex flex-col sm:flex-row gap-2">
             <button
               onClick={() => router.push('/admin')}
               className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700"
