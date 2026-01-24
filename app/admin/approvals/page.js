@@ -159,8 +159,8 @@ export default function ApprovalsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-gray-50 p-4 sm:p-6 lg:p-8">
+      <div className="max-w-[420px] sm:max-w-3xl lg:max-w-6xl xl:max-w-7xl mx-auto">
         <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
           <h1 className="text-3xl font-bold mb-2">NNK Jóváhagyások</h1>
           <p className="text-gray-600 mb-4">Pharmagister profil jóváhagyások NNK szám ellenőrzéssel</p>

@@ -239,8 +239,7 @@ function PharmagisterSetupContent() {
   return (
     <RouteGuard>
       <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 py-8 pb-40">
-        <div className="max-w-lg mx-auto px-4">
-          
+        <div className="max-w-[420px] sm:max-w-2xl lg:max-w-4xl mx-auto px-4 sm:px-6">{" "}          
           {/* Fejléc */}
           <div className="mb-6">
             <button

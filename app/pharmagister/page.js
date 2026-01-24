@@ -98,7 +98,7 @@ function PharmagisterContent() {
   return (
     <RouteGuard>
       <div className={`min-h-screen ${darkMode ? 'bg-gray-900 text-white' : 'bg-[#F9FAFB] text-[#111827]'} ${pharmaRole ? 'pb-[146px]' : 'pb-40'}`}>
-        <div className="max-w-[420px] mx-auto px-4 py-6">
+        <div className="max-w-[420px] sm:max-w-2xl lg:max-w-5xl xl:max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           
           {/* Header */}
           <div className="mb-8">
