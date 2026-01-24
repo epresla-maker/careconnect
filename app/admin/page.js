@@ -65,80 +65,80 @@ export default function AdminPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 p-2 sm:p-4">
-      <div className="max-w-[420px] sm:max-w-3xl lg:max-w-6xl xl:max-w-7xl mx-auto">
-        <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 mb-4 sm:mb-6">
-          <h1 className="text-2xl sm:text-3xl font-bold mb-2">Admin Panel</h1>
-          <p className="text-sm sm:text-base text-gray-600">Üdvözöl a CareConnect admin felület</p>
-          <div className="flex flex-col sm:flex-row gap-2 mt-4">
+      <div className="max-w-full sm:max-w-3xl lg:max-w-6xl xl:max-w-7xl mx-auto">
+        <div className="bg-white rounded-lg shadow-lg p-3 sm:p-6 mb-3 sm:mb-6">
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold mb-2">Admin Panel</h1>
+          <p className="text-xs sm:text-sm lg:text-base text-gray-600 mb-3">Üdvözöl a CareConnect admin felület</p>
+          <div className="flex flex-col gap-2">
             <button
               onClick={() => router.push('/pharmagister')}
-              className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 text-sm sm:text-base"
+              className="bg-purple-600 text-white px-3 py-2 rounded-lg hover:bg-purple-700 text-xs sm:text-sm w-full"
             >
               ← Vissza a Pharmagister-hez
             </button>
             <button
               onClick={() => router.push('/admin/approvals')}
-              className="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 text-sm sm:text-base"
+              className="bg-orange-600 text-white px-3 py-2 rounded-lg hover:bg-orange-700 text-xs sm:text-sm w-full"
             >
               📋 NNK Jóváhagyások
             </button>
             <button
               onClick={() => router.push('/admin/posts')}
-              className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 text-sm sm:text-base"
+              className="bg-green-600 text-white px-3 py-2 rounded-lg hover:bg-green-700 text-xs sm:text-sm w-full"
             >
               📝 Posztok kezelése
             </button>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6">
-          <h2 className="text-xl sm:text-2xl font-bold mb-4">Regisztrált felhasználók ({users.length})</h2>
+        <div className="bg-white rounded-lg shadow-lg p-3 sm:p-6">
+          <h2 className="text-lg sm:text-xl lg:text-2xl font-bold mb-4">Regisztrált felhasználók ({users.length})</h2>
           
           {loadingUsers ? (
             <div className="text-center py-8">Betöltés...</div>
           ) : users.length === 0 ? (
             <div className="text-center py-8 text-gray-500">Még nincsenek felhasználók</div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
+            <div className="overflow-x-auto -mx-3 sm:mx-0">
+              <table className="w-full min-w-max">
                 <thead>
                   <tr className="border-b">
-                    <th className="text-left py-3 px-4">Email</th>
-                    <th className="text-left py-3 px-4">Szerep</th>
-                    <th className="text-left py-3 px-4">Profil kész</th>
-                    <th className="text-left py-3 px-4">Regisztráció</th>
-                    <th className="text-left py-3 px-4">Műveletek</th>
+                    <th className="text-left py-2 px-2 sm:py-3 sm:px-4 text-xs sm:text-sm">Email</th>
+                    <th className="text-left py-2 px-2 sm:py-3 sm:px-4 text-xs sm:text-sm">Szerep</th>
+                    <th className="text-left py-2 px-2 sm:py-3 sm:px-4 text-xs sm:text-sm">Profil</th>
+                    <th className="text-left py-2 px-2 sm:py-3 sm:px-4 text-xs sm:text-sm hidden sm:table-cell">Reg.</th>
+                    <th className="text-left py-2 px-2 sm:py-3 sm:px-4 text-xs sm:text-sm">Műv.</th>
                   </tr>
                 </thead>
                 <tbody>
                   {users.map(user => (
                     <tr key={user.id} className="border-b hover:bg-gray-50">
-                      <td className="py-3 px-4">{user.email}</td>
-                      <td className="py-3 px-4">
+                      <td className="py-2 px-2 sm:py-3 sm:px-4 text-xs sm:text-sm break-all">{user.email}</td>
+                      <td className="py-2 px-2 sm:py-3 sm:px-4">
                         {user.pharmagisterRole ? (
-                          <span className="bg-purple-100 text-purple-800 px-2 py-1 rounded text-sm">
+                          <span className="bg-purple-100 text-purple-800 px-1 py-0.5 sm:px-2 sm:py-1 rounded text-[10px] sm:text-xs">
                             {user.pharmagisterRole}
                           </span>
                         ) : (
-                          <span className="text-gray-400">-</span>
+                          <span className="text-gray-400 text-xs">-</span>
                         )}
                       </td>
-                      <td className="py-3 px-4">
+                      <td className="py-2 px-2 sm:py-3 sm:px-4 text-xs sm:text-sm">
                         {user.pharmaProfileComplete ? (
-                          <span className="text-green-600">✓ Kész</span>
+                          <span className="text-green-600">✓</span>
                         ) : (
-                          <span className="text-orange-600">⚠ Hiányos</span>
+                          <span className="text-orange-600">⚠</span>
                         )}
                       </td>
-                      <td className="py-3 px-4 text-sm text-gray-600">
+                      <td className="py-2 px-2 sm:py-3 sm:px-4 text-[10px] sm:text-sm text-gray-600 hidden sm:table-cell">
                         {user.createdAt ? new Date(user.createdAt).toLocaleDateString('hu-HU') : '-'}
                       </td>
-                      <td className="py-3 px-4">
+                      <td className="py-2 px-2 sm:py-3 sm:px-4">
                         <button
                           onClick={() => deleteUser(user.id)}
-                          className="text-red-600 hover:text-red-800 text-sm"
+                          className="text-red-600 hover:text-red-800 text-[10px] sm:text-xs"
                         >
-                          Törlés
+                          🗑
                         </button>
                       </td>
                     </tr>
