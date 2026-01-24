@@ -161,12 +161,14 @@ export default function PharmaCalendar({ pharmaRole }) {
         <h2 className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-[#111827]'}`}>Naptár</h2>
         <div className="flex items-center gap-2 w-full sm:w-auto">
           <button
+            type="button"
             onClick={goToToday}
             className="px-4 py-2 text-sm bg-[#6B46C1] hover:bg-[#5a3aa3] text-white rounded-xl transition-colors whitespace-nowrap font-medium"
           >
             Ma
           </button>
           <button
+            type="button"
             onClick={goToPreviousMonth}
             className={`p-2 ${darkMode ? 'bg-gray-800 hover:bg-gray-700 border-gray-700' : 'bg-white hover:bg-[#F3F4F6] border-[#E5E7EB]'} border rounded-xl transition-colors flex-shrink-0`}
           >
@@ -176,6 +178,7 @@ export default function PharmaCalendar({ pharmaRole }) {
             {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
           </div>
           <button
+            type="button"
             onClick={goToNextMonth}
             className={`p-2 ${darkMode ? 'bg-gray-800 hover:bg-gray-700 border-gray-700' : 'bg-white hover:bg-[#F3F4F6] border-[#E5E7EB]'} border rounded-xl transition-colors flex-shrink-0`}
           >
