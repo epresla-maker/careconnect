@@ -65,15 +65,22 @@ export default function AdminPostsPage() {
     }
   };
 
-  const handleDelete = async (postId) => {
+  const handleDelete = async (postId, postType, pharmaDemandId) => {
     if (!confirm('Biztosan törölni szeretnéd ezt a posztot?')) return;
 
     try {
+      // Poszt törlése a serviceFeedPosts-ból
       await deleteDoc(doc(db, 'serviceFeedPosts', postId));
+      
+      // Ha pharma demand volt, töröljük a pharmaDemands-ból is
+      if (postType === 'pharmaDemand' && pharmaDemandId) {
+        await deleteDoc(doc(db, 'pharmaDemands', pharmaDemandId));
+      }
+      
       alert('✅ Poszt törölve!');
     } catch (error) {
       console.error('Error deleting post:', error);
-      alert('❌ Hiba történt a törlés során');
+      alert('❌ Hiba történt a törlés során: ' + error.message);
     }
   };
 
@@ -183,15 +190,14 @@ export default function AdminPostsPage() {
                     </div>
                   )}
 
-                  {post.postType === 'adminPost' && (
-                    <button
-                      onClick={() => handleDelete(post.id)}
-                      className="flex items-center gap-2 text-red-600 hover:text-red-700 text-sm"
-                    >
-                      <Trash2 size={16} />
-                      Poszt törlése
-                    </button>
-                  )}
+                  {/* Törlés gomb - minden poszt típusnál megjelenik */}
+                  <button
+                    onClick={() => handleDelete(post.id, post.postType, post.pharmaDemandId)}
+                    className="flex items-center gap-2 text-red-600 hover:text-red-700 text-sm mt-2"
+                  >
+                    <Trash2 size={16} />
+                    Poszt törlése
+                  </button>
                 </div>
               ))
             )}
