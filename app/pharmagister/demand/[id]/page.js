@@ -73,6 +73,23 @@ export default function DemandDetailPage() {
       return;
     }
 
+    // Check if profile is approved
+    if (userData.pharmaPendingApproval && !userData.pharmaProfileComplete) {
+      alert('A profilod még jóváhagyásra vár. Amíg az admin nem ellenőrzi az NNK számodat, nem tudsz jelentkezni.');
+      return;
+    }
+
+    // Check if user's role matches the demand position
+    const userRole = userData.pharmagisterRole; // 'pharmacist' or 'assistant'
+    const demandPosition = demand.position; // 'pharmacist' or 'assistant'
+    
+    if (userRole !== demandPosition) {
+      const userRoleLabel = userRole === 'pharmacist' ? 'gyógyszerész' : 'szakasszisztens';
+      const demandPositionLabel = demandPosition === 'pharmacist' ? 'gyógyszerész' : 'szakasszisztens';
+      alert(`Erre az igényre csak ${demandPositionLabel}ek jelentkezhetnek. Te ${userRoleLabel}ként vagy regisztrálva.`);
+      return;
+    }
+
     try {
       setApplying(true);
 
@@ -83,9 +100,10 @@ export default function DemandDetailPage() {
         pharmagisterRole: userData.pharmagisterRole,
         email: userData.email,
         phone: userData.pharmaPhone || userData.phone || null,
-        experience: userData.pharmaExperience || null,
+        experience: userData.pharmaYearsOfExperience || null,
         hourlyRate: userData.pharmaHourlyRate || null,
-        software: userData.pharmaSoftware || [],
+        software: userData.pharmaSoftwareKnowledge || [],
+        bio: userData.pharmaBio || '',
         appliedAt: Timestamp.now(),
         status: 'pending' // pending, accepted, rejected
       };
@@ -95,8 +113,21 @@ export default function DemandDetailPage() {
         applicants: arrayUnion(applicantData)
       });
 
+      // Send notification to pharmacy
+      const { addDoc, collection, serverTimestamp } = await import('firebase/firestore');
+      await addDoc(collection(db, 'notifications'), {
+        userId: demand.pharmacyId,
+        type: 'pharma_application',
+        title: 'Új jelentkező! 📝',
+        message: `${userData.displayName || 'Valaki'} jelentkezett a ${new Date(demand.date).toLocaleDateString('hu-HU')}-i helyettesítésre.`,
+        demandId: demandId,
+        applicantId: user.uid,
+        read: false,
+        createdAt: serverTimestamp(),
+      });
+
       setHasApplied(true);
-      alert('Sikeres jelentkezés! A gyógyszertár hamarosan felveszi veled a kapcsolatot.');
+      alert('Sikeres jelentkezés! A gyógyszertár hamarosan értesítést kap és felveszi veled a kapcsolatot.');
 
     } catch (err) {
       console.error('Error applying:', err);
@@ -150,10 +181,14 @@ export default function DemandDetailPage() {
   };
 
   const isOwnDemand = user?.uid === demand.pharmacyId;
+  const isPendingApproval = userData?.pharmaPendingApproval && !userData?.pharmaProfileComplete;
+  const roleMatches = userData?.pharmagisterRole === demand.position;
   const canApply = userData?.pharmagisterRole && 
                    userData.pharmagisterRole !== 'pharmacy' &&
                    !isOwnDemand &&
-                   demand.status === 'open';
+                   demand.status === 'open' &&
+                   roleMatches &&
+                   !isPendingApproval;
 
   return (
     <RouteGuard>
@@ -357,6 +392,16 @@ export default function DemandDetailPage() {
                 <div className="bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400 rounded-xl p-4 text-center">
                   <span className="text-xl mr-2">✅</span>
                   Már jelentkeztél erre az igényre
+                </div>
+              ) : isPendingApproval ? (
+                <div className="bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-400 rounded-xl p-4 text-center">
+                  <span className="text-xl mr-2">⏳</span>
+                  A profilod még jóváhagyásra vár. Amíg az admin nem ellenőrzi az NNK számodat, nem tudsz jelentkezni.
+                </div>
+              ) : !roleMatches && userData?.pharmagisterRole && userData.pharmagisterRole !== 'pharmacy' ? (
+                <div className={`${darkMode ? 'bg-gray-700 text-gray-400' : 'bg-gray-100 text-gray-500'} rounded-xl p-4 text-center`}>
+                  <span className="text-xl mr-2">🚫</span>
+                  Erre az igényre csak {demand.position === 'pharmacist' ? 'gyógyszerészek' : 'szakasszisztensek'} jelentkezhetnek
                 </div>
               ) : canApply ? (
                 <button

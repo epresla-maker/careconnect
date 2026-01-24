@@ -1,7 +1,7 @@
 "use client";
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { useTheme } from '@/context/ThemeContext';
-import { Calendar, BarChart3, User, HelpCircle } from 'lucide-react';
+import { Calendar, BarChart3, HelpCircle } from 'lucide-react';
 
 export default function PharmaNavbar({ isVisible = true }) {
   const router = useRouter();
@@ -22,11 +22,6 @@ export default function PharmaNavbar({ isVisible = true }) {
       icon: BarChart3,
       label: 'Vezérlőpult',
       tab: 'dashboard'
-    },
-    {
-      icon: User,
-      label: 'Pharma Profilom',
-      tab: 'profile'
     },
     {
       icon: HelpCircle,
@@ -50,7 +45,7 @@ export default function PharmaNavbar({ isVisible = true }) {
         isVisible ? 'translate-y-0' : 'translate-y-full'
       }`}
     >
-      <div className="grid grid-cols-4 gap-1 px-2 py-2">
+      <div className="grid grid-cols-3 gap-1 px-2 py-2">
         {navItems.map((item) => {
           const isActive = !item.isLink && activeTab === item.tab;
           const Icon = item.icon;

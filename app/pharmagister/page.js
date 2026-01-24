@@ -240,6 +240,34 @@ function PharmagisterContent() {
           {/* Fő tartalom - ha már van szerepkör */}
           {pharmaRole && (
             <div className="space-y-4">
+              {/* Függőben állapot figyelmeztetés */}
+              {userData?.pharmaPendingApproval && !userData?.pharmaProfileComplete && (
+                <div className={`${darkMode ? 'bg-yellow-900/30 border-yellow-600' : 'bg-yellow-50 border-yellow-300'} border rounded-xl p-4`}>
+                  <div className="flex items-start gap-3">
+                    <span className="text-2xl">⏳</span>
+                    <div>
+                      <h3 className={`font-semibold ${darkMode ? 'text-yellow-300' : 'text-yellow-800'}`}>Jóváhagyásra vár</h3>
+                      <p className={`text-sm ${darkMode ? 'text-yellow-400' : 'text-yellow-700'} mt-1`}>
+                        Az NNK nyilvántartási számod ellenőrzése folyamatban van. Amíg a profilod nincs jóváhagyva, nem tudsz igényt feladni vagy jelentkezni.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Profil szerkesztés gomb */}
+              <div className="flex justify-end">
+                <button
+                  onClick={() => router.push('/pharmagister/setup?edit=true')}
+                  className={`flex items-center gap-2 px-4 py-2 ${darkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'} rounded-lg transition-colors text-sm`}
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                  Profil szerkesztése
+                </button>
+              </div>
+
               {activeTab === 'calendar' && (
                 <div className={`${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-[#E5E7EB]'} border rounded-xl p-6`}>
                   <CalendarTab pharmaRole={pharmaRole} />
@@ -248,11 +276,6 @@ function PharmagisterContent() {
               {activeTab === 'dashboard' && (
                 <div className={`${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-[#E5E7EB]'} border rounded-xl p-6`}>
                   <DashboardTab pharmaRole={pharmaRole} />
-                </div>
-              )}
-              {activeTab === 'profile' && (
-                <div className={`${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-[#E5E7EB]'} border rounded-xl p-6`}>
-                  <ProfileTab pharmaRole={pharmaRole} />
                 </div>
               )}
             </div>
@@ -276,12 +299,6 @@ function CalendarTab({ pharmaRole }) {
 function DashboardTab({ pharmaRole }) {
   const PharmaDashboard = require('@/app/components/PharmaDashboard').default;
   return <PharmaDashboard pharmaRole={pharmaRole} />;
-}
-
-// Profile Tab Component
-function ProfileTab({ pharmaRole }) {
-  const PharmaProfileEditor = require('@/app/components/PharmaProfileEditor').default;
-  return <PharmaProfileEditor pharmaRole={pharmaRole} />;
 }
 
 // Wrapper with Suspense boundary

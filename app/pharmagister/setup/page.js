@@ -1,41 +1,46 @@
 "use client";
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, useRef, Suspense } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { doc, updateDoc } from 'firebase/firestore';
+import { doc, updateDoc, addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import RouteGuard from '@/app/components/RouteGuard';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Camera, ArrowLeft, Building2, User, Users } from 'lucide-react';
 
 function PharmagisterSetupContent() {
   const { user, userData } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const role = searchParams.get('role');
+  const editMode = searchParams.get('edit') === 'true';
+  const fileInputRef = useRef(null);
   
   const [loading, setLoading] = useState(false);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [step, setStep] = useState(role ? 2 : 1); // 1: szerepkör választás, 2: adatok megadása
+  const [selectedRole, setSelectedRole] = useState(role || '');
+  const [photoPreview, setPhotoPreview] = useState(null);
+  
   const [formData, setFormData] = useState({
     // Közös mezők
-    pharmagisterRole: role || '',
-    pharmaProfileComplete: false,
+    displayName: '',
+    photoURL: '',
+    phone: '',
     
     // Gyógyszertár specifikus
     pharmacyName: '',
-    pharmacyAddress: '',
-    pharmacyZipCode: '',
-    pharmacyCity: '',
-    pharmacyPhone: '',
-    pharmacyEmail: '',
-    nkkNumber: '', // NNK működési nyilvántartási szám
+    contactName: '',
+    city: '',
+    zipCode: '',
+    street: '',
+    houseNumber: '',
+    nkkNumber: '',
     
-    // Helyettesítő specifikus (Gyógyszerész & Szakasszisztens)
+    // Helyettesítő specifikus
     yearsOfExperience: '',
     softwareKnowledge: [],
     hourlyRate: '',
     bio: '',
-    // Profilkép beállítások
-    useMainPhoto: true,
-    pharmaPhotoURL: '',
   });
 
   const softwareOptions = [
@@ -48,15 +53,41 @@ function PharmagisterSetupContent() {
     'Egyéb'
   ];
 
+  // Ha van már szerepkör és nem edit módban vagyunk, irányítsuk vissza
   useEffect(() => {
-    if (!role || !['pharmacy', 'pharmacist', 'assistant'].includes(role)) {
+    if (userData?.pharmagisterRole && !editMode) {
       router.push('/pharmagister');
+      return;
     }
-    
-    if (userData?.pharmagisterRole) {
-      router.push('/pharmagister');
+
+    // Edit módban töltsd be az adatokat
+    if (editMode && userData) {
+      setSelectedRole(userData.pharmagisterRole || '');
+      setStep(2);
+      setFormData({
+        displayName: userData.displayName || '',
+        photoURL: userData.photoURL || '',
+        phone: userData.phone || userData.pharmacyPhone || '',
+        pharmacyName: userData.pharmacyName || '',
+        contactName: userData.contactName || userData.displayName || '',
+        city: userData.pharmacyCity || userData.city || '',
+        zipCode: userData.pharmacyZipCode || userData.zipCode || '',
+        street: userData.pharmacyStreet || userData.street || '',
+        houseNumber: userData.pharmacyHouseNumber || userData.houseNumber || '',
+        nkkNumber: userData.nkkNumber || '',
+        yearsOfExperience: userData.pharmaYearsOfExperience || '',
+        softwareKnowledge: userData.pharmaSoftwareKnowledge || [],
+        hourlyRate: userData.pharmaHourlyRate || '',
+        bio: userData.pharmaBio || '',
+      });
+      setPhotoPreview(userData.photoURL || null);
     }
-  }, [role, userData, router]);
+  }, [userData, editMode, router]);
+
+  const handleRoleSelect = (role) => {
+    setSelectedRole(role);
+    setStep(2);
+  };
 
   const handleSoftwareToggle = (software) => {
     setFormData(prev => ({
@@ -67,77 +98,139 @@ function PharmagisterSetupContent() {
     }));
   };
 
+  const handlePhotoUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert('A fájl mérete maximum 5MB lehet!');
+      return;
+    }
+
+    if (!file.type.startsWith('image/')) {
+      alert('Csak képfájlokat tölthetsz fel!');
+      return;
+    }
+
+    // Preview
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setPhotoPreview(reader.result);
+    };
+    reader.readAsDataURL(file);
+
+    setUploadingPhoto(true);
+    try {
+      const uploadFormData = new FormData();
+      uploadFormData.append('file', file);
+      uploadFormData.append('upload_preset', 'careconnect_profiles');
+
+      const response = await fetch(
+        `https://api.cloudinary.com/v1_1/dyoq9pcdx/image/upload`,
+        {
+          method: 'POST',
+          body: uploadFormData,
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error?.message || 'Feltöltés sikertelen');
+      }
+
+      setFormData(prev => ({ ...prev, photoURL: data.secure_url }));
+      alert('Profilkép sikeresen feltöltve!');
+    } catch (error) {
+      console.error('Error uploading photo:', error);
+      alert('Hiba történt a kép feltöltése során: ' + error.message);
+      setPhotoPreview(null);
+    } finally {
+      setUploadingPhoto(false);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
 
     try {
       const userRef = doc(db, 'users', user.uid);
-      const { addDoc, collection, serverTimestamp } = await import('firebase/firestore');
       
       const dataToUpdate = {
-        pharmagisterRole: role,
-        pharmaProfileComplete: false, // Admin jóváhagyásig false marad
+        pharmagisterRole: selectedRole,
+        pharmaProfileComplete: false, // Admin jóváhagyásig false
         pharmaPendingApproval: true,
         updatedAt: new Date().toISOString(),
       };
 
-      if (role === 'pharmacy') {
-        // Gyógyszertár adatok
-        if (!formData.pharmacyName || !formData.pharmacyAddress || !formData.pharmacyCity || !formData.nkkNumber) {
-          alert('Kérlek töltsd ki az összes kötelező mezőt (beleértve az NNK működési nyilvántartási számot)!');
+      if (selectedRole === 'pharmacy') {
+        // Gyógyszertár validáció
+        if (!formData.pharmacyName || !formData.contactName || !formData.city || !formData.street || !formData.nkkNumber) {
+          alert('Kérlek töltsd ki az összes kötelező mezőt!');
           setLoading(false);
           return;
         }
         
         Object.assign(dataToUpdate, {
+          displayName: formData.contactName,
+          photoURL: formData.photoURL || '',
           pharmacyName: formData.pharmacyName,
-          pharmacyAddress: formData.pharmacyAddress,
-          pharmacyZipCode: formData.pharmacyZipCode,
-          pharmacyCity: formData.pharmacyCity,
-          pharmacyPhone: formData.pharmacyPhone,
-          pharmacyEmail: formData.pharmacyEmail,
+          contactName: formData.contactName,
+          pharmacyCity: formData.city,
+          pharmacyZipCode: formData.zipCode,
+          pharmacyStreet: formData.street,
+          pharmacyHouseNumber: formData.houseNumber,
+          pharmacyPhone: formData.phone,
+          pharmacyEmail: user.email,
           nkkNumber: formData.nkkNumber,
         });
       } else {
-        // Helyettesítő adatok (Gyógyszerész vagy Szakasszisztens)
-        if (!formData.yearsOfExperience || formData.softwareKnowledge.length === 0 || !formData.nkkNumber) {
-          alert('Kérlek töltsd ki az összes kötelező mezőt (beleértve az NNK működési nyilvántartási számot)!');
+        // Helyettesítő validáció
+        if (!formData.displayName || !formData.yearsOfExperience || formData.softwareKnowledge.length === 0 || !formData.nkkNumber) {
+          alert('Kérlek töltsd ki az összes kötelező mezőt!');
           setLoading(false);
           return;
         }
         
         Object.assign(dataToUpdate, {
+          displayName: formData.displayName,
+          photoURL: formData.photoURL || '',
+          phone: formData.phone,
           pharmaYearsOfExperience: formData.yearsOfExperience,
           pharmaSoftwareKnowledge: formData.softwareKnowledge,
           pharmaHourlyRate: formData.hourlyRate || null,
           pharmaBio: formData.bio,
-          pharmaUseMainPhoto: formData.useMainPhoto,
-          pharmaPhotoURL: formData.useMainPhoto ? (userData?.photoURL || '') : (formData.pharmaPhotoURL || ''),
           nkkNumber: formData.nkkNumber,
         });
       }
 
       await updateDoc(userRef, dataToUpdate);
       
-      // Jóváhagyási kérelem létrehozása
-      await addDoc(collection(db, 'pharmagisterApprovals'), {
-        userId: user.uid,
-        userEmail: user.email,
-        userName: userData?.displayName || user.displayName || 'Ismeretlen',
-        role: role,
-        nkkNumber: formData.nkkNumber,
-        status: 'pending',
-        submittedAt: serverTimestamp(),
-        ...dataToUpdate
-      });
+      // Jóváhagyási kérelem létrehozása (csak új regisztrációnál vagy ha változott az NNK szám)
+      if (!editMode || userData?.nkkNumber !== formData.nkkNumber) {
+        await addDoc(collection(db, 'pharmagisterApprovals'), {
+          userId: user.uid,
+          userEmail: user.email,
+          userName: selectedRole === 'pharmacy' ? formData.contactName : formData.displayName,
+          role: selectedRole,
+          nkkNumber: formData.nkkNumber,
+          status: 'pending',
+          submittedAt: serverTimestamp(),
+        });
+      }
       
-      alert('✅ Profil sikeresen beküldve!\n\n⏳ A profil aktiválásához admin jóváhagyás szükséges az NNK működési nyilvántartási szám ellenőrzése után.\n\nÉrtesítést fogsz kapni, amikor a profilod jóváhagyásra került.');
+      if (editMode) {
+        alert('✅ Profil sikeresen frissítve!');
+      } else {
+        alert('✅ Profil sikeresen beküldve!\n\n⏳ A profil aktiválásához admin jóváhagyás szükséges az NNK működési nyilvántartási szám ellenőrzése után.\n\nÉrtesítést fogsz kapni, amikor a profilod jóváhagyásra került.');
+      }
+      
       router.push('/pharmagister');
       
     } catch (error) {
       console.error('Error updating profile:', error);
-      alert('Hiba történt a profil létrehozása során.');
+      alert('Hiba történt a profil mentése során.');
     } finally {
       setLoading(false);
     }
@@ -145,281 +238,390 @@ function PharmagisterSetupContent() {
 
   return (
     <RouteGuard>
-      <div className="min-h-screen bg-gray-50 py-8 pb-40">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-            <h1 className="text-3xl font-bold text-[#111827] mb-2">
-              Pharmagister Profil Beállítása
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 py-8 pb-40">
+        <div className="max-w-lg mx-auto px-4">
+          
+          {/* Fejléc */}
+          <div className="mb-6">
+            <button
+              onClick={() => step === 2 && !editMode ? setStep(1) : router.push('/pharmagister')}
+              className="flex items-center text-purple-600 hover:text-purple-700 mb-4"
+            >
+              <ArrowLeft className="w-5 h-5 mr-1" />
+              {step === 2 && !editMode ? 'Vissza' : 'Pharmagister'}
+            </button>
+            <h1 className="text-2xl font-bold text-gray-900">
+              {editMode ? 'Profil szerkesztése' : 'Pharmagister Regisztráció'}
             </h1>
-            <p className="text-[#6B7280]">
-              {role === 'pharmacy' && '🏢 Gyógyszertár profil létrehozása'}
-              {role === 'pharmacist' && '👨‍⚕️ Gyógyszerész profil létrehozása'}
-              {role === 'assistant' && '🧑‍⚕️ Szakasszisztens profil létrehozása'}
+            <p className="text-gray-600 mt-1">
+              {step === 1 ? 'Válaszd ki a szerepkörödet' : 
+               selectedRole === 'pharmacy' ? '🏢 Gyógyszertár adatok' :
+               selectedRole === 'pharmacist' ? '💊 Gyógyszerész adatok' :
+               '🩺 Szakasszisztens adatok'}
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-sm p-6">
-            {role === 'pharmacy' ? (
-              // Gyógyszertár űrlap
-              <div className="space-y-6">
-                <h2 className="text-xl font-bold text-[#111827] mb-4">Gyógyszertár Adatok</h2>
-                
-                <div>
-                  <label className="block text-sm font-medium text-[#6B7280] mb-2">
-                    Gyógyszertár neve <span className="text-red-500">*</span>
-                  </label>
+          {/* STEP 1: Szerepkör választás */}
+          {step === 1 && (
+            <div className="space-y-4">
+              <button
+                onClick={() => handleRoleSelect('pharmacy')}
+                className="w-full bg-white border-2 border-gray-200 hover:border-purple-400 rounded-xl p-6 transition-all text-left group"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="w-14 h-14 bg-purple-100 rounded-xl flex items-center justify-center group-hover:bg-purple-200 transition-colors">
+                    <Building2 className="w-7 h-7 text-purple-600" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900">Gyógyszertár</h3>
+                    <p className="text-sm text-gray-500">Helyettesítőt keresek a patikámba</p>
+                  </div>
+                </div>
+              </button>
+
+              <button
+                onClick={() => handleRoleSelect('pharmacist')}
+                className="w-full bg-white border-2 border-gray-200 hover:border-blue-400 rounded-xl p-6 transition-all text-left group"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="w-14 h-14 bg-blue-100 rounded-xl flex items-center justify-center group-hover:bg-blue-200 transition-colors">
+                    <User className="w-7 h-7 text-blue-600" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900">Gyógyszerész</h3>
+                    <p className="text-sm text-gray-500">Helyettesítést vállalok gyógyszerészként</p>
+                  </div>
+                </div>
+              </button>
+
+              <button
+                onClick={() => handleRoleSelect('assistant')}
+                className="w-full bg-white border-2 border-gray-200 hover:border-green-400 rounded-xl p-6 transition-all text-left group"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="w-14 h-14 bg-green-100 rounded-xl flex items-center justify-center group-hover:bg-green-200 transition-colors">
+                    <Users className="w-7 h-7 text-green-600" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900">Szakasszisztens</h3>
+                    <p className="text-sm text-gray-500">Helyettesítést vállalok asszisztensként</p>
+                  </div>
+                </div>
+              </button>
+            </div>
+          )}
+
+          {/* STEP 2: Adatok megadása */}
+          {step === 2 && (
+            <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-sm p-6 space-y-6">
+              
+              {/* Profilkép feltöltés */}
+              <div className="flex flex-col items-center">
+                <div className="relative">
+                  <div className="w-24 h-24 rounded-full overflow-hidden bg-gray-100 border-4 border-white shadow-lg">
+                    {photoPreview || formData.photoURL ? (
+                      <img 
+                        src={photoPreview || formData.photoURL} 
+                        alt="Profilkép" 
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-gray-400">
+                        <User className="w-12 h-12" />
+                      </div>
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploadingPhoto}
+                    className="absolute bottom-0 right-0 w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center text-white hover:bg-purple-700 transition-colors shadow-lg"
+                  >
+                    {uploadingPhoto ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Camera className="w-4 h-4" />
+                    )}
+                  </button>
                   <input
-                    type="text"
-                    value={formData.pharmacyName}
-                    onChange={(e) => setFormData({ ...formData, pharmacyName: e.target.value })}
-                    className="w-full px-4 py-2 bg-white border border-[#E5E7EB] rounded-lg text-[#111827] focus:outline-none focus:ring-2 focus:ring-[#6B7280]"
-                    required
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handlePhotoUpload}
+                    className="hidden"
                   />
                 </div>
+                <p className="text-sm text-gray-500 mt-2">Profilkép feltöltése</p>
+              </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {selectedRole === 'pharmacy' ? (
+                /* Gyógyszertár űrlap */
+                <>
                   <div>
-                    <label className="block text-sm font-medium text-[#6B7280] mb-2">
-                      Irányítószám
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Gyógyszertár neve <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="text"
-                      value={formData.pharmacyZipCode}
-                      onChange={(e) => setFormData({ ...formData, pharmacyZipCode: e.target.value })}
-                      className="w-full px-4 py-2 bg-white border border-[#E5E7EB] rounded-lg text-[#111827] focus:outline-none focus:ring-2 focus:ring-[#6B7280]"
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-[#6B7280] mb-2">
-                      Város <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.pharmacyCity}
-                      onChange={(e) => setFormData({ ...formData, pharmacyCity: e.target.value })}
-                      className="w-full px-4 py-2 bg-white border border-[#E5E7EB] rounded-lg text-[#111827] focus:outline-none focus:ring-2 focus:ring-[#6B7280]"
+                      value={formData.pharmacyName}
+                      onChange={(e) => setFormData({ ...formData, pharmacyName: e.target.value })}
+                      className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                      placeholder="pl. Alma Gyógyszertár"
                       required
                     />
                   </div>
-                </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-[#6B7280] mb-2">
-                    Cím (utca, házszám) <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.pharmacyAddress}
-                    onChange={(e) => setFormData({ ...formData, pharmacyAddress: e.target.value })}
-                    className="w-full px-4 py-2 bg-white border border-[#E5E7EB] rounded-lg text-[#111827] focus:outline-none focus:ring-2 focus:ring-[#6B7280]"
-                    required
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-[#6B7280] mb-2">
-                      Telefonszám
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Kapcsolattartó neve <span className="text-red-500">*</span>
                     </label>
                     <input
-                      type="tel"
-                      value={formData.pharmacyPhone}
-                      onChange={(e) => setFormData({ ...formData, pharmacyPhone: e.target.value })}
-                      className="w-full px-4 py-2 bg-white border border-[#E5E7EB] rounded-lg text-[#111827] focus:outline-none focus:ring-2 focus:ring-[#6B7280]"
+                      type="text"
+                      value={formData.contactName}
+                      onChange={(e) => setFormData({ ...formData, contactName: e.target.value })}
+                      className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                      placeholder="pl. Kovács Péter"
+                      required
                     />
                   </div>
-                  
+
                   <div>
-                    <label className="block text-sm font-medium text-[#6B7280] mb-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
                       Email cím
                     </label>
                     <input
                       type="email"
-                      value={formData.pharmacyEmail}
-                      onChange={(e) => setFormData({ ...formData, pharmacyEmail: e.target.value })}
-                      className="w-full px-4 py-2 bg-white border border-[#E5E7EB] rounded-lg text-[#111827] focus:outline-none focus:ring-2 focus:ring-[#6B7280]"
+                      value={user?.email || ''}
+                      disabled
+                      className="w-full px-4 py-3 border border-gray-200 rounded-lg bg-gray-50 text-gray-500"
                     />
+                    <p className="text-xs text-gray-400 mt-1">Automatikusan kitöltve a regisztrációból</p>
                   </div>
-                </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-[#6B7280] mb-2">
-                    NNK Működési Nyilvántartási Szám <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.nkkNumber}
-                    onChange={(e) => setFormData({ ...formData, nkkNumber: e.target.value })}
-                    className="w-full px-4 py-2 bg-white border border-[#E5E7EB] rounded-lg text-[#111827] focus:outline-none focus:ring-2 focus:ring-[#6B7280]"
-                    placeholder="pl. 12345-6/7890/2024"
-                    required
-                  />
-                  <p className="mt-1 text-xs text-gray-500">
-                    ⚠️ Az NNK szám ellenőrzése után admin jóváhagyás szükséges a profil aktiválásához
-                  </p>
-                </div>
-              </div>
-            ) : (
-              // Helyettesítő űrlap (Gyógyszerész & Szakasszisztens)
-              <div className="space-y-6">
-                <h2 className="text-xl font-bold text-[#111827] mb-4">Szakmai Adatok</h2>
-                
-                <div>
-                  <label className="block text-sm font-medium text-[#6B7280] mb-2">
-                    Tapasztalat (évek) <span className="text-red-500">*</span>
-                  </label>
-                  <select
-                    value={formData.yearsOfExperience}
-                    onChange={(e) => setFormData({ ...formData, yearsOfExperience: e.target.value })}
-                    className="w-full px-4 py-2 bg-white border border-[#E5E7EB] rounded-lg text-[#111827] focus:outline-none focus:ring-2 focus:ring-[#6B7280]"
-                    required
-                  >
-                    <option value="">Válassz...</option>
-                    <option value="0-1">0-1 év</option>
-                    <option value="1-3">1-3 év</option>
-                    <option value="3-5">3-5 év</option>
-                    <option value="5-10">5-10 év</option>
-                    <option value="10+">10+ év</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-[#6B7280] mb-2">
-                    Szoftverismeret <span className="text-red-500">*</span>
-                  </label>
-                  <div className="space-y-2">
-                    {softwareOptions.map(software => (
-                      <label key={software} className="flex items-center">
-                        <input
-                          type="checkbox"
-                          checked={formData.softwareKnowledge.includes(software)}
-                          onChange={() => handleSoftwareToggle(software)}
-                          className="w-4 h-4 text-[#111827] border-gray-300 rounded focus:ring-[#6B7280]"
-                        />
-                        <span className="ml-2 text-[#111827]">{software}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-[#6B7280] mb-2">
-                    Órabér (Ft) <span className="text-gray-400 text-xs">(opcionális)</span>
-                  </label>
-                  <input
-                    type="number"
-                    value={formData.hourlyRate}
-                    onChange={(e) => setFormData({ ...formData, hourlyRate: e.target.value })}
-                    className="w-full px-4 py-2 bg-white border border-[#E5E7EB] rounded-lg text-[#111827] focus:outline-none focus:ring-2 focus:ring-[#6B7280]"
-                    min="0"
-                    placeholder="Hagyd üresen ha nem szeretnéd megadni"
-                  />
-                </div>
-
-                {/* Profilkép beállítások */}
-                <div className="border border-[#E5E7EB] rounded-lg p-4 bg-gray-50">
-                  <label className="block text-sm font-medium text-[#6B7280] mb-3">
-                    Profilkép beállítása
-                  </label>
-                  
-                  <div className="flex items-center mb-4">
-                    <input
-                      type="checkbox"
-                      id="useMainPhoto"
-                      checked={formData.useMainPhoto}
-                      onChange={(e) => setFormData({ ...formData, useMainPhoto: e.target.checked })}
-                      className="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
-                    />
-                    <label htmlFor="useMainPhoto" className="ml-2 text-sm text-[#111827]">
-                      Fő profilkép használata
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Telefonszám
                     </label>
+                    <input
+                      type="tel"
+                      value={formData.phone}
+                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                      className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                      placeholder="+36 30 123 4567"
+                    />
                   </div>
-                  
-                  {formData.useMainPhoto ? (
-                    <div className="flex items-center gap-3 p-3 bg-white rounded-lg border border-gray-200">
-                      {userData?.photoURL ? (
-                        <img 
-                          src={userData.photoURL} 
-                          alt="Fő profilkép" 
-                          className="w-12 h-12 rounded-full object-cover border-2 border-green-500"
-                        />
-                      ) : (
-                        <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 text-sm">
-                          ?
-                        </div>
-                      )}
-                      <span className="text-sm text-gray-600">A fő profilképed lesz használva a Pharmagister-en</span>
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      <p className="text-xs text-gray-500">Külön profilkép feltöltése a Pharmagister-hez:</p>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Város <span className="text-red-500">*</span>
+                      </label>
                       <input
-                        type="url"
-                        value={formData.pharmaPhotoURL}
-                        onChange={(e) => setFormData({ ...formData, pharmaPhotoURL: e.target.value })}
-                        className="w-full px-4 py-2 bg-white border border-[#E5E7EB] rounded-lg text-[#111827] focus:outline-none focus:ring-2 focus:ring-[#6B7280]"
-                        placeholder="Kép URL (pl. Cloudinary link)"
+                        type="text"
+                        value={formData.city}
+                        onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                        className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                        placeholder="Budapest"
+                        required
                       />
-                      {formData.pharmaPhotoURL && (
-                        <div className="flex items-center gap-3">
-                          <img 
-                            src={formData.pharmaPhotoURL} 
-                            alt="Pharmagister profilkép" 
-                            className="w-12 h-12 rounded-full object-cover border-2 border-green-500"
-                            onError={(e) => e.target.style.display = 'none'}
-                          />
-                          <span className="text-sm text-gray-600">Pharmagister profilkép előnézet</span>
-                        </div>
-                      )}
                     </div>
-                  )}
-                </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Irányítószám
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.zipCode}
+                        onChange={(e) => setFormData({ ...formData, zipCode: e.target.value })}
+                        className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                        placeholder="1234"
+                      />
+                    </div>
+                  </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-[#6B7280] mb-2">
-                    Bemutatkozás
-                  </label>
-                  <textarea
-                    value={formData.bio}
-                    onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
-                    rows="4"
-                    className="w-full px-4 py-2 bg-white border border-[#E5E7EB] rounded-lg text-[#111827] focus:outline-none focus:ring-2 focus:ring-[#6B7280]"
-                    placeholder="Írj néhány mondatot magadról..."
-                  />
-                </div>
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="col-span-2">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Utca <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.street}
+                        onChange={(e) => setFormData({ ...formData, street: e.target.value })}
+                        className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                        placeholder="Kossuth Lajos utca"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Házszám
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.houseNumber}
+                        onChange={(e) => setFormData({ ...formData, houseNumber: e.target.value })}
+                        className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                        placeholder="12"
+                      />
+                    </div>
+                  </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-[#6B7280] mb-2">
-                    NNK Működési Nyilvántartási Szám <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.nkkNumber}
-                    onChange={(e) => setFormData({ ...formData, nkkNumber: e.target.value })}
-                    className="w-full px-4 py-2 bg-white border border-[#E5E7EB] rounded-lg text-[#111827] focus:outline-none focus:ring-2 focus:ring-[#6B7280]"
-                    placeholder="pl. 12345-6/7890/2024"
-                    required
-                  />
-                  <p className="mt-1 text-xs text-gray-500">
-                    ⚠️ Az NNK szám ellenőrzése után admin jóváhagyás szükséges a profil aktiválásához
-                  </p>
-                </div>
-              </div>
-            )}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      NNK Nyilvántartási szám <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.nkkNumber}
+                      onChange={(e) => setFormData({ ...formData, nkkNumber: e.target.value })}
+                      className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                      placeholder="12345-6/7890/2024"
+                      required
+                    />
+                    <div className="mt-2 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                      <p className="text-xs text-yellow-800">
+                        ⚠️ <strong>Fontos:</strong> Az NNK szám ellenőrzése után admin jóváhagyás szükséges. 
+                        Addig nem tudsz igényt feladni vagy jelentkezni.
+                      </p>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                /* Helyettesítő űrlap (Gyógyszerész & Szakasszisztens) */
+                <>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Teljes név <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.displayName}
+                      onChange={(e) => setFormData({ ...formData, displayName: e.target.value })}
+                      className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                      placeholder="pl. Nagy Eszter"
+                      required
+                    />
+                  </div>
 
-            <div className="mt-8 flex gap-4">
-              <button
-                type="button"
-                onClick={() => router.push('/pharmagister')}
-                className="flex-1 px-6 py-3 border border-[#E5E7EB] rounded-lg text-[#111827] font-medium hover:bg-[#F3F4F6] transition-colors"
-              >
-                Mégse
-              </button>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Email cím
+                    </label>
+                    <input
+                      type="email"
+                      value={user?.email || ''}
+                      disabled
+                      className="w-full px-4 py-3 border border-gray-200 rounded-lg bg-gray-50 text-gray-500"
+                    />
+                    <p className="text-xs text-gray-400 mt-1">Automatikusan kitöltve a regisztrációból</p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Telefonszám
+                    </label>
+                    <input
+                      type="tel"
+                      value={formData.phone}
+                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                      className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                      placeholder="+36 30 123 4567"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Tapasztalat <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      value={formData.yearsOfExperience}
+                      onChange={(e) => setFormData({ ...formData, yearsOfExperience: e.target.value })}
+                      className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                      required
+                    >
+                      <option value="">Válassz...</option>
+                      <option value="0-1">0-1 év</option>
+                      <option value="1-3">1-3 év</option>
+                      <option value="3-5">3-5 év</option>
+                      <option value="5-10">5-10 év</option>
+                      <option value="10+">10+ év</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Szoftverismeret <span className="text-red-500">*</span>
+                    </label>
+                    <div className="grid grid-cols-2 gap-2">
+                      {softwareOptions.map(software => (
+                        <label key={software} className="flex items-center p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors">
+                          <input
+                            type="checkbox"
+                            checked={formData.softwareKnowledge.includes(software)}
+                            onChange={() => handleSoftwareToggle(software)}
+                            className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+                          />
+                          <span className="ml-2 text-sm text-gray-700">{software}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Órabér (Ft) <span className="text-gray-400 text-xs">(opcionális)</span>
+                    </label>
+                    <input
+                      type="number"
+                      value={formData.hourlyRate}
+                      onChange={(e) => setFormData({ ...formData, hourlyRate: e.target.value })}
+                      className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                      min="0"
+                      placeholder="Hagyd üresen ha nem szeretnéd megadni"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Bemutatkozás
+                    </label>
+                    <textarea
+                      value={formData.bio}
+                      onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
+                      rows="4"
+                      className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                      placeholder="Írj néhány mondatot magadról, ami meggyőzi a gyógyszertárakat..."
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      NNK Nyilvántartási szám <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.nkkNumber}
+                      onChange={(e) => setFormData({ ...formData, nkkNumber: e.target.value })}
+                      className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                      placeholder="12345-6/7890/2024"
+                      required
+                    />
+                    <div className="mt-2 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                      <p className="text-xs text-yellow-800">
+                        ⚠️ <strong>Fontos:</strong> Az NNK szám ellenőrzése után admin jóváhagyás szükséges. 
+                        Addig nem tudsz igényre jelentkezni.
+                      </p>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* Submit gomb */}
               <button
                 type="submit"
                 disabled={loading}
-                className="flex-1 px-6 py-3 bg-[#111827] text-white rounded-lg font-medium hover:bg-[#374151] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                className="w-full py-4 bg-purple-600 text-white rounded-lg font-semibold hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
               >
                 {loading ? (
                   <>
@@ -427,25 +629,24 @@ function PharmagisterSetupContent() {
                     Mentés...
                   </>
                 ) : (
-                  'Profil létrehozása'
+                  editMode ? 'Profil mentése' : 'Regisztráció beküldése'
                 )}
               </button>
-            </div>
-          </form>
+            </form>
+          )}
         </div>
       </div>
     </RouteGuard>
   );
 }
 
-// Wrapper with Suspense boundary
 export default function PharmagisterSetupPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
-          <p className="text-gray-300">Betöltés...</p>
+          <p className="text-gray-500">Betöltés...</p>
         </div>
       </div>
     }>
