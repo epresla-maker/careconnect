@@ -84,7 +84,7 @@ async function fetchFriendData(friendIds) {
 // =================================================================
 // --- "Húzható" Chat Elem Komponens ---
 // =================================================================
-function SwipeableChatItem({ chat, onArchive, onDelete, onNavigate, isUnread, darkMode }) {
+function SwipeableChatItem({ chat, onArchive, onDelete, onNavigate, isUnread, darkMode, demandInfo }) {
   const x = useMotionValue(0); 
   const itemRef = useRef(null);
   const archiveThreshold = 100;
@@ -177,9 +177,15 @@ function SwipeableChatItem({ chat, onArchive, onDelete, onNavigate, isUnread, da
           <h2 className={`text-lg truncate ${isUnread ? (darkMode ? 'font-bold text-white' : 'font-bold text-[#111827]') : (darkMode ? 'font-semibold text-gray-300' : 'font-semibold text-gray-700')}`}>
             {chat.otherUserName}
           </h2>
-          <p className={`text-sm truncate ${isUnread ? (darkMode ? 'font-semibold text-gray-400' : 'font-semibold text-[#374151]') : (darkMode ? 'text-gray-500' : 'text-[#6B7280]')}`}>
-            {chat.lastMessage}
-          </p>
+          {demandInfo ? (
+            <p className={`text-xs truncate ${isUnread ? (darkMode ? 'font-semibold text-gray-400' : 'font-semibold text-[#374151]') : (darkMode ? 'text-gray-500' : 'text-[#6B7280]')}`}>
+              {demandInfo}
+            </p>
+          ) : (
+            <p className={`text-sm truncate ${isUnread ? (darkMode ? 'font-semibold text-gray-400' : 'font-semibold text-[#374151]') : (darkMode ? 'text-gray-500' : 'text-[#6B7280]')}`}>
+              {chat.lastMessage}
+            </p>
+          )}
         </div>
         <div className="text-right ml-2 whitespace-nowrap flex flex-col items-end">
           <p className={`text-xs ${isUnread ? 'text-blue-400 font-semibold' : (darkMode ? 'text-gray-500' : 'text-gray-500')}`}>
@@ -297,8 +303,8 @@ export default function ChatListPage() {
                         chat.lastMessageSenderId !== user.uid && 
                         (!chat.readBy || !chat.readBy.includes(user.uid));
 
-        // Pozíció és dátum formázása a névhez
-        let displayName = partner.name;
+        // Pozíció és dátum külön mezőben
+        let demandInfo = null;
         if (chat.relatedDemandPosition && chat.relatedDemandDate) {
           const positionLabel = chat.relatedDemandPositionLabel || 
             (chat.relatedDemandPosition === 'pharmacist' ? 'Gyógyszerész' : 'Szakasszisztens');
@@ -307,16 +313,17 @@ export default function ChatListPage() {
             month: '2-digit', 
             day: '2-digit' 
           }).replace('. ', '.');
-          displayName = `${partner.name} - ${positionLabel} ${formattedDate}`;
+          demandInfo = `${positionLabel} • ${formattedDate}`;
         }
 
         return {
           id: chat.id,
-          otherUserName: displayName,
+          otherUserName: partner.name,
           otherUserPhotoURL: partner.photoURL,
           lastMessage: lastMessagePreview,
           lastMessageAt: chat.lastMessageAt?.toDate(),
           isUnread: isUnread,
+          demandInfo: demandInfo,
         };
       });
       
@@ -741,6 +748,7 @@ export default function ChatListPage() {
                   onNavigate={handleNavigate}
                   isUnread={chat.isUnread}
                   darkMode={darkMode}
+                  demandInfo={chat.demandInfo}
                 />
               ))}
             </div>
