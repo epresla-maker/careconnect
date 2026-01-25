@@ -746,7 +746,10 @@ export default function PharmaDashboard({ pharmaRole }) {
                       >
                         Jelentkezem
                       </button>
-                      <button className={`px-3 py-1.5 border rounded text-xs font-medium ${darkMode ? 'border-gray-600 text-gray-200 hover:bg-gray-600' : 'border-[#E5E7EB] text-[#111827] hover:bg-[#F9FAFB]'}`}>
+                      <button 
+                        onClick={() => router.push(`/pharmagister/demand/${demand.id}`)}
+                        className={`px-3 py-1.5 border rounded text-xs font-medium ${darkMode ? 'border-gray-600 text-gray-200 hover:bg-gray-600' : 'border-[#E5E7EB] text-[#111827] hover:bg-[#F9FAFB]'}`}
+                      >
                         Részletek
                       </button>
                     </div>
