@@ -287,15 +287,44 @@ export default function ChatRoomPage() {
     // 2. Üzenetek valós idejű figyelése
     const messagesRef = collection(db, "chats", chatId, "messages");
     const q = query(messagesRef, orderBy("createdAt", "asc")); 
+    
+    // Tárol a chat törlés időpontját
+    let userDeletedAtTime = null;
 
-    const unsubscribeMessages = onSnapshot(q, (querySnapshot) => {
+    const unsubscribeMessages = onSnapshot(q, async (querySnapshot) => {
+      // Első futáskor lekérdezzük a chat dokumentumot a törlési időpontért
+      if (userDeletedAtTime === null) {
+        try {
+          const chatDocSnap = await getDoc(chatDocRef);
+          const chatData = chatDocSnap.data();
+          const userDeletedAt = chatData?.deletedAt?.[user.uid];
+          if (userDeletedAt) {
+            userDeletedAtTime = userDeletedAt.toMillis();
+          }
+        } catch (err) {
+          console.error("Error fetching chat deletedAt:", err);
+        }
+      }
+      
       const loadedMessages = [];
       querySnapshot.forEach((doc) => {
         const messageData = { id: doc.id, ...doc.data() };
-        // Kiszűrjük azokat az üzeneteket, amiket a felhasználó lokálisan törölt
-        if (!messageData.deletedBy || !messageData.deletedBy.includes(user.uid)) {
-          loadedMessages.push(messageData);
+        
+        // Kiszűrjük:
+        // 1. Lokálisan törölt üzenetek
+        if (messageData.deletedBy && messageData.deletedBy.includes(user.uid)) {
+          return;
         }
+        
+        // 2. Chat törlés előtti üzenetek
+        if (userDeletedAtTime && messageData.createdAt) {
+          const messageTime = messageData.createdAt.toMillis();
+          if (messageTime <= userDeletedAtTime) {
+            return; // Régi üzenet, ne mutassuk
+          }
+        }
+        
+        loadedMessages.push(messageData);
       });
       
       const previousLength = messages.length;

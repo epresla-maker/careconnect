@@ -559,8 +559,10 @@ export default function ChatListPage() {
     setChats(prevChats => prevChats.filter(chat => chat.id !== chatId));
     try {
       const chatDocRef = doc(db, "chats", chatId);
+      // Tároljuk a törlés időpontját is
       await updateDoc(chatDocRef, {
-        deletedBy: arrayUnion(user.uid)
+        deletedBy: arrayUnion(user.uid),
+        [`deletedAt.${user.uid}`]: serverTimestamp() // Időpont amikor törölte
       });
     } catch (error) {
       console.error("Hiba a (soft) törléskor:", error);
