@@ -42,8 +42,13 @@ export default function RegisterPage() {
         pharmaProfileComplete: false
       });
 
-      // Aktiváló email küldése
-      await sendEmailVerification(userCredential.user);
+      // Aktiváló email küldése egyedi beállításokkal
+      const actionCodeSettings = {
+        url: `${window.location.origin}/login?verified=true`,
+        handleCodeInApp: false
+      };
+      
+      await sendEmailVerification(userCredential.user, actionCodeSettings);
 
       // Kijelentkeztetjük a usert
       await signOut(auth);
