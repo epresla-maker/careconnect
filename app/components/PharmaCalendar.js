@@ -646,6 +646,23 @@ function DemandCard({ demand, pharmaRole, darkMode }) {
       return;
     }
 
+    // Szerepkör ellenőrzés - KRITIKUS!
+    if (!userData.pharmagisterRole || userData.pharmagisterRole === 'pharmacy') {
+      alert('Csak gyógyszerészek és szakasszisztensek jelentkezhetnek!');
+      return;
+    }
+
+    // Ellenőrizzük hogy a szerepkör egyezik-e az igénnyel
+    const userRole = userData.pharmagisterRole; // 'pharmacist' vagy 'assistant'
+    const demandPosition = demand.position; // 'pharmacist' vagy 'assistant'
+    
+    if (userRole !== demandPosition) {
+      const userRoleLabel = userRole === 'pharmacist' ? 'gyógyszerész' : 'szakasszisztens';
+      const demandPositionLabel = demandPosition === 'pharmacist' ? 'gyógyszerész' : 'szakasszisztens';
+      alert(`Erre az igényre csak ${demandPositionLabel}ek jelentkezhetnek! Te ${userRoleLabel}ként vagy regisztrálva.`);
+      return;
+    }
+
     if (applying) return;
     
     setApplying(true);
@@ -682,6 +699,19 @@ function DemandCard({ demand, pharmaRole, darkMode }) {
         status: 'pending',
         createdAt: new Date().toISOString(),
         message: `Jelentkezem a ${demand.date} napra.`
+      });
+
+      // Értesítés küldése a gyógyszertárnak
+      const { addDoc: addDocNotif, collection: collectionNotif, serverTimestamp } = await import('firebase/firestore');
+      await addDocNotif(collectionNotif(db, 'notifications'), {
+        userId: demand.pharmacyId,
+        type: 'pharma_application',
+        title: 'Új jelentkező! 📝',
+        message: `${userData.displayName || 'Valaki'} jelentkezett a ${new Date(demand.date).toLocaleDateString('hu-HU')}-i helyettesítésre.`,
+        demandId: demand.id,
+        applicantId: user.uid,
+        read: false,
+        createdAt: serverTimestamp(),
       });
 
       alert('Jelentkezés sikeresen elküldve!');

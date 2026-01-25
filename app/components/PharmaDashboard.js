@@ -256,12 +256,29 @@ export default function PharmaDashboard({ pharmaRole }) {
       return;
     }
 
-    const message = prompt('Üzenet a gyógyszertárnak (opcionális):');
-
     try {
       // Get demand details to send notification to pharmacy
       const demandDoc = await getDoc(doc(db, 'pharmaDemands', demandId));
       const demandData = demandDoc.data();
+      
+      // Szerepkör ellenőrzés - KRITIKUS!
+      if (!userData.pharmagisterRole || userData.pharmagisterRole === 'pharmacy') {
+        alert('Csak gyógyszerészek és szakasszisztensek jelentkezhetnek!');
+        return;
+      }
+
+      // Ellenőrizzük hogy a szerepkör egyezik-e az igénnyel
+      const userRole = userData.pharmagisterRole; // 'pharmacist' vagy 'assistant'
+      const demandPosition = demandData.position; // 'pharmacist' vagy 'assistant'
+      
+      if (userRole !== demandPosition) {
+        const userRoleLabel = userRole === 'pharmacist' ? 'gyógyszerész' : 'szakasszisztens';
+        const demandPositionLabel = demandPosition === 'pharmacist' ? 'gyógyszerész' : 'szakasszisztens';
+        alert(`Erre az igényre csak ${demandPositionLabel}ek jelentkezhetnek! Te ${userRoleLabel}ként vagy regisztrálva.`);
+        return;
+      }
+
+    const message = prompt('Üzenet a gyógyszertárnak (opcionális):');
       
       await addDoc(collection(db, 'pharmaApplications'), {
         demandId,
