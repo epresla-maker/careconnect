@@ -205,7 +205,9 @@ export default function DemandDetailPage() {
         // Update existing chat with last message info
         await updateDoc(doc(db, 'chats', chatId), {
           lastMessageAt: serverTimestamp(),
-          lastMessage: messageText.trim()
+          lastMessage: messageText.trim(),
+          deletedBy: [], // Visszaállítjuk mindkét félnek
+          archivedBy: [] // Archívumból is visszaállítjuk
         });
       }
       
