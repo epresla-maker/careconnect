@@ -183,6 +183,18 @@ export default function SettingsPage() {
           </div>
         ))}
 
+        {/* Add Account Button */}
+        <button
+          onClick={() => router.push('/register')}
+          className={`w-full ${darkMode ? 'bg-gray-800 hover:bg-gray-700' : 'bg-white hover:bg-gray-50'} rounded-xl shadow-sm px-4 py-3 flex items-center gap-3 transition-colors mb-4`}
+        >
+          <div className={`p-2 rounded-lg ${darkMode ? 'bg-blue-900/30' : 'bg-blue-100'}`}>
+            <User className="w-5 h-5 text-blue-600" />
+          </div>
+          <span className={`flex-1 text-left font-medium ${darkMode ? 'text-gray-200' : 'text-gray-700'}`}>Fiók hozzáadása</span>
+          <ChevronRight className={`w-5 h-5 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`} />
+        </button>
+
         {/* Logout Button */}
         <button
           onClick={() => setShowLogoutConfirm(true)}
