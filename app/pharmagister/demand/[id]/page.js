@@ -306,11 +306,12 @@ export default function DemandDetailPage() {
     roleMatches,
     canApply,
     isPendingApproval,
-    pharmaProfileComplete: userData?.pharmaProfileComplete
+    pharmaProfileComplete: userData?.pharmaProfileComplete,
+    hasUser: !!user
   });
 
-  // Show buttons for any logged-in user who is not the pharmacy owner
-  const showBottomButtons = user && !isOwnDemand;
+  // Show buttons for any logged-in user (always show if user exists)
+  const showBottomButtons = !!user;
 
   return (
     <RouteGuard>
