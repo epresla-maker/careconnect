@@ -459,6 +459,41 @@ export default function DemandDetailPage() {
                   </p>
                 </div>
               )}
+
+              {/* ACTION BUTTONS - Inside the card */}
+              {user && (
+                <div className={`mt-6 pt-4 border-t ${darkMode ? 'border-gray-700' : 'border-gray-200'} flex gap-3`}>
+                  <button
+                    onClick={handleApply}
+                    disabled={applying || hasApplied || !canApply}
+                    className={`flex-1 py-3 px-4 rounded-xl font-semibold transition-colors flex items-center justify-center gap-2 ${
+                      hasApplied 
+                        ? 'bg-green-100 text-green-700 cursor-default'
+                        : canApply
+                          ? 'bg-green-600 hover:bg-green-700 text-white'
+                          : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                    }`}
+                  >
+                    {applying ? (
+                      <>
+                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                        <span>Jelentkezés...</span>
+                      </>
+                    ) : hasApplied ? (
+                      <span>✅ Már jelentkeztél</span>
+                    ) : (
+                      <span>Jelentkezem</span>
+                    )}
+                  </button>
+                  <button
+                    onClick={() => setShowMessageModal(true)}
+                    className="px-4 py-3 bg-[#6B46C1] hover:bg-[#5a3aa3] text-white font-semibold rounded-xl transition-colors flex items-center gap-2"
+                  >
+                    <MessageCircle className="w-5 h-5" />
+                    Üzenet
+                  </button>
+                </div>
+              )}
             </div>
           </div>
 
