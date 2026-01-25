@@ -198,7 +198,9 @@ export default function DemandDetailPage() {
           relatedDemandId: demandId,
           relatedDemandDate: demand.date,
           relatedDemandPosition: demand.position,
-          relatedDemandPositionLabel: demand.position === 'pharmacist' ? 'Gyógyszerész' : 'Szakasszisztens'
+          relatedDemandPositionLabel: demand.position === 'pharmacist' ? 'Gyógyszerész' : 'Szakasszisztens',
+          archivedBy: [],
+          deletedBy: []
         });
         chatId = newChatRef.id;
       } else {
