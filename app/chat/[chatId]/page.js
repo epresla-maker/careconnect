@@ -81,7 +81,8 @@ export default function ChatRoomPage() {
   const [highlightedMessageId, setHighlightedMessageId] = useState(highlightMessageId);
   
   const [partnerData, setPartnerData] = useState({ name: "Betöltés...", photoURL: "" });
-  const [firstMessageAt, setFirstMessageAt] = useState(null); 
+  const [firstMessageAt, setFirstMessageAt] = useState(null);
+  const [chatDemandInfo, setChatDemandInfo] = useState(null); // { position, date } 
 
   // --- ÚJ ÁLLAPOTOK A GÉPELÉSJELZŐHÖZ ---
   const [partnerId, setPartnerId] = useState(null); // Ki a partner?
@@ -223,6 +224,15 @@ export default function ChatRoomPage() {
         const docSnap = await getDoc(chatDocRef);
         if (docSnap.exists()) {
           const chatData = docSnap.data();
+          
+          // Demand info mentése ha van
+          if (chatData.relatedDemandPosition && chatData.relatedDemandDate) {
+            setChatDemandInfo({
+              position: chatData.relatedDemandPosition,
+              positionLabel: chatData.relatedDemandPositionLabel || (chatData.relatedDemandPosition === 'pharmacist' ? 'Gyógyszerész' : 'Szakasszisztens'),
+              date: chatData.relatedDemandDate
+            });
+          }
           
           if (!chatData.members.includes(user.uid)) {
             router.push("/chat"); 
@@ -1023,7 +1033,14 @@ export default function ChatRoomPage() {
           )}
           
           <div>
-            <h1 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>{partnerData.name}</h1>
+            <h1 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+              {partnerData.name}
+              {chatDemandInfo && (
+                <span className={`ml-2 text-sm font-normal ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                  - {chatDemandInfo.positionLabel} {new Date(chatDemandInfo.date).toLocaleDateString('hu-HU', { month: '2-digit', day: '2-digit' }).replace('. ', '.').replace('.', '.')}
+                </span>
+              )}
+            </h1>
             <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
               {isPartnerOnline ? (
                 <span className="flex items-center gap-1">

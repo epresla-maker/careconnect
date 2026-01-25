@@ -195,7 +195,9 @@ export default function DemandDetailPage() {
           lastMessageAt: serverTimestamp(),
           lastMessage: messageText.trim(),
           relatedDemandId: demandId,
-          relatedDemandDate: demand.date
+          relatedDemandDate: demand.date,
+          relatedDemandPosition: demand.position,
+          relatedDemandPositionLabel: demand.position === 'pharmacist' ? 'Gyógyszerész' : 'Szakasszisztens'
         });
         chatId = newChatRef.id;
       } else {

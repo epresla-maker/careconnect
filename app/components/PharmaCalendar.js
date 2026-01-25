@@ -765,7 +765,9 @@ function DemandCard({ demand, pharmaRole, darkMode }) {
           lastMessageAt: serverTimestamp(),
           lastMessage: messageText.trim(),
           relatedDemandId: demand.id,
-          relatedDemandDate: demand.date
+          relatedDemandDate: demand.date,
+          relatedDemandPosition: demand.position,
+          relatedDemandPositionLabel: demand.position === 'pharmacist' ? 'Gyógyszerész' : 'Szakasszisztens'
         });
         chatId = newChatRef.id;
       } else {
