@@ -205,12 +205,22 @@ export default function DemandDetailPage() {
         chatId = newChatRef.id;
       } else {
         // Update existing chat with last message info
-        await updateDoc(doc(db, 'chats', chatId), {
+        const chatDoc = await getDoc(doc(db, 'chats', chatId));
+        const updateData = {
           lastMessageAt: serverTimestamp(),
-          lastMessage: messageText.trim(),
-          deletedBy: arrayRemove(user.uid), // Csak a küldő státuszát töröljük
-          archivedBy: arrayRemove(user.uid) // Csak a küldő státuszát töröljük
-        });
+          lastMessage: messageText.trim()
+        };
+        
+        // Csak akkor használjuk az arrayRemove-ot, ha a mezők léteznek
+        const chatData = chatDoc.data();
+        if (chatData?.deletedBy) {
+          updateData.deletedBy = arrayRemove(user.uid);
+        }
+        if (chatData?.archivedBy) {
+          updateData.archivedBy = arrayRemove(user.uid);
+        }
+        
+        await updateDoc(doc(db, 'chats', chatId), updateData);
       }
       
       // Add message to the chat
