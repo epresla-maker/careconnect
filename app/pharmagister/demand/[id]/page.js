@@ -295,6 +295,22 @@ export default function DemandDetailPage() {
                    demand.status === 'open' &&
                    roleMatches &&
                    !isPendingApproval;
+  
+  // Debug log
+  console.log('🔍 Demand Detail Debug:', {
+    isOwnDemand,
+    userUid: user?.uid,
+    pharmacyId: demand.pharmacyId,
+    userRole: userData?.pharmagisterRole,
+    demandPosition: demand.position,
+    roleMatches,
+    canApply,
+    isPendingApproval,
+    pharmaProfileComplete: userData?.pharmaProfileComplete
+  });
+
+  // Show buttons for any logged-in user who is not the pharmacy owner
+  const showBottomButtons = user && !isOwnDemand;
 
   return (
     <RouteGuard>
@@ -491,7 +507,7 @@ export default function DemandDetailPage() {
         </div>
 
         {/* Fixed Bottom Buttons */}
-        {!isOwnDemand && (
+        {showBottomButtons && (
           <div className={`fixed bottom-0 left-0 right-0 ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border-t p-4`}>
             <div className="max-w-lg mx-auto">
               {hasApplied ? (
