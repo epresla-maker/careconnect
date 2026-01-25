@@ -2,9 +2,10 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useTheme } from '@/context/ThemeContext';
-import { collection, addDoc, query, where, getDocs, deleteDoc, doc, orderBy } from 'firebase/firestore';
+import { useRouter } from 'next/navigation';
+import { collection, addDoc, query, where, getDocs, deleteDoc, doc, orderBy, serverTimestamp, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { ChevronLeft, ChevronRight, Plus, X, Loader2, Clock, MapPin } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, X, Loader2, Clock, MapPin, MessageCircle, Send } from 'lucide-react';
 
 export default function PharmaCalendar({ pharmaRole }) {
   const { user, userData } = useAuth();
@@ -632,8 +633,12 @@ function CreateDemandForm({ date, darkMode, onSuccess, onCancel }) {
 // Demand Card for Substitutes
 function DemandCard({ demand, pharmaRole, darkMode }) {
   const { user, userData } = useAuth();
+  const router = useRouter();
   const [showDetails, setShowDetails] = useState(false);
   const [applying, setApplying] = useState(false);
+  const [showMessageModal, setShowMessageModal] = useState(false);
+  const [messageText, setMessageText] = useState('');
+  const [sendingMessage, setSendingMessage] = useState(false);
   
   const handleApply = async () => {
     if (!user || !userData) {
@@ -723,6 +728,91 @@ function DemandCard({ demand, pharmaRole, darkMode }) {
     }
   };
 
+  const handleSendMessage = async () => {
+    if (!user || !messageText.trim()) return;
+    
+    setSendingMessage(true);
+    try {
+      // Check if chat already exists between user and pharmacy
+      const chatsRef = collection(db, 'chats');
+      const existingChatQuery = query(
+        chatsRef,
+        where('members', 'array-contains', user.uid)
+      );
+      const existingChats = await getDocs(existingChatQuery);
+      
+      let chatId = null;
+      existingChats.forEach((chatDoc) => {
+        const chatData = chatDoc.data();
+        if (chatData.members.includes(demand.pharmacyId)) {
+          chatId = chatDoc.id;
+        }
+      });
+      
+      // If no existing chat, create new one
+      if (!chatId) {
+        const newChatRef = await addDoc(chatsRef, {
+          members: [user.uid, demand.pharmacyId],
+          memberNames: {
+            [user.uid]: userData?.displayName || 'Felhasználó',
+            [demand.pharmacyId]: demand.pharmacyName || 'Gyógyszertár'
+          },
+          memberPhotos: {
+            [user.uid]: userData?.photoURL || null,
+            [demand.pharmacyId]: demand.pharmacyPhotoURL || null
+          },
+          createdAt: serverTimestamp(),
+          lastMessageAt: serverTimestamp(),
+          lastMessage: messageText.trim(),
+          relatedDemandId: demand.id,
+          relatedDemandDate: demand.date
+        });
+        chatId = newChatRef.id;
+      } else {
+        // Update existing chat with last message info
+        await updateDoc(doc(db, 'chats', chatId), {
+          lastMessageAt: serverTimestamp(),
+          lastMessage: messageText.trim()
+        });
+      }
+      
+      // Add message to the chat
+      await addDoc(collection(db, 'chats', chatId, 'messages'), {
+        senderId: user.uid,
+        senderName: userData?.displayName || 'Felhasználó',
+        text: messageText.trim(),
+        createdAt: serverTimestamp(),
+        relatedDemandId: demand.id,
+        relatedDemandDate: demand.date
+      });
+      
+      // Send notification to pharmacy
+      await addDoc(collection(db, 'notifications'), {
+        userId: demand.pharmacyId,
+        type: 'new_message',
+        title: 'Új üzenet érkezett! 💬',
+        message: `${userData?.displayName || 'Valaki'} üzenetet küldött a ${new Date(demand.date).toLocaleDateString('hu-HU')}-i igényeddel kapcsolatban.`,
+        chatId: chatId,
+        senderId: user.uid,
+        read: false,
+        createdAt: serverTimestamp(),
+      });
+      
+      setShowMessageModal(false);
+      setMessageText('');
+      alert('Üzenet sikeresen elküldve!');
+      
+      // Navigate to chat
+      router.push(`/chat/${chatId}`);
+      
+    } catch (err) {
+      console.error('Error sending message:', err);
+      alert('Hiba történt az üzenet küldése során.');
+    } finally {
+      setSendingMessage(false);
+    }
+  };
+
   return (
     <div className={`border ${darkMode ? 'border-gray-700 bg-gray-900' : 'border-[#E5E7EB] bg-[#F9FAFB]'} rounded-xl p-4 hover:border-[#6B46C1] transition-colors`}>
       <div className="flex items-start gap-3">
@@ -794,17 +884,81 @@ function DemandCard({ demand, pharmaRole, darkMode }) {
         <button 
           onClick={handleApply}
           disabled={applying}
-          className="flex-1 px-4 py-2 bg-[#6B46C1] hover:bg-[#5a3aa3] text-white rounded-xl transition-colors text-sm font-medium disabled:bg-gray-400 disabled:cursor-not-allowed"
+          className="flex-1 px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded-xl transition-colors text-sm font-medium disabled:bg-gray-400 disabled:cursor-not-allowed"
         >
           {applying ? 'Jelentkezés...' : 'Jelentkezem'}
         </button>
         <button 
-          onClick={() => setShowDetails(!showDetails)}
-          className={`px-4 py-2 border ${darkMode ? 'border-gray-600 text-white hover:bg-gray-700' : 'border-[#E5E7EB] text-[#111827] hover:bg-[#F3F4F6]'} rounded-xl transition-colors text-sm font-medium`}
+          onClick={() => setShowMessageModal(true)}
+          className="px-3 py-2 bg-[#6B46C1] hover:bg-[#5a3aa3] text-white rounded-xl transition-colors text-sm font-medium flex items-center gap-1"
         >
-          {showDetails ? 'Kevesebb' : 'Részletek'}
+          <MessageCircle className="w-4 h-4" />
+          Üzenet
+        </button>
+        <button 
+          onClick={() => router.push(`/pharmagister/demand/${demand.id}`)}
+          className={`px-3 py-2 border ${darkMode ? 'border-gray-600 text-white hover:bg-gray-700' : 'border-[#E5E7EB] text-[#111827] hover:bg-[#F3F4F6]'} rounded-xl transition-colors text-sm font-medium`}
+        >
+          Részletek
         </button>
       </div>
+
+      {/* Message Modal */}
+      {showMessageModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-4" onClick={() => setShowMessageModal(false)}>
+          <div 
+            className={`w-full max-w-lg ${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-t-2xl sm:rounded-2xl p-6`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h3 className={`text-lg font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                Üzenet - {demand.pharmacyName}
+              </h3>
+              <button
+                onClick={() => setShowMessageModal(false)}
+                className={`p-2 rounded-full ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'} mb-4`}>
+              Írj üzenetet a gyógyszertárnak a {new Date(demand.date).toLocaleDateString('hu-HU')}-i igénnyel kapcsolatban.
+            </p>
+            
+            <textarea
+              value={messageText}
+              onChange={(e) => setMessageText(e.target.value)}
+              placeholder="Îrd ide az üzeneted..."
+              rows={4}
+              className={`w-full px-4 py-3 rounded-xl border ${darkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'bg-white border-gray-200 text-gray-900 placeholder-gray-400'} focus:ring-2 focus:ring-[#6B46C1] focus:border-transparent resize-none`}
+            />
+            
+            <div className="flex gap-3 mt-4">
+              <button
+                onClick={() => setShowMessageModal(false)}
+                className={`flex-1 py-3 px-4 rounded-xl font-medium ${darkMode ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+              >
+                Mégsem
+              </button>
+              <button
+                onClick={handleSendMessage}
+                disabled={!messageText.trim() || sendingMessage}
+                className="flex-1 py-3 px-4 rounded-xl font-medium bg-[#6B46C1] hover:bg-[#5a3aa3] text-white disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                {sendingMessage ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : (
+                  <>
+                    <Send className="w-4 h-4" />
+                    Küldés
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
