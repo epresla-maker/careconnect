@@ -83,12 +83,21 @@ export default function DemandDetailPage() {
     const userRole = userData.pharmagisterRole; // 'pharmacist' or 'assistant'
     const demandPosition = demand.position; // 'pharmacist' or 'assistant'
     
+    console.log('🔍 Szerepkör ellenőrzés:', {
+      userRole,
+      demandPosition,
+      matches: userRole === demandPosition
+    });
+    
     if (userRole !== demandPosition) {
       const userRoleLabel = userRole === 'pharmacist' ? 'gyógyszerész' : 'szakasszisztens';
       const demandPositionLabel = demandPosition === 'pharmacist' ? 'gyógyszerész' : 'szakasszisztens';
+      console.log('❌ Szerepkör nem egyezik! User:', userRoleLabel, '| Demand:', demandPositionLabel);
       alert(`Erre az igényre csak ${demandPositionLabel}ek jelentkezhetnek. Te ${userRoleLabel}ként vagy regisztrálva.`);
       return;
     }
+    
+    console.log('✅ Szerepkör egyezik, folytatás...');
 
     try {
       setApplying(true);
@@ -115,6 +124,12 @@ export default function DemandDetailPage() {
 
       // Send notification to pharmacy
       const { addDoc, collection, serverTimestamp } = await import('firebase/firestore');
+      console.log('📧 Értesítés küldése gyógyszertárnak:', {
+        pharmacyId: demand.pharmacyId,
+        demandDate: demand.date,
+        applicantName: userData.displayName
+      });
+      
       await addDoc(collection(db, 'notifications'), {
         userId: demand.pharmacyId,
         type: 'pharma_application',
@@ -125,6 +140,8 @@ export default function DemandDetailPage() {
         read: false,
         createdAt: serverTimestamp(),
       });
+      
+      console.log('✅ Értesítés sikeresen létrehozva!');
 
       setHasApplied(true);
       alert('Sikeres jelentkezés! A gyógyszertár hamarosan értesítést kap és felveszi veled a kapcsolatot.');
