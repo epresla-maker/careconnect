@@ -4,8 +4,9 @@ import { useAuth } from '@/context/AuthContext';
 import { useTheme } from '@/context/ThemeContext';
 import { useRouter, useParams } from 'next/navigation';
 import RouteGuard from '@/app/components/RouteGuard';
-import { doc, getDoc, updateDoc, arrayUnion, Timestamp } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, arrayUnion, Timestamp, collection, addDoc, query, where, getDocs, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { MessageCircle, Send, X } from 'lucide-react';
 
 export default function DemandDetailPage() {
   const { user, userData } = useAuth();
@@ -20,6 +21,9 @@ export default function DemandDetailPage() {
   const [applying, setApplying] = useState(false);
   const [hasApplied, setHasApplied] = useState(false);
   const [error, setError] = useState(null);
+  const [showMessageModal, setShowMessageModal] = useState(false);
+  const [messageText, setMessageText] = useState('');
+  const [sendingMessage, setSendingMessage] = useState(false);
 
   useEffect(() => {
     const fetchDemand = async () => {
@@ -151,6 +155,91 @@ export default function DemandDetailPage() {
       alert('Hiba történt a jelentkezés során. Kérjük, próbáld újra.');
     } finally {
       setApplying(false);
+    }
+  };
+
+  const handleSendMessage = async () => {
+    if (!user || !messageText.trim()) return;
+    
+    setSendingMessage(true);
+    try {
+      // Check if chat already exists between user and pharmacy
+      const chatsRef = collection(db, 'chats');
+      const existingChatQuery = query(
+        chatsRef,
+        where('members', 'array-contains', user.uid)
+      );
+      const existingChats = await getDocs(existingChatQuery);
+      
+      let chatId = null;
+      existingChats.forEach((chatDoc) => {
+        const chatData = chatDoc.data();
+        if (chatData.members.includes(demand.pharmacyId)) {
+          chatId = chatDoc.id;
+        }
+      });
+      
+      // If no existing chat, create new one
+      if (!chatId) {
+        const newChatRef = await addDoc(chatsRef, {
+          members: [user.uid, demand.pharmacyId],
+          memberNames: {
+            [user.uid]: userData?.displayName || 'Felhasználó',
+            [demand.pharmacyId]: demand.pharmacyName || 'Gyógyszertár'
+          },
+          memberPhotos: {
+            [user.uid]: userData?.photoURL || null,
+            [demand.pharmacyId]: pharmacyData?.pharmaPhotoURL || pharmacyData?.photoURL || null
+          },
+          createdAt: serverTimestamp(),
+          lastMessageAt: serverTimestamp(),
+          lastMessage: messageText.trim(),
+          relatedDemandId: demandId,
+          relatedDemandDate: demand.date
+        });
+        chatId = newChatRef.id;
+      } else {
+        // Update existing chat with last message info
+        await updateDoc(doc(db, 'chats', chatId), {
+          lastMessageAt: serverTimestamp(),
+          lastMessage: messageText.trim()
+        });
+      }
+      
+      // Add message to the chat
+      await addDoc(collection(db, 'chats', chatId, 'messages'), {
+        senderId: user.uid,
+        senderName: userData?.displayName || 'Felhasználó',
+        text: messageText.trim(),
+        createdAt: serverTimestamp(),
+        relatedDemandId: demandId,
+        relatedDemandDate: demand.date
+      });
+      
+      // Send notification to pharmacy
+      await addDoc(collection(db, 'notifications'), {
+        userId: demand.pharmacyId,
+        type: 'new_message',
+        title: 'Új üzenet érkezett! 💬',
+        message: `${userData?.displayName || 'Valaki'} üzenetet küldött a ${new Date(demand.date).toLocaleDateString('hu-HU')}-i igényeddel kapcsolatban.`,
+        chatId: chatId,
+        senderId: user.uid,
+        read: false,
+        createdAt: serverTimestamp(),
+      });
+      
+      setShowMessageModal(false);
+      setMessageText('');
+      alert('Üzenet sikeresen elküldve!');
+      
+      // Navigate to chat
+      router.push(`/chat/${chatId}`);
+      
+    } catch (err) {
+      console.error('Error sending message:', err);
+      alert('Hiba történt az üzenet küldése során.');
+    } finally {
+      setSendingMessage(false);
     }
   };
 
@@ -401,14 +490,22 @@ export default function DemandDetailPage() {
           )}
         </div>
 
-        {/* Fixed Apply Button */}
+        {/* Fixed Bottom Buttons */}
         {!isOwnDemand && (
           <div className={`fixed bottom-0 left-0 right-0 ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border-t p-4`}>
             <div className="max-w-lg mx-auto">
               {hasApplied ? (
-                <div className="bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400 rounded-xl p-4 text-center">
-                  <span className="text-xl mr-2">✅</span>
-                  Már jelentkeztél erre az igényre
+                <div className="flex gap-3">
+                  <div className="flex-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400 rounded-xl p-3 text-center text-sm">
+                    ✅ Már jelentkeztél
+                  </div>
+                  <button
+                    onClick={() => setShowMessageModal(true)}
+                    className="flex items-center gap-2 px-4 py-3 bg-[#6B46C1] hover:bg-[#5a3aa3] text-white font-semibold rounded-xl transition-colors"
+                  >
+                    <MessageCircle className="w-5 h-5" />
+                    Üzenet
+                  </button>
                 </div>
               ) : isPendingApproval ? (
                 <div className="bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-400 rounded-xl p-4 text-center">
@@ -416,40 +513,120 @@ export default function DemandDetailPage() {
                   A profilod még jóváhagyásra vár. Amíg az admin nem ellenőrzi az NNK számodat, nem tudsz jelentkezni.
                 </div>
               ) : !roleMatches && userData?.pharmagisterRole && userData.pharmagisterRole !== 'pharmacy' ? (
-                <div className={`${darkMode ? 'bg-gray-700 text-gray-400' : 'bg-gray-100 text-gray-500'} rounded-xl p-4 text-center`}>
-                  <span className="text-xl mr-2">🚫</span>
-                  Erre az igényre csak {demand.position === 'pharmacist' ? 'gyógyszerészek' : 'szakasszisztensek'} jelentkezhetnek
+                <div className="flex gap-3">
+                  <div className={`flex-1 ${darkMode ? 'bg-gray-700 text-gray-400' : 'bg-gray-100 text-gray-500'} rounded-xl p-3 text-center text-sm`}>
+                    🚫 Csak {demand.position === 'pharmacist' ? 'gyógyszerészek' : 'szakasszisztensek'} jelentkezhetnek
+                  </div>
+                  <button
+                    onClick={() => setShowMessageModal(true)}
+                    className="flex items-center gap-2 px-4 py-3 bg-[#6B46C1] hover:bg-[#5a3aa3] text-white font-semibold rounded-xl transition-colors"
+                  >
+                    <MessageCircle className="w-5 h-5" />
+                    Üzenet
+                  </button>
                 </div>
               ) : canApply ? (
-                <button
-                  onClick={handleApply}
-                  disabled={applying}
-                  className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white font-semibold py-4 px-6 rounded-xl transition-colors flex items-center justify-center gap-2"
-                >
-                  {applying ? (
-                    <>
-                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                      <span>Jelentkezés...</span>
-                    </>
-                  ) : (
-                    <>
-                      <span>📝</span>
-                      <span>Jelentkezem</span>
-                    </>
-                  )}
-                </button>
+                <div className="flex gap-3">
+                  <button
+                    onClick={handleApply}
+                    disabled={applying}
+                    className="flex-1 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white font-semibold py-3 px-4 rounded-xl transition-colors flex items-center justify-center gap-2"
+                  >
+                    {applying ? (
+                      <>
+                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                        <span>Jelentkezés...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>📝</span>
+                        <span>Jelentkezem</span>
+                      </>
+                    )}
+                  </button>
+                  <button
+                    onClick={() => setShowMessageModal(true)}
+                    className="flex items-center gap-2 px-4 py-3 bg-[#6B46C1] hover:bg-[#5a3aa3] text-white font-semibold rounded-xl transition-colors"
+                  >
+                    <MessageCircle className="w-5 h-5" />
+                    Üzenet
+                  </button>
+                </div>
               ) : demand.status !== 'open' ? (
                 <div className={`${darkMode ? 'bg-gray-700 text-gray-400' : 'bg-gray-100 text-gray-500'} rounded-xl p-4 text-center`}>
                   Ez az igény már nem aktív
                 </div>
               ) : (
-                <button
-                  onClick={() => router.push('/pharmagister/setup')}
-                  className="w-full bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-semibold py-4 px-6 rounded-xl"
-                >
-                  Jelentkezéshez regisztrálj a Pharmagisterbe
-                </button>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => router.push('/pharmagister/setup')}
+                    className="flex-1 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-semibold py-3 px-4 rounded-xl"
+                  >
+                    Regisztrálj a Pharmagisterbe
+                  </button>
+                  <button
+                    onClick={() => setShowMessageModal(true)}
+                    className="flex items-center gap-2 px-4 py-3 bg-[#6B46C1] hover:bg-[#5a3aa3] text-white font-semibold rounded-xl transition-colors"
+                  >
+                    <MessageCircle className="w-5 h-5" />
+                    Üzenet
+                  </button>
+                </div>
               )}
+            </div>
+          </div>
+        )}
+
+        {/* Message Modal */}
+        {showMessageModal && (
+          <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-4">
+            <div className={`w-full max-w-lg ${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-t-2xl sm:rounded-2xl p-6`}>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className={`text-lg font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                  Üzenet küldése - {demand.pharmacyName}
+                </h3>
+                <button
+                  onClick={() => setShowMessageModal(false)}
+                  className={`p-2 rounded-full ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              
+              <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'} mb-4`}>
+                Írj üzenetet a gyógyszertárnak a {new Date(demand.date).toLocaleDateString('hu-HU')}-i igénnyel kapcsolatban.
+              </p>
+              
+              <textarea
+                value={messageText}
+                onChange={(e) => setMessageText(e.target.value)}
+                placeholder="Îrd ide az üzeneted..."
+                rows={4}
+                className={`w-full px-4 py-3 rounded-xl border ${darkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'bg-white border-gray-200 text-gray-900 placeholder-gray-400'} focus:ring-2 focus:ring-[#6B46C1] focus:border-transparent resize-none`}
+              />
+              
+              <div className="flex gap-3 mt-4">
+                <button
+                  onClick={() => setShowMessageModal(false)}
+                  className={`flex-1 py-3 px-4 rounded-xl font-medium ${darkMode ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+                >
+                  Mégsem
+                </button>
+                <button
+                  onClick={handleSendMessage}
+                  disabled={!messageText.trim() || sendingMessage}
+                  className="flex-1 py-3 px-4 rounded-xl font-medium bg-[#6B46C1] hover:bg-[#5a3aa3] text-white disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {sendingMessage ? (
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                  ) : (
+                    <>
+                      <Send className="w-4 h-4" />
+                      Küldés
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
           </div>
         )}
