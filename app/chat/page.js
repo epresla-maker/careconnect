@@ -297,9 +297,22 @@ export default function ChatListPage() {
                         chat.lastMessageSenderId !== user.uid && 
                         (!chat.readBy || !chat.readBy.includes(user.uid));
 
+        // Pozíció és dátum formázása a névhez
+        let displayName = partner.name;
+        if (chat.relatedDemandPosition && chat.relatedDemandDate) {
+          const positionLabel = chat.relatedDemandPositionLabel || 
+            (chat.relatedDemandPosition === 'pharmacist' ? 'Gyógyszerész' : 'Szakasszisztens');
+          const demandDate = new Date(chat.relatedDemandDate);
+          const formattedDate = demandDate.toLocaleDateString('hu-HU', { 
+            month: '2-digit', 
+            day: '2-digit' 
+          }).replace('. ', '.');
+          displayName = `${partner.name} - ${positionLabel} ${formattedDate}`;
+        }
+
         return {
           id: chat.id,
-          otherUserName: partner.name,
+          otherUserName: displayName,
           otherUserPhotoURL: partner.photoURL,
           lastMessage: lastMessagePreview,
           lastMessageAt: chat.lastMessageAt?.toDate(),
