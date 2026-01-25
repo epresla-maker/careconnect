@@ -4,7 +4,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useTheme } from '@/context/ThemeContext';
 import { useRouter, useParams } from 'next/navigation';
 import RouteGuard from '@/app/components/RouteGuard';
-import { doc, getDoc, updateDoc, arrayUnion, Timestamp, collection, addDoc, query, where, getDocs, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, arrayUnion, arrayRemove, Timestamp, collection, addDoc, query, where, getDocs, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { MessageCircle, Send, X } from 'lucide-react';
 

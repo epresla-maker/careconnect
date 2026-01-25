@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useTheme } from '@/context/ThemeContext';
 import { useRouter } from 'next/navigation';
-import { collection, addDoc, query, where, getDocs, deleteDoc, doc, orderBy, serverTimestamp, updateDoc } from 'firebase/firestore';
+import { collection, addDoc, query, where, getDocs, deleteDoc, doc, orderBy, serverTimestamp, updateDoc, arrayRemove } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { ChevronLeft, ChevronRight, Plus, X, Loader2, Clock, MapPin, MessageCircle, Send } from 'lucide-react';
 
