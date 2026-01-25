@@ -206,8 +206,8 @@ export default function DemandDetailPage() {
         await updateDoc(doc(db, 'chats', chatId), {
           lastMessageAt: serverTimestamp(),
           lastMessage: messageText.trim(),
-          deletedBy: [], // Visszaállítjuk mindkét félnek
-          archivedBy: [] // Archívumból is visszaállítjuk
+          deletedBy: arrayRemove(user.uid), // Csak a küldő státuszát töröljük
+          archivedBy: arrayRemove(user.uid) // Csak a küldő státuszát töröljük
         });
       }
       

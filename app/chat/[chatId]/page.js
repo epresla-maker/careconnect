@@ -671,8 +671,8 @@ export default function ChatRoomPage() {
         lastMessageSenderId: user.uid,
         typing: arrayRemove(user.uid),
         readBy: [user.uid],
-        deletedBy: [], // Mindkét fél számára visszaállítjuk
-        archivedBy: [] // Archívumból is visszaállítjuk
+        deletedBy: arrayRemove(user.uid), // Csak a küldő státuszát töröljük
+        archivedBy: arrayRemove(user.uid) // Csak a küldő státuszát töröljük
       });
 
       setAudioBlob(null);
@@ -969,8 +969,8 @@ export default function ChatRoomPage() {
         lastMessageSenderId: user.uid,
         typing: arrayRemove(user.uid),
         readBy: [user.uid], // Csak a küldő olvasta, a partner még nem
-        deletedBy: [], // Mindkét fél számára visszaállítjuk a chatet
-        archivedBy: [] // Mindkét fél számára visszaállítjuk az archívumból is
+        deletedBy: arrayRemove(user.uid), // Csak a küldő deleted státuszát töröljük
+        archivedBy: arrayRemove(user.uid) // Csak a küldő archived státuszát töröljük
       });
       
       // Megtartjuk a fókuszt az input mezőn - többszörös próbálkozás iOS-hez
