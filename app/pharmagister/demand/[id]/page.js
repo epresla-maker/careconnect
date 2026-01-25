@@ -163,7 +163,7 @@ export default function DemandDetailPage() {
     
     setSendingMessage(true);
     try {
-      // Check if chat already exists between user and pharmacy
+      // Check if chat already exists for this specific demand
       const chatsRef = collection(db, 'chats');
       const existingChatQuery = query(
         chatsRef,
@@ -174,7 +174,8 @@ export default function DemandDetailPage() {
       let chatId = null;
       existingChats.forEach((chatDoc) => {
         const chatData = chatDoc.data();
-        if (chatData.members.includes(demand.pharmacyId)) {
+        // Check both: same pharmacy AND same demand
+        if (chatData.members.includes(demand.pharmacyId) && chatData.relatedDemandId === demandId) {
           chatId = chatDoc.id;
         }
       });
