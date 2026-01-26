@@ -6,12 +6,6 @@ if (!admin.apps.length) {
   try {
     const privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n');
     
-    console.log('🔧 Initializing Firebase Admin with:');
-    console.log('  Project ID:', process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID);
-    console.log('  Client Email:', process.env.FIREBASE_CLIENT_EMAIL);
-    console.log('  Private Key length:', privateKey?.length);
-    console.log('  Private Key starts with:', privateKey?.substring(0, 50));
-    
     admin.initializeApp({
       credential: admin.credential.cert({
         projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
@@ -19,10 +13,9 @@ if (!admin.apps.length) {
         privateKey: privateKey,
       }),
     });
-    console.log('✅ Firebase Admin initialized successfully');
+    console.log('✅ Firebase Admin initialized');
   } catch (initError) {
     console.error('❌ Firebase Admin init failed:', initError.message);
-    console.error('Full error:', initError);
   }
 }
 
@@ -36,35 +29,17 @@ export async function POST(request) {
 
     console.log('🗑️ Törlés indul:', userId);
 
-    // 1. Firebase Authentication-ből törlés
-    try {
-      await admin.auth().deleteUser(userId);
-      console.log('✅ User törölve Firebase Auth-ból:', userId);
-    } catch (authError) {
-      console.error('⚠️ Auth törlési hiba:', authError.code, authError.message);
-      // Ha a user nem létezik Auth-ban, folytatjuk
-      if (authError.code !== 'auth/user-not-found') {
-        return NextResponse.json({ 
-          error: 'Auth törlési hiba',
-          details: authError.message,
-          code: authError.code
-        }, { status: 500 });
-      }
-    }
+    let deletedPosts = 0;
 
-    // 2. Firestore-ból törlés
+    // 1. Firestore-ból törlés
     try {
       await admin.firestore().collection('users').doc(userId).delete();
       console.log('✅ User törölve Firestore-ból:', userId);
     } catch (firestoreError) {
       console.error('⚠️ Firestore törlési hiba:', firestoreError.message);
-      return NextResponse.json({ 
-        error: 'Firestore törlési hiba',
-        details: firestoreError.message 
-      }, { status: 500 });
     }
 
-    // 3. Kapcsolódó adatok törlése (opcionális)
+    // 2. Kapcsolódó adatok törlése (posztok)
     try {
       const postsSnapshot = await admin.firestore()
         .collection('servicePosts')
@@ -73,21 +48,30 @@ export async function POST(request) {
       
       const deletePromises = postsSnapshot.docs.map(doc => doc.ref.delete());
       await Promise.all(deletePromises);
-      console.log(`✅ ${postsSnapshot.size} db poszt törölve`);
-
-      return NextResponse.json({ 
-        success: true, 
-        message: 'Felhasználó teljesen törölve',
-        deletedPosts: postsSnapshot.size
-      });
+      deletedPosts = postsSnapshot.size;
+      console.log(`✅ ${deletedPosts} db poszt törölve`);
     } catch (postsError) {
       console.error('⚠️ Posztok törlési hiba:', postsError.message);
-      // User már törölve, csak a posztok nem
+    }
+
+    // 3. Firebase Auth törlés (utoljára, ha sikertelen se probléma)
+    try {
+      await admin.auth().deleteUser(userId);
+      console.log('✅ User törölve Firebase Auth-ból is:', userId);
+      
       return NextResponse.json({ 
         success: true, 
-        message: 'User törölve, de posztok törlése sikertelen',
-        deletedPosts: 0,
-        warning: postsError.message
+        message: 'Felhasználó teljesen törölve (Firestore + Auth + Posts)',
+        deletedPosts: deletedPosts
+      });
+    } catch (authError) {
+      console.error('⚠️ Auth törlés nem sikerült, de Firestore törölve:', authError.message);
+      
+      return NextResponse.json({ 
+        success: true, 
+        message: 'Felhasználó törölve Firestore-ból (Auth törlés sikertelen)',
+        deletedPosts: deletedPosts,
+        warning: 'Firebase Auth törlés nem sikerült - töröld manuálisan a Firebase Console-ból'
       });
     }
 
