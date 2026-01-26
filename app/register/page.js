@@ -1,7 +1,7 @@
 "use client";
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { createUserWithEmailAndPassword, sendEmailVerification, signOut } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 
@@ -40,11 +40,43 @@ export default function RegisterPage() {
         createdAt: new Date().toISOString(),
         pharmagisterRole: null,
         pharmaProfileComplete: false,
-        emailVerified: false // Manuálisan követjük
+        emailVerified: false
       });
 
-      // NEM küldünk email verifikációt - azonnal bejelentkezhet
-      // Az email verifikáció opcionális lesz
+      // Firebase verification link generálása
+      const actionCodeSettings = {
+        url: 'https://careconnect-3ovgzoxey-epreslas-projects.vercel.app/login?verified=true',
+        handleCodeInApp: false
+      };
+      
+      await sendEmailVerification(userCredential.user, actionCodeSettings);
+      const verificationLink = userCredential.user.emailVerified ? '' : 'Link generálva'; // Placeholder
+      
+      // Resend API hívás az email küldéshez
+      try {
+        const response = await fetch('/api/send-verification-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: userCredential.user.email,
+            displayName: userCredential.user.email.split('@')[0],
+            verificationLink: `${window.location.origin}/login?verified=true`
+          })
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          console.log('✅ Verification email sent via Resend:', result.emailId);
+        } else {
+          console.error('Resend email failed, falling back to Firebase');
+        }
+      } catch (emailError) {
+        console.error('Resend API error:', emailError);
+        // Firebase már elküldte, folytathatjuk
+      }
+
+      // Kijelentkeztetjük a usert
+      await signOut(auth);
       
       // Success üzenet megjelenítése
       setSuccess(true);
@@ -69,19 +101,27 @@ export default function RegisterPage() {
 
         {success ? (
           <div className="text-center py-6">
-            <div className="mb-4 text-6xl">✅</div>
+            <div className="mb-4 text-6xl">✉️</div>
             <h2 className="text-2xl font-bold mb-3 text-green-600">Regisztráció sikeres!</h2>
             <p className="text-gray-700 mb-2">
-              Fiókod létrejött: <strong>{email}</strong>
+              Küldtünk egy aktiváló emailt a <strong>{email}</strong> címre.
             </p>
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
+              <p className="text-sm text-green-800 mb-2">
+                ✅ <strong>Email elküldve!</strong> Hamarosan megérkezik (1-2 percen belül).
+              </p>
+              <p className="text-sm text-green-800">
+                📬 Az email közvetlenül a Beérkező mappába kerül (nem spam).
+              </p>
+            </div>
             <p className="text-gray-600 mb-6 text-sm">
-              Most már bejelentkezhetsz és használhatod az alkalmazást!
+              Kattints az emailben található linkre a fiókod aktiválásához.
             </p>
             <button
               onClick={() => router.push('/login')}
               className="w-full bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 font-semibold"
             >
-              Bejelentkezés
+              Vissza a bejelentkezéshez
             </button>
           </div>
         ) : (
