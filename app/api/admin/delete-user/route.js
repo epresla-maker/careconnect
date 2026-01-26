@@ -6,6 +6,12 @@ if (!admin.apps.length) {
   try {
     const privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n');
     
+    console.log('🔧 Initializing Firebase Admin with:');
+    console.log('  Project ID:', process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID);
+    console.log('  Client Email:', process.env.FIREBASE_CLIENT_EMAIL);
+    console.log('  Private Key length:', privateKey?.length);
+    console.log('  Private Key starts with:', privateKey?.substring(0, 50));
+    
     admin.initializeApp({
       credential: admin.credential.cert({
         projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
@@ -13,9 +19,10 @@ if (!admin.apps.length) {
         privateKey: privateKey,
       }),
     });
-    console.log('✅ Firebase Admin initialized');
+    console.log('✅ Firebase Admin initialized successfully');
   } catch (initError) {
     console.error('❌ Firebase Admin init failed:', initError.message);
+    console.error('Full error:', initError);
   }
 }
 
