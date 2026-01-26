@@ -43,36 +43,29 @@ export default function RegisterPage() {
         emailVerified: false
       });
 
-      // Firebase verification link generálása
-      const actionCodeSettings = {
-        url: `${window.location.origin}/login?verified=true`,
-        handleCodeInApp: false
-      };
-      
-      await sendEmailVerification(userCredential.user, actionCodeSettings);
-      const verificationLink = userCredential.user.emailVerified ? '' : 'Link generálva'; // Placeholder
-      
-      // Resend API hívás az email küldéshez
+      // Email küldés a backend API-n keresztül
       try {
-        const response = await fetch('/api/send-verification-email', {
+        const response = await fetch('/api/send-verification-email-v2', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             email: userCredential.user.email,
             displayName: userCredential.user.email.split('@')[0],
-            verificationLink: `${window.location.origin}/login?verified=true`
+            userId: userCredential.user.uid
           })
         });
 
         if (response.ok) {
           const result = await response.json();
-          console.log('✅ Verification email sent via Resend:', result.emailId);
+          console.log('✅ Verification email sent:', result.emailId);
         } else {
-          console.error('Resend email failed, falling back to Firebase');
+          const errorData = await response.json();
+          console.error('❌ Email send failed:', errorData);
+          setError('Regisztráció sikeres, de az aktiváló email nem lett elküldve. Lépj kapcsolatba az adminnal.');
         }
       } catch (emailError) {
-        console.error('Resend API error:', emailError);
-        // Firebase már elküldte, folytathatjuk
+        console.error('❌ Email API error:', emailError);
+        setError('Regisztráció sikeres, de az aktiváló email nem lett elküldve.');
       }
 
       // Kijelentkeztetjük a usert
