@@ -44,14 +44,27 @@ export default function AdminPage() {
   };
 
   const deleteUser = async (userId) => {
-    if (!confirm('Biztosan törölni szeretnéd ezt a felhasználót?')) return;
+    if (!confirm('Biztosan törölni szeretnéd ezt a felhasználót? Ez VÉGLEGESEN törli a felhasználót a Firebase Authentication-ből és minden adatát!')) return;
     
     try {
-      await deleteDoc(doc(db, 'users', userId));
+      // Backend API hívás a teljes törléshez
+      const response = await fetch('/api/admin/delete-user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId })
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Törlési hiba');
+      }
+
       setUsers(users.filter(u => u.id !== userId));
-      alert('Felhasználó törölve');
+      alert(`✅ Felhasználó teljesen törölve!\n- Firebase Auth: törölve\n- Firestore: törölve\n- Posztok: ${result.deletedPosts} db törölve`);
     } catch (error) {
-      alert('Hiba történt a törlés során: ' + error.message);
+      alert('❌ Hiba történt a törlés során: ' + error.message);
+      console.error('Delete error:', error);
     }
   };
 
