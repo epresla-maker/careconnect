@@ -45,7 +45,7 @@ export default function RegisterPage() {
 
       // Firebase verification link generálása
       const actionCodeSettings = {
-        url: 'https://careconnect-3ovgzoxey-epreslas-projects.vercel.app/login?verified=true',
+        url: `${window.location.origin}/login?verified=true`,
         handleCodeInApp: false
       };
       
