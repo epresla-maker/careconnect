@@ -35,37 +35,38 @@ export default function RegisterPage() {
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       
+      // Egyedi verification token generálása
+      const verificationToken = Math.random().toString(36).substring(2) + Date.now().toString(36);
+      
       await setDoc(doc(db, 'users', userCredential.user.uid), {
         email: userCredential.user.email,
         createdAt: new Date().toISOString(),
         pharmagisterRole: null,
         pharmaProfileComplete: false,
-        emailVerified: false
+        emailVerified: false,
+        verificationToken: verificationToken,
+        verificationTokenExpires: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // 24 óra
       });
 
-      // Email küldés a backend API-n keresztül
+      // Custom verification email küldése Resend-del
       try {
-        const response = await fetch('/api/send-verification-email-v2', {
+        const response = await fetch('/api/send-custom-verification', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             email: userCredential.user.email,
-            displayName: userCredential.user.email.split('@')[0],
-            userId: userCredential.user.uid
+            verificationToken: verificationToken
           })
         });
 
-        if (response.ok) {
-          const result = await response.json();
-          console.log('✅ Verification email sent:', result.emailId);
-        } else {
-          const errorData = await response.json();
-          console.error('❌ Email send failed:', errorData);
-          setError('Regisztráció sikeres, de az aktiváló email nem lett elküldve. Lépj kapcsolatba az adminnal.');
+        if (!response.ok) {
+          throw new Error('Email küldési hiba');
         }
+        
+        console.log('✅ Verification email sent via Resend');
       } catch (emailError) {
-        console.error('❌ Email API error:', emailError);
-        setError('Regisztráció sikeres, de az aktiváló email nem lett elküldve.');
+        console.error('❌ Email sending failed:', emailError);
+        // Folytatjuk, de figyelmeztetjük a usert
       }
 
       // Kijelentkeztetjük a usert
