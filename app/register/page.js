@@ -1,7 +1,7 @@
 "use client";
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { createUserWithEmailAndPassword, sendEmailVerification, signOut } from 'firebase/auth';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 
@@ -39,20 +39,13 @@ export default function RegisterPage() {
         email: userCredential.user.email,
         createdAt: new Date().toISOString(),
         pharmagisterRole: null,
-        pharmaProfileComplete: false
+        pharmaProfileComplete: false,
+        emailVerified: false // Manuálisan követjük
       });
 
-      // Aktiváló email küldése egyedi beállításokkal
-      const actionCodeSettings = {
-        url: `${window.location.origin}/login?verified=true`,
-        handleCodeInApp: false
-      };
+      // NEM küldünk email verifikációt - azonnal bejelentkezhet
+      // Az email verifikáció opcionális lesz
       
-      await sendEmailVerification(userCredential.user, actionCodeSettings);
-
-      // Kijelentkeztetjük a usert
-      await signOut(auth);
-
       // Success üzenet megjelenítése
       setSuccess(true);
       setLoading(false);
@@ -76,19 +69,19 @@ export default function RegisterPage() {
 
         {success ? (
           <div className="text-center py-6">
-            <div className="mb-4 text-6xl">✉️</div>
+            <div className="mb-4 text-6xl">✅</div>
             <h2 className="text-2xl font-bold mb-3 text-green-600">Regisztráció sikeres!</h2>
-            <p className="text-gray-700 mb-4">
-              Küldtünk egy aktiváló emailt a <strong>{email}</strong> címre.
+            <p className="text-gray-700 mb-2">
+              Fiókod létrejött: <strong>{email}</strong>
             </p>
-            <p className="text-gray-600 mb-6">
-              Kérjük, ellenőrizd a postaládádat és kattints az aktiváló linkre a folytatáshoz.
+            <p className="text-gray-600 mb-6 text-sm">
+              Most már bejelentkezhetsz és használhatod az alkalmazást!
             </p>
             <button
               onClick={() => router.push('/login')}
-              className="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700"
+              className="w-full bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 font-semibold"
             >
-              Vissza a bejelentkezéshez
+              Bejelentkezés
             </button>
           </div>
         ) : (
