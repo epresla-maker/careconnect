@@ -57,7 +57,10 @@ export default function AdminPage() {
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.error || 'Törlési hiba');
+        const errorMsg = result.details 
+          ? `${result.error}\nRészletek: ${result.details}\nKód: ${result.code || 'nincs'}` 
+          : result.error || 'Törlési hiba';
+        throw new Error(errorMsg);
       }
 
       setUsers(users.filter(u => u.id !== userId));
