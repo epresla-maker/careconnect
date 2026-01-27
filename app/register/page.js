@@ -86,15 +86,15 @@ export default function RegisterPage() {
 
       // Kijelentkeztetjük a usert
       console.log('👋 STEP 5: Signing out user...');
+      await signOut(auth);
+      console.log('✅ STEP 5 DONE: User signed out');
+      
+      // Success üzenet megjelenítése
       console.log('🎉 STEP 6: Showing success message');
       setSuccess(true);
       setLoading(false);
     } catch (err) {
       console.error('💥 REGISTRATION ERROR:', err);
-      // Success üzenet megjelenítése
-      setSuccess(true);
-      setLoading(false);
-    } catch (err) {
       setLoading(false);
       
       if (err.code === 'auth/email-already-in-use') {
