@@ -10,7 +10,7 @@ export async function POST(request) {
     const verificationUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://careconnect.vercel.app'}/verify-email?token=${verificationToken}`;
 
     const { data, error } = await resend.emails.send({
-      from: 'CareConnect <onboarding@resend.dev>',
+      from: 'CareConnect <noreply@valifriend.com>',
       to: [email],
       subject: 'Erősítsd meg az email címedet - CareConnect Pharmagister',
       html: `

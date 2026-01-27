@@ -8,7 +8,7 @@ export async function POST(request) {
     const { email, displayName, verificationLink } = await request.json();
 
     const { data, error } = await resend.emails.send({
-      from: 'CareConnect <onboarding@resend.dev>', // Később módosítsd saját domain-re
+      from: 'CareConnect <noreply@valifriend.com>',
       to: [email],
       subject: 'Erősítsd meg az email címedet - CareConnect',
       html: `

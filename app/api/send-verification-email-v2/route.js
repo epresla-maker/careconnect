@@ -34,7 +34,7 @@ export async function POST(request) {
 
     // Email küldése Resend-del
     const { data, error } = await resend.emails.send({
-      from: 'CareConnect <onboarding@resend.dev>',
+      from: 'CareConnect <noreply@valifriend.com>',
       to: [email],
       subject: 'Erősítsd meg az email címedet - CareConnect',
       html: `
