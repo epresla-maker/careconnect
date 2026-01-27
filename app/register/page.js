@@ -33,68 +33,28 @@ export default function RegisterPage() {
     setLoading(true);
 
     try {
-      console.log('🚀 STEP 1: Creating user with email:', email);
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      console.log('✅ STEP 1 DONE: User created:', userCredential.user.uid);
       
-      // Egyedi verification token generálása
-      const verificationToken = Math.random().toString(36).substring(2) + Date.now().toString(36);
-      console.log('🔑 STEP 2: Generated token:', verificationToken);
+      // Firebase beépített email verifikáció küldése
+      await sendEmailVerification(userCredential.user);
+      console.log('✅ Firebase verification email sent');
       
-      console.log('💾 STEP 3: Saving user to Firestore...');
       await setDoc(doc(db, 'users', userCredential.user.uid), {
         email: userCredential.user.email,
         createdAt: new Date().toISOString(),
         pharmagisterRole: null,
         pharmaProfileComplete: false,
-        emailVerified: false,
-        verificationToken: verificationToken,
-        verificationTokenExpires: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // 24 óra
+        emailVerified: false
       });
-      console.log('✅ STEP 3 DONE: User saved to Firestore');
-
-      // Custom verification email küldése Resend-del
-      console.log('📧 STEP 4: Starting email send process...');
-      try {
-        console.log('📧 Sending verification email to:', userCredential.user.email);
-        console.log('🌐 Fetching API:', '/api/send-custom-verification');
-        const response = await fetch('/api/send-custom-verification', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            email: userCredential.user.email,
-            verificationToken: verificationToken
-          })
-        });
-        console.log('📬 Fetch completed, response status:', response.status);
-
-        const responseData = await response.json();
-        console.log('📬 API Response:', responseData);
-
-        if (!response.ok) {
-          console.error('❌ Email API failed:', responseData);
-          alert('❌ Email API hiba: ' + JSON.stringify(responseData));
-          throw new Error(responseData.error || 'Email küldési hiba');
-        }
-        
-        console.log('✅ STEP 4 DONE: Email sent via Resend:', responseData.emailId);
-      } catch (emailError) {
-        console.error('❌ STEP 4 FAILED: Email sending error:', emailError);
-        alert('⚠️ HIBA: Az email nem ment el! ' + emailError.message);
-        // Folytatjuk, de figyelmeztetjük a usert
-      }
 
       // Kijelentkeztetjük a usert
-      console.log('👋 STEP 5: Signing out user...');
       await signOut(auth);
-      console.log('✅ STEP 5 DONE: User signed out');
       
       // Success üzenet megjelenítése
-      console.log('🎉 STEP 6: Showing success message');
       setSuccess(true);
       setLoading(false);
     } catch (err) {
-      console.error('💥 REGISTRATION ERROR:', err);
+      console.error('Registration error:', err);
       setLoading(false);
       
       if (err.code === 'auth/email-already-in-use') {
