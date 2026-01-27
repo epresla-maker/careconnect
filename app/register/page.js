@@ -50,6 +50,7 @@ export default function RegisterPage() {
 
       // Custom verification email küldése Resend-del
       try {
+        console.log('📧 Sending verification email to:', userCredential.user.email);
         const response = await fetch('/api/send-custom-verification', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -59,13 +60,18 @@ export default function RegisterPage() {
           })
         });
 
+        const responseData = await response.json();
+        console.log('📬 API Response:', responseData);
+
         if (!response.ok) {
-          throw new Error('Email küldési hiba');
+          console.error('❌ Email API failed:', responseData);
+          throw new Error(responseData.error || 'Email küldési hiba');
         }
         
-        console.log('✅ Verification email sent via Resend');
+        console.log('✅ Verification email sent via Resend:', responseData.emailId);
       } catch (emailError) {
         console.error('❌ Email sending failed:', emailError);
+        alert('⚠️ HIBA: Az email nem ment el! ' + emailError.message);
         // Folytatjuk, de figyelmeztetjük a usert
       }
 

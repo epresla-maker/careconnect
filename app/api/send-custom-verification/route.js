@@ -7,7 +7,13 @@ export async function POST(request) {
   try {
     const { email, verificationToken } = await request.json();
     
+    console.log('📧 [send-custom-verification] Starting email send to:', email);
+    console.log('🔑 Resend API Key present:', !!process.env.RESEND_API_KEY);
+    console.log('🌐 App URL:', process.env.NEXT_PUBLIC_APP_URL);
+    
     const verificationUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://careconnect.vercel.app'}/verify-email?token=${verificationToken}`;
+    
+    console.log('🔗 Verification URL:', verificationUrl);
 
     const { data, error } = await resend.emails.send({
       from: 'CareConnect <noreply@valifriend.com>',
@@ -106,7 +112,8 @@ export async function POST(request) {
     return NextResponse.json({ success: true, emailId: data.id });
 
   } catch (error) {
-    console.error('❌ Error:', error);
+    console.error('❌ Error in send-custom-verification:', error);
+    console.error('Error stack:', error.stack);
     return NextResponse.json({ 
       error: 'Hiba történt', 
       details: error.message 
