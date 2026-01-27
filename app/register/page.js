@@ -35,17 +35,32 @@ export default function RegisterPage() {
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       
-      // Firebase beépített email verifikáció küldése
-      await sendEmailVerification(userCredential.user);
-      console.log('✅ Firebase verification email sent');
+      // Egyedi verification token generálása
+      const verificationToken = Math.random().toString(36).substring(2) + Date.now().toString(36);
       
       await setDoc(doc(db, 'users', userCredential.user.uid), {
         email: userCredential.user.email,
         createdAt: new Date().toISOString(),
         pharmagisterRole: null,
         pharmaProfileComplete: false,
-        emailVerified: false
+        emailVerified: false,
+        verificationToken: verificationToken,
+        verificationTokenExpires: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
       });
+
+      // Custom verification email küldése Resend-del
+      const response = await fetch('/api/send-custom-verification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: userCredential.user.email,
+          verificationToken: verificationToken
+        })
+      });
+
+      if (!response.ok) {
+        console.error('Email küldési hiba');
+      }
 
       // Kijelentkeztetjük a usert
       await signOut(auth);
