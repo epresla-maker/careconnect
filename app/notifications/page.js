@@ -78,6 +78,10 @@ export default function NotificationsPage() {
         return '✅';
       case 'approval_rejected':
         return '❌';
+      case 'pharma_application':
+        return '📝';
+      case 'admin_approval_request':
+        return '🔔';
       default:
         return '📢';
     }
@@ -89,9 +93,25 @@ export default function NotificationsPage() {
         return 'bg-green-50 border-green-200';
       case 'approval_rejected':
         return 'bg-red-50 border-red-200';
+      case 'pharma_application':
+        return 'bg-purple-50 border-purple-200';
+      case 'admin_approval_request':
+        return 'bg-orange-50 border-orange-200';
       default:
         return 'bg-blue-50 border-blue-200';
     }
+  };
+
+  const handleNotificationClick = (notification) => {
+    // Pharmagister jelentkezés értesítés - vezérlőpultra navigálás
+    if (notification.type === 'pharma_application' && notification.demandId) {
+      router.push('/pharmagister?tab=dashboard');
+    }
+    // Admin jóváhagyási kérelem - approvals oldalra
+    else if (notification.type === 'admin_approval_request') {
+      router.push('/admin/approvals');
+    }
+    // Egyéb értesítések esetén alapértelmezett viselkedés (nincs navigáció)
   };
 
   return (
@@ -133,7 +153,12 @@ export default function NotificationsPage() {
               {notifications.map(notification => (
                 <div
                   key={notification.id}
-                  className={`rounded-xl shadow-lg p-6 border-2 ${getNotificationColor(notification.type)}`}
+                  onClick={() => handleNotificationClick(notification)}
+                  className={`rounded-xl shadow-lg p-6 border-2 ${getNotificationColor(notification.type)} ${
+                    notification.type === 'pharma_application' || notification.type === 'admin_approval_request'
+                      ? 'cursor-pointer hover:shadow-xl transition-shadow'
+                      : ''
+                  }`}
                 >
                   <div className="flex items-start gap-4">
                     <div className="text-4xl flex-shrink-0">
