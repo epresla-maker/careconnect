@@ -106,17 +106,14 @@ export default function RegisterPage() {
             {email.toLowerCase().includes('freemail.hu') && (
               <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-4">
                 <p className="text-sm text-orange-800">
-                  🚨 <strong>Freemail figyelmeztetés:</strong> A freemail.hu címekre küldött emailek <strong>gyakran meg sem érkeznek</strong>. 
+                  ⚠️ <strong>Freemail figyelmeztetés:</strong> A freemail.hu címekre küldött emailek <strong>gyakran meg sem érkeznek</strong>. 
                   Ha 5 perc alatt nem látod az emailt (sem a Beérkező, sem a Spam mappában), próbálj másik email címmel regisztrálni.
                 </p>
               </div>
             )}
             <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
-              <p className="text-sm text-green-800 mb-2">
-                ✅ <strong>Email elküldve!</strong> Hamarosan megérkezik (1-2 percen belül).
-              </p>
               <p className="text-sm text-green-800">
-                📬 Az email közvetlenül a Beérkező mappába kerül (nem spam).
+                ✅ <strong>Email elküldve!</strong> Hamarosan megérkezik (1-2 percen belül).
               </p>
             </div>
             <p className="text-gray-600 mb-6 text-sm">
@@ -154,7 +151,7 @@ export default function RegisterPage() {
             {showFreemailWarning && (
               <div className="mt-2 bg-orange-50 border border-orange-200 rounded-lg p-3 text-sm">
                 <div className="flex items-start gap-2">
-                  <span className="text-orange-600 text-lg flex-shrink-0">🚨</span>
+                  <span className="text-orange-600 text-lg flex-shrink-0">⚠️</span>
                   <div className="text-orange-800">
                     <strong>Figyelem!</strong> A freemail.hu címekre küldött emailek <strong>gyakran meg sem érkeznek</strong>. 
                     Erősen javasoljuk <strong>Gmail</strong> vagy más szolgáltató használatát.
