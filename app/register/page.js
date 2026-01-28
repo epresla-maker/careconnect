@@ -111,11 +111,6 @@ export default function RegisterPage() {
                 </p>
               </div>
             )}
-            <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
-              <p className="text-sm text-green-800">
-                ✅ <strong>Email elküldve!</strong> Hamarosan megérkezik (1-2 percen belül).
-              </p>
-            </div>
             <p className="text-gray-600 mb-6 text-sm">
               Kattints az emailben található linkre a fiókod aktiválásához.
             </p>
