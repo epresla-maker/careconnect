@@ -1,7 +1,6 @@
 "use client";
-import { useState, useEffect, useRef, Suspense } from 'react';
+import { useState, useRef, Suspense } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { useTheme } from '@/context/ThemeContext';
 import { useRouter, useSearchParams } from 'next/navigation';
 import RouteGuard from '@/app/components/RouteGuard';
 import { collection, addDoc, serverTimestamp, query, where, getDocs } from 'firebase/firestore';
@@ -10,7 +9,6 @@ import { ArrowLeft, Send, Loader2 } from 'lucide-react';
 
 function NewChatContent() {
   const { user, userData } = useAuth();
-  const { darkMode } = useTheme();
   const router = useRouter();
   const searchParams = useSearchParams();
   const messagesEndRef = useRef(null);
@@ -92,13 +90,13 @@ function NewChatContent() {
 
   return (
     <RouteGuard>
-      <div className={`min-h-screen ${darkMode ? 'bg-gray-900' : 'bg-gray-50'} flex flex-col`}>
+      <div className="min-h-screen bg-gray-50 flex flex-col">
         {/* Header */}
-        <div className={`${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border-b px-4 py-3`}>
+        <div className="bg-white border-gray-200 border-b px-4 py-3">
           <div className="max-w-4xl mx-auto flex items-center gap-3">
             <button
               onClick={() => router.back()}
-              className={`p-2 rounded-lg ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
+              className="p-2 rounded-lg hover:bg-gray-100"
             >
               <ArrowLeft className="w-5 h-5" />
             </button>
@@ -111,17 +109,17 @@ function NewChatContent() {
                   className="w-10 h-10 rounded-full object-cover"
                 />
               ) : (
-                <div className={`w-10 h-10 rounded-full ${darkMode ? 'bg-gray-700' : 'bg-gray-300'} flex items-center justify-center`}>
+                <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center">
                   <span className="text-lg">{recipientName?.charAt(0) || '?'}</span>
                 </div>
               )}
               
               <div className="flex-1 min-w-0">
-                <h2 className={`font-semibold truncate ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                <h2 className="font-semibold truncate text-gray-900">
                   {recipientName || 'Felhasználó'}
                 </h2>
                 {demandDate && (
-                  <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                  <p className="text-xs text-gray-500">
                     {demandPositionLabel} • {new Date(demandDate).toLocaleDateString('hu-HU')}
                   </p>
                 )}
@@ -134,17 +132,17 @@ function NewChatContent() {
         <div className="flex-1 flex flex-col items-center justify-center px-4 pb-32">
           <div className="text-center max-w-md">
             <div className="text-6xl mb-4">💬</div>
-            <h3 className={`text-xl font-semibold mb-2 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+            <h3 className="text-xl font-semibold mb-2 text-gray-900">
               Új beszélgetés
             </h3>
-            <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'} mb-6`}>
+            <p className="text-sm text-gray-600 mb-6">
               Írj egy üzenetet, hogy elindítsd a beszélgetést {recipientName || 'a felhasználóval'}.
             </p>
           </div>
         </div>
 
         {/* Message input */}
-        <div className={`${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border-t px-4 py-4 fixed bottom-0 left-0 right-0`}>
+        <div className="bg-white border-gray-200 border-t px-4 py-4 fixed bottom-0 left-0 right-0">
           <div className="max-w-4xl mx-auto flex gap-2">
             <input
               type="text"
@@ -152,11 +150,7 @@ function NewChatContent() {
               onChange={(e) => setMessageText(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && !sending && handleSendMessage()}
               placeholder="Írj üzenetet..."
-              className={`flex-1 px-4 py-2 rounded-lg ${
-                darkMode 
-                  ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
-                  : 'bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-500'
-              } border focus:outline-none focus:ring-2 focus:ring-purple-500`}
+              className="flex-1 px-4 py-2 rounded-lg bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-500 border focus:outline-none focus:ring-2 focus:ring-purple-500"
               disabled={sending}
             />
             <button
