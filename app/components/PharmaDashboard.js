@@ -26,6 +26,7 @@ export default function PharmaDashboard({ pharmaRole, expandDemandId }) {
   // Update expanded demand when expandDemandId prop changes
   useEffect(() => {
     if (expandDemandId) {
+      console.log('🎯 Auto-expanding demand:', expandDemandId);
       setExpandedDemand(expandDemandId);
     }
   }, [expandDemandId]);
@@ -433,7 +434,9 @@ export default function PharmaDashboard({ pharmaRole, expandDemandId }) {
             </div>
           ) : (
             <div className="space-y-2">
-              {myDemands.map(demand => (
+              {myDemands.map(demand => {
+                console.log('🔍 Demand ID:', demand.id, '| Expanded:', expandedDemand, '| Match:', expandedDemand === demand.id);
+                return (
                 <div key={demand.id} className={`${darkMode ? 'bg-gray-700 border-gray-600' : 'bg-white border-[#E5E7EB]'} border-b pb-3 pt-2`}>
                   <div
                     onClick={() => setExpandedDemand(expandedDemand === demand.id ? null : demand.id)}
