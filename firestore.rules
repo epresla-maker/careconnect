@@ -1,15 +1,18 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Users collection - bejelentkezett felhasználók írhatnak/olvashatnak
+    // Users collection
     match /users/{userId} {
-      allow read: if request.auth != null;
-      // Email verifikáció olvasás engedélyezése - bárki query-zheti token alapján
-      allow read: if true; // Szükséges a where query-hez token alapján
-      allow write: if request.auth != null && request.auth.uid == userId;
-      // Email verifikáció update engedélyezése - csak az emailVerified mezőt lehet true-ra állítani
-      allow update: if request.resource.data.keys().hasOnly(['emailVerified', 'verificationToken', 'verificationTokenExpires'])
-                    && request.resource.data.emailVerified == true;
+      // Olvasás: mindenki (szükséges a verifikációs token query-hez)
+      allow read: if true;
+      
+      // Írás: csak saját profil
+      allow create, delete: if request.auth != null && request.auth.uid == userId;
+      
+      // Update: saját profil VAGY email verifikáció
+      allow update: if (request.auth != null && request.auth.uid == userId) ||
+                       (request.resource.data.keys().hasOnly(['emailVerified', 'verificationToken', 'verificationTokenExpires']) &&
+                        request.resource.data.emailVerified == true);
     }
     
     // Pharmagister collections
