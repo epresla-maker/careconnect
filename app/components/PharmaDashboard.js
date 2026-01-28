@@ -202,6 +202,59 @@ export default function PharmaDashboard({ pharmaRole }) {
     }
   };
 
+  const handleSendMessage = async (application, demand) => {
+    try {
+      // Check if chat already exists for this specific demand
+      const chatsRef = collection(db, 'chats');
+      const existingChatQuery = query(
+        chatsRef,
+        where('members', 'array-contains', user.uid)
+      );
+      const existingChats = await getDocs(existingChatQuery);
+      
+      let chatId = null;
+      existingChats.forEach((chatDoc) => {
+        const chatData = chatDoc.data();
+        // Check both: same applicant AND same demand
+        if (chatData.members.includes(application.applicantId) && chatData.relatedDemandId === demand.id) {
+          chatId = chatDoc.id;
+        }
+      });
+      
+      // If no existing chat, create new one
+      if (!chatId) {
+        const newChatRef = await addDoc(chatsRef, {
+          members: [user.uid, application.applicantId],
+          memberNames: {
+            [user.uid]: userData?.pharmacyName || userData?.displayName || 'Gyógyszertár',
+            [application.applicantId]: application.displayName || 'Jelentkező'
+          },
+          memberPhotos: {
+            [user.uid]: userData?.pharmaPhotoURL || userData?.photoURL || null,
+            [application.applicantId]: application.photoURL || null
+          },
+          createdAt: serverTimestamp(),
+          lastMessageAt: serverTimestamp(),
+          lastMessage: '',
+          relatedDemandId: demand.id,
+          relatedDemandDate: demand.date,
+          relatedDemandPosition: demand.position,
+          relatedDemandPositionLabel: demand.position === 'pharmacist' ? 'Gyógyszerész' : 'Szakasszisztens',
+          archivedBy: [],
+          deletedBy: []
+        });
+        chatId = newChatRef.id;
+      }
+      
+      // Navigate to chat
+      router.push(`/chat/${chatId}`);
+      
+    } catch (error) {
+      console.error('Error opening chat:', error);
+      alert('Hiba történt a chat megnyitása során.');
+    }
+  };
+
   const handleDeleteDemand = async (demandId) => {
     if (!confirm('Biztosan törlöd ezt az igényt? Ez a művelet nem vonható vissza!')) return;
 
@@ -471,7 +524,10 @@ export default function PharmaDashboard({ pharmaRole }) {
                                 >
                                   Adatlap
                                 </button>
-                                <button className={`px-2 py-1.5 text-xs ${darkMode ? 'bg-gray-600 text-gray-200 hover:bg-gray-500' : 'bg-[#F3F4F6] text-[#111827] hover:bg-[#E5E7EB]'} rounded transition-colors flex items-center justify-center gap-1`}>
+                                <button 
+                                  onClick={() => handleSendMessage(application, demand)}
+                                  className={`px-2 py-1.5 text-xs ${darkMode ? 'bg-gray-600 text-gray-200 hover:bg-gray-500' : 'bg-[#F3F4F6] text-[#111827] hover:bg-[#E5E7EB]'} rounded transition-colors flex items-center justify-center gap-1`}
+                                >
                                   <MessageCircle className="w-3 h-3" />
                                   Üzenet
                                 </button>
