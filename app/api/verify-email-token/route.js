@@ -1,25 +1,20 @@
 import { NextResponse } from 'next/server';
-import admin from 'firebase-admin';
-
-// Firebase Admin inicializálás
-if (!admin.apps.length) {
-  try {
-    const privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n');
-    
-    admin.initializeApp({
-      credential: admin.credential.cert({
-        projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-        privateKey: privateKey,
-      }),
-    });
-  } catch (initError) {
-    console.error('❌ Firebase Admin init failed:', initError.message);
-  }
-}
+import { getFirebaseAdmin } from '@/lib/firebaseAdmin';
 
 export async function POST(request) {
   try {
+    // Initialize Firebase Admin
+    let admin;
+    try {
+      admin = getFirebaseAdmin();
+    } catch (initError) {
+      console.error('❌ Firebase Admin initialization error:', initError);
+      return NextResponse.json({ 
+        error: 'Server konfigurációs hiba. Kérjük, vegye fel a kapcsolatot az adminisztrátorral.',
+        details: initError.message 
+      }, { status: 500 });
+    }
+
     const { token } = await request.json();
 
     if (!token) {
