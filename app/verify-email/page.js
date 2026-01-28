@@ -1,8 +1,6 @@
 "use client";
 import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { doc, getDoc, updateDoc, collection, query, where, getDocs } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 
 function VerifyEmailContent() {
   const router = useRouter();
@@ -21,33 +19,27 @@ function VerifyEmailContent() {
       }
 
       try {
-        // Keressük meg a user-t a token alapján - query használata
-        const usersRef = collection(db, 'users');
-        const q = query(usersRef, where('verificationToken', '==', token));
-        const snapshot = await getDocs(q);
-        
-        if (snapshot.empty) {
-          setStatus('error');
-          setMessage('Érvénytelen vagy már felhasznált verifikációs link');
-          return;
-        }
-
-        const userDoc = snapshot.docs[0];
-        const userData = userDoc.data();
-
-        // Ellenőrizzük a lejáratot
-        if (new Date(userData.verificationTokenExpires) < new Date()) {
-          setStatus('expired');
-          setMessage('A verifikációs link lejárt. Kérj új linket.');
-          return;
-        }
-
-        // Email megerősítése
-        await updateDoc(doc(db, 'users', userDoc.id), {
-          emailVerified: true,
-          verificationToken: null,
-          verificationTokenExpires: null
+        // API route hívása (Firebase Admin SDK-val frissíti a Firestore ÉS Firebase Auth-ot is)
+        const response = await fetch('/api/verify-email-token', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ token }),
         });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          if (response.status === 410) {
+            setStatus('expired');
+            setMessage(data.error);
+          } else {
+            setStatus('error');
+            setMessage(data.error || 'Hiba történt az email megerősítése során');
+          }
+          return;
+        }
 
         setStatus('success');
         setMessage('Email cím sikeresen megerősítve! ✅');
