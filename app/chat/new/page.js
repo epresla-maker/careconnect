@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, Suspense } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useTheme } from '@/context/ThemeContext';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -8,7 +8,7 @@ import { collection, addDoc, serverTimestamp, query, where, getDocs } from 'fire
 import { db } from '@/lib/firebase';
 import { ArrowLeft, Send, Loader2 } from 'lucide-react';
 
-export default function NewChatPage() {
+function NewChatContent() {
   const { user, userData } = useAuth();
   const { darkMode } = useTheme();
   const router = useRouter();
@@ -177,5 +177,17 @@ export default function NewChatPage() {
         </div>
       </div>
     </RouteGuard>
+  );
+}
+
+export default function NewChatPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-purple-600" />
+      </div>
+    }>
+      <NewChatContent />
+    </Suspense>
   );
 }
