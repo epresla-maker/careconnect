@@ -11,9 +11,7 @@ export async function POST(request) {
     console.log('🔑 Resend API Key present:', !!process.env.RESEND_API_KEY);
     console.log('🌐 App URL:', process.env.NEXT_PUBLIC_APP_URL);
     
-    const verificationUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://careconnect.vercel.app'}/verify-email?token=${verificationToken}`;
-    
-    console.log('🔗 Verification URL:', verificationUrl);
+    const verificationUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://careconnect-fawn.vercel.app'}/verify-email?token=${verificationToken}`;
 
     const { data, error } = await resend.emails.send({
       from: 'CareConnect <noreply@valifriend.com>',

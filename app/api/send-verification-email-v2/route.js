@@ -27,7 +27,7 @@ export async function POST(request) {
 
     // Generálj Firebase email verification linket
     const verificationLink = await admin.auth().generateEmailVerificationLink(email, {
-      url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://careconnect.vercel.app'}/login?verified=true`,
+      url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://careconnect-fawn.vercel.app'}/login?verified=true`,
     });
 
     console.log('📧 Verification link generated for:', email);
