@@ -8,7 +8,7 @@ async function testEmail() {
   
   try {
     const { data, error } = await resend.emails.send({
-      from: 'Pharmagister <noreply@valifriend.com>',
+      from: 'Pharmagister VF <noreply@valifriend.com>',
       to: ['epresl@gmail.com'], // Cseréld le a saját emailedre
       subject: 'Test Email - Pharmagister',
       html: '<h1>Test email</h1><p>Ha megkapod, akkor működik a Resend!</p>',

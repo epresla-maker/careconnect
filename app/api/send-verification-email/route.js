@@ -8,7 +8,7 @@ export async function POST(request) {
     const { email, displayName, verificationLink } = await request.json();
 
     const { data, error } = await resend.emails.send({
-      from: 'Pharmagister <noreply@valifriend.com>',
+      from: 'Pharmagister VF <noreply@valifriend.com>',
       to: [email],
       subject: 'Erősítsd meg az email címedet - Pharmagister',
       html: `

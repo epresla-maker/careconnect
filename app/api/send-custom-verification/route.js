@@ -14,7 +14,7 @@ export async function POST(request) {
     const verificationUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://pharmagister.vercel.app'}/verify-email?token=${verificationToken}`;
 
     const { data, error } = await resend.emails.send({
-      from: 'Pharmagister <noreply@valifriend.com>',
+      from: 'Pharmagister VF <noreply@valifriend.com>',
       to: [email],
       subject: 'Erősítsd meg az email címedet - Pharmagister',
       html: `
