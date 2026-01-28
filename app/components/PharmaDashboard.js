@@ -7,7 +7,7 @@ import { collection, query, where, getDocs, orderBy, updateDoc, doc, addDoc, del
 import { db } from '@/lib/firebase';
 import { Loader2, Search, ChevronDown, ChevronUp, MapPin, Clock, CheckCircle, XCircle, MessageCircle, User, Calendar, Edit2, Trash2, Eye, CalendarDays, Filter } from 'lucide-react';
 
-export default function PharmaDashboard({ pharmaRole }) {
+export default function PharmaDashboard({ pharmaRole, expandDemandId }) {
   const { user, userData } = useAuth();
   const { darkMode } = useTheme();
   const router = useRouter();
@@ -16,12 +16,19 @@ export default function PharmaDashboard({ pharmaRole }) {
   const [myDemands, setMyDemands] = useState([]);
   const [availableDemands, setAvailableDemands] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [expandedDemand, setExpandedDemand] = useState(null);
+  const [expandedDemand, setExpandedDemand] = useState(expandDemandId || null);
   const [statusFilter, setStatusFilter] = useState('all'); // 'all', 'pending', 'accepted', 'rejected'
 
   useEffect(() => {
     loadData();
   }, [user, pharmaRole]);
+
+  // Update expanded demand when expandDemandId prop changes
+  useEffect(() => {
+    if (expandDemandId) {
+      setExpandedDemand(expandDemandId);
+    }
+  }, [expandDemandId]);
 
   const loadData = async () => {
     if (!user || !pharmaRole) {

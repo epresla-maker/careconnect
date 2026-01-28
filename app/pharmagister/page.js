@@ -284,8 +284,10 @@ function CalendarTab({ pharmaRole }) {
 
 // Dashboard Tab Component
 function DashboardTab({ pharmaRole }) {
+  const searchParams = useSearchParams();
+  const expandDemandId = searchParams.get('expand');
   const PharmaDashboard = require('@/app/components/PharmaDashboard').default;
-  return <PharmaDashboard pharmaRole={pharmaRole} />;
+  return <PharmaDashboard pharmaRole={pharmaRole} expandDemandId={expandDemandId} />;
 }
 
 // Wrapper with Suspense boundary

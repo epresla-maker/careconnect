@@ -103,9 +103,9 @@ export default function NotificationsPage() {
   };
 
   const handleNotificationClick = (notification) => {
-    // Pharmagister jelentkezés értesítés - vezérlőpultra navigálás
+    // Pharmagister jelentkezés értesítés - vezérlőpultra navigálás a konkrét igénnyel
     if (notification.type === 'pharma_application' && notification.demandId) {
-      router.push('/pharmagister?tab=dashboard');
+      router.push(`/pharmagister?tab=dashboard&expand=${notification.demandId}`);
     }
     // Admin jóváhagyási kérelem - approvals oldalra
     else if (notification.type === 'admin_approval_request') {
