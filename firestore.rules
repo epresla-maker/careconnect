@@ -22,33 +22,33 @@ service cloud.firestore {
     
     // Pharmagister collections
     match /pharmacies/{pharmacyId} {
-      allow read: if request.auth != null || isAdmin();
-      allow write: if request.auth != null || isAdmin();
+      allow read: if isAdmin() || request.auth != null;
+      allow write: if isAdmin() || request.auth != null;
     }
     
     match /gigs/{gigId} {
-      allow read: if request.auth != null || isAdmin();
-      allow write: if request.auth != null || isAdmin();
+      allow read: if isAdmin() || request.auth != null;
+      allow write: if isAdmin() || request.auth != null;
     }
     
     match /applications/{applicationId} {
-      allow read: if request.auth != null || isAdmin();
-      allow write: if request.auth != null || isAdmin();
+      allow read: if isAdmin() || request.auth != null;
+      allow write: if isAdmin() || request.auth != null;
     }
     
     match /notifications/{notificationId} {
-      allow read: if request.auth != null || isAdmin();
-      allow write: if request.auth != null || isAdmin();
+      allow read: if isAdmin() || request.auth != null;
+      allow write: if isAdmin() || request.auth != null;
     }
     
     match /chats/{chatId} {
-      allow read: if request.auth != null || isAdmin();
-      allow write: if request.auth != null || isAdmin();
+      allow read: if isAdmin() || request.auth != null;
+      allow write: if isAdmin() || request.auth != null;
     }
     
     // Minden más collection - auth required VAGY admin
     match /{document=**} {
-      allow read, write: if request.auth != null || isAdmin();
+      allow read, write: if isAdmin() || request.auth != null;
     }
   }
 }
