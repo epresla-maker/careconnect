@@ -6,49 +6,67 @@ service cloud.firestore {
       return request.auth != null && request.auth.token.email == 'epresla@icloud.com';
     }
     
+    // Bejelentkezett user ellenőrzés
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
     // Users collection
     match /users/{userId} {
       // Olvasás: mindenki (szükséges a verifikációs token query-hez)
       allow read: if true;
       
       // Írás: csak saját profil
-      allow create, delete: if request.auth != null && request.auth.uid == userId;
+      allow create, delete: if isAuthenticated() && request.auth.uid == userId;
       
       // Update: saját profil VAGY email verifikáció (bárki frissítheti ezeket a mezőket)
-      allow update: if (request.auth != null && request.auth.uid == userId) ||
+      allow update: if (isAuthenticated() && request.auth.uid == userId) ||
                        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['emailVerified', 'verificationToken', 'verificationTokenExpires']) &&
                         request.resource.data.emailVerified == true);
     }
     
     // Pharmagister collections
     match /pharmacies/{pharmacyId} {
-      allow read: if isAdmin() || request.auth != null;
-      allow write: if isAdmin() || request.auth != null;
+      allow read, write: if isAdmin() || isAuthenticated();
     }
     
     match /gigs/{gigId} {
-      allow read: if isAdmin() || request.auth != null;
-      allow write: if isAdmin() || request.auth != null;
+      allow read, write: if isAdmin() || isAuthenticated();
     }
     
     match /applications/{applicationId} {
-      allow read: if isAdmin() || request.auth != null;
-      allow write: if isAdmin() || request.auth != null;
+      allow read, write: if isAdmin() || isAuthenticated();
     }
     
     match /notifications/{notificationId} {
-      allow read: if isAdmin() || request.auth != null;
-      allow write: if isAdmin() || request.auth != null;
+      allow read, write: if isAdmin() || isAuthenticated();
     }
     
     match /chats/{chatId} {
-      allow read: if isAdmin() || request.auth != null;
-      allow write: if isAdmin() || request.auth != null;
+      allow read, write: if isAdmin() || isAuthenticated();
+    }
+    
+    // Pharmagister-specifikus collections
+    match /pharmaDemands/{demandId} {
+      allow read, write: if isAdmin() || isAuthenticated();
+    }
+    
+    match /pharmaApplications/{applicationId} {
+      allow read, write: if isAdmin() || isAuthenticated();
+    }
+    
+    match /pharmagisterApprovals/{approvalId} {
+      allow read, write: if isAdmin() || isAuthenticated();
+    }
+    
+    // Service feed
+    match /serviceFeedPosts/{postId} {
+      allow read, write: if isAdmin() || isAuthenticated();
     }
     
     // Minden más collection - auth required VAGY admin
     match /{document=**} {
-      allow read, write: if isAdmin() || request.auth != null;
+      allow read, write: if isAdmin() || isAuthenticated();
     }
   }
 }

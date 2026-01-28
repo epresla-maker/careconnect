@@ -218,6 +218,18 @@ function PharmagisterSetupContent() {
           status: 'pending',
           submittedAt: serverTimestamp(),
         });
+
+        // Értesítés az adminnak (epresla@icloud.com user UID: Z8uUDktrQAfeQHT51REJaRP2z9n2)
+        await addDoc(collection(db, 'notifications'), {
+          userId: 'Z8uUDktrQAfeQHT51REJaRP2z9n2',
+          type: 'admin_approval_request',
+          title: '🔔 Új Pharmagister jóváhagyási kérelem',
+          message: `${selectedRole === 'pharmacy' ? formData.pharmacyName || formData.contactName : formData.displayName} (${user.email}) jóváhagyást kér. NKK szám: ${formData.nkkNumber}`,
+          read: false,
+          createdAt: serverTimestamp(),
+          relatedUserId: user.uid,
+          relatedUserEmail: user.email,
+        });
       }
       
       if (editMode) {
