@@ -1,6 +1,11 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    // Admin hozzáférés - admin email címmel rendelkező user mindent elérhet
+    function isAdmin() {
+      return request.auth != null && request.auth.token.email == 'epresla@icloud.com';
+    }
+    
     // Users collection
     match /users/{userId} {
       // Olvasás: mindenki (szükséges a verifikációs token query-hez)
@@ -17,23 +22,33 @@ service cloud.firestore {
     
     // Pharmagister collections
     match /pharmacies/{pharmacyId} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null;
+      allow read: if request.auth != null || isAdmin();
+      allow write: if request.auth != null || isAdmin();
     }
     
     match /gigs/{gigId} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null;
+      allow read: if request.auth != null || isAdmin();
+      allow write: if request.auth != null || isAdmin();
     }
     
     match /applications/{applicationId} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null;
+      allow read: if request.auth != null || isAdmin();
+      allow write: if request.auth != null || isAdmin();
     }
     
-    // Minden más collection - auth required
+    match /notifications/{notificationId} {
+      allow read: if request.auth != null || isAdmin();
+      allow write: if request.auth != null || isAdmin();
+    }
+    
+    match /chats/{chatId} {
+      allow read: if request.auth != null || isAdmin();
+      allow write: if request.auth != null || isAdmin();
+    }
+    
+    // Minden más collection - auth required VAGY admin
     match /{document=**} {
-      allow read, write: if request.auth != null;
+      allow read, write: if request.auth != null || isAdmin();
     }
   }
 }

@@ -15,6 +15,7 @@ export default function RegisterPage() {
   const [success, setSuccess] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showFreemailWarning, setShowFreemailWarning] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -126,10 +127,25 @@ export default function RegisterPage() {
             <input
               type="email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                const isFreemail = e.target.value.toLowerCase().includes('freemail.hu');
+                setShowFreemailWarning(isFreemail);
+              }}
               className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
               required
             />
+            {showFreemailWarning && (
+              <div className="mt-2 bg-orange-50 border border-orange-200 rounded-lg p-3 text-sm">
+                <div className="flex items-start gap-2">
+                  <span className="text-orange-600 text-lg flex-shrink-0">⚠️</span>
+                  <div className="text-orange-800">
+                    <strong>Freemail figyelmeztetés:</strong> A freemail.hu címekre küldött emailek gyakran spamnek minősülnek vagy nem érkeznek meg. 
+                    Javasoljuk <strong>Gmail</strong> vagy más szolgáltató használatát a megbízhatóbb kézbesítés érdekében.
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           <div>
