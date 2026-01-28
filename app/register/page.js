@@ -95,6 +95,22 @@ export default function RegisterPage() {
             <p className="text-gray-700 mb-2">
               Küldtünk egy aktiváló emailt a <strong>{email}</strong> címre.
             </p>
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+              <p className="text-sm text-yellow-800 mb-2">
+                ⚠️ <strong>Fontos:</strong> Kérjük, ellenőrizd a <strong>Spam/Kéretlen</strong> mappádat is!
+              </p>
+              <p className="text-xs text-yellow-700">
+                Az automatikus emailek gyakran oda kerülnek.
+              </p>
+            </div>
+            {email.toLowerCase().includes('freemail.hu') && (
+              <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-4">
+                <p className="text-sm text-orange-800">
+                  🚨 <strong>Freemail figyelmeztetés:</strong> A freemail.hu címekre küldött emailek <strong>gyakran meg sem érkeznek</strong>. 
+                  Ha 5 perc alatt nem látod az emailt (sem a Beérkező, sem a Spam mappában), próbálj másik email címmel regisztrálni.
+                </p>
+              </div>
+            )}
             <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
               <p className="text-sm text-green-800 mb-2">
                 ✅ <strong>Email elküldve!</strong> Hamarosan megérkezik (1-2 percen belül).
@@ -138,10 +154,10 @@ export default function RegisterPage() {
             {showFreemailWarning && (
               <div className="mt-2 bg-orange-50 border border-orange-200 rounded-lg p-3 text-sm">
                 <div className="flex items-start gap-2">
-                  <span className="text-orange-600 text-lg flex-shrink-0">⚠️</span>
+                  <span className="text-orange-600 text-lg flex-shrink-0">🚨</span>
                   <div className="text-orange-800">
-                    <strong>Freemail figyelmeztetés:</strong> A freemail.hu címekre küldött emailek gyakran spamnek minősülnek vagy nem érkeznek meg. 
-                    Javasoljuk <strong>Gmail</strong> vagy más szolgáltató használatát a megbízhatóbb kézbesítés érdekében.
+                    <strong>Figyelem!</strong> A freemail.hu címekre küldött emailek <strong>gyakran meg sem érkeznek</strong>. 
+                    Erősen javasoljuk <strong>Gmail</strong> vagy más szolgáltató használatát.
                   </div>
                 </div>
               </div>
