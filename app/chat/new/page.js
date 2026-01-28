@@ -1,0 +1,181 @@
+"use client";
+import { useState, useEffect, useRef } from 'react';
+import { useAuth } from '@/context/AuthContext';
+import { useTheme } from '@/context/ThemeContext';
+import { useRouter, useSearchParams } from 'next/navigation';
+import RouteGuard from '@/app/components/RouteGuard';
+import { collection, addDoc, serverTimestamp, query, where, getDocs } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { ArrowLeft, Send, Loader2 } from 'lucide-react';
+
+export default function NewChatPage() {
+  const { user, userData } = useAuth();
+  const { darkMode } = useTheme();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const messagesEndRef = useRef(null);
+
+  const [messageText, setMessageText] = useState('');
+  const [sending, setSending] = useState(false);
+
+  const recipientId = searchParams.get('recipientId');
+  const recipientName = searchParams.get('recipientName');
+  const recipientPhoto = searchParams.get('recipientPhoto');
+  const demandId = searchParams.get('demandId');
+  const demandDate = searchParams.get('demandDate');
+  const demandPosition = searchParams.get('demandPosition');
+  const demandPositionLabel = searchParams.get('demandPositionLabel');
+
+  const handleSendMessage = async () => {
+    if (!messageText.trim() || !user) return;
+
+    setSending(true);
+    try {
+      // Check if chat already exists
+      const chatsRef = collection(db, 'chats');
+      const existingChatQuery = query(
+        chatsRef,
+        where('members', 'array-contains', user.uid)
+      );
+      const existingChats = await getDocs(existingChatQuery);
+      
+      let chatId = null;
+      existingChats.forEach((chatDoc) => {
+        const chatData = chatDoc.data();
+        if (chatData.members.includes(recipientId) && chatData.relatedDemandId === demandId) {
+          chatId = chatDoc.id;
+        }
+      });
+
+      // Create new chat if doesn't exist
+      if (!chatId) {
+        const newChatRef = await addDoc(chatsRef, {
+          members: [user.uid, recipientId],
+          memberNames: {
+            [user.uid]: userData?.pharmacyName || userData?.displayName || 'Felhasználó',
+            [recipientId]: recipientName || 'Felhasználó'
+          },
+          memberPhotos: {
+            [user.uid]: userData?.pharmaPhotoURL || userData?.photoURL || null,
+            [recipientId]: recipientPhoto || null
+          },
+          createdAt: serverTimestamp(),
+          lastMessageAt: serverTimestamp(),
+          lastMessage: messageText.trim(),
+          relatedDemandId: demandId,
+          relatedDemandDate: demandDate,
+          relatedDemandPosition: demandPosition,
+          relatedDemandPositionLabel: demandPositionLabel,
+          archivedBy: [],
+          deletedBy: []
+        });
+        chatId = newChatRef.id;
+      }
+
+      // Add first message
+      await addDoc(collection(db, 'chats', chatId, 'messages'), {
+        senderId: user.uid,
+        senderName: userData?.pharmacyName || userData?.displayName || 'Felhasználó',
+        text: messageText.trim(),
+        timestamp: serverTimestamp(),
+        read: false
+      });
+
+      // Navigate to the new chat
+      router.push(`/chat/${chatId}`);
+    } catch (error) {
+      console.error('Error creating chat:', error);
+      alert('Hiba történt az üzenet küldése során.');
+      setSending(false);
+    }
+  };
+
+  return (
+    <RouteGuard>
+      <div className={`min-h-screen ${darkMode ? 'bg-gray-900' : 'bg-gray-50'} flex flex-col`}>
+        {/* Header */}
+        <div className={`${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border-b px-4 py-3`}>
+          <div className="max-w-4xl mx-auto flex items-center gap-3">
+            <button
+              onClick={() => router.back()}
+              className={`p-2 rounded-lg ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </button>
+            
+            <div className="flex items-center gap-3 flex-1">
+              {recipientPhoto ? (
+                <img
+                  src={recipientPhoto}
+                  alt={recipientName}
+                  className="w-10 h-10 rounded-full object-cover"
+                />
+              ) : (
+                <div className={`w-10 h-10 rounded-full ${darkMode ? 'bg-gray-700' : 'bg-gray-300'} flex items-center justify-center`}>
+                  <span className="text-lg">{recipientName?.charAt(0) || '?'}</span>
+                </div>
+              )}
+              
+              <div className="flex-1 min-w-0">
+                <h2 className={`font-semibold truncate ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                  {recipientName || 'Felhasználó'}
+                </h2>
+                {demandDate && (
+                  <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                    {demandPositionLabel} • {new Date(demandDate).toLocaleDateString('hu-HU')}
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Empty state */}
+        <div className="flex-1 flex flex-col items-center justify-center px-4 pb-32">
+          <div className="text-center max-w-md">
+            <div className="text-6xl mb-4">💬</div>
+            <h3 className={`text-xl font-semibold mb-2 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+              Új beszélgetés
+            </h3>
+            <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'} mb-6`}>
+              Írj egy üzenetet, hogy elindítsd a beszélgetést {recipientName || 'a felhasználóval'}.
+            </p>
+          </div>
+        </div>
+
+        {/* Message input */}
+        <div className={`${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border-t px-4 py-4 fixed bottom-0 left-0 right-0`}>
+          <div className="max-w-4xl mx-auto flex gap-2">
+            <input
+              type="text"
+              value={messageText}
+              onChange={(e) => setMessageText(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && !sending && handleSendMessage()}
+              placeholder="Írj üzenetet..."
+              className={`flex-1 px-4 py-2 rounded-lg ${
+                darkMode 
+                  ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                  : 'bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-500'
+              } border focus:outline-none focus:ring-2 focus:ring-purple-500`}
+              disabled={sending}
+            />
+            <button
+              onClick={handleSendMessage}
+              disabled={!messageText.trim() || sending}
+              className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            >
+              {sending ? (
+                <Loader2 className="w-5 h-5 animate-spin" />
+              ) : (
+                <>
+                  <Send className="w-5 h-5" />
+                  <span className="hidden sm:inline">Küldés</span>
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
+    </RouteGuard>
+  );
+}
