@@ -1,6 +1,6 @@
-const CACHE_NAME = 'careconnect-v1';
-const STATIC_CACHE = 'careconnect-static-v1';
-const DYNAMIC_CACHE = 'careconnect-dynamic-v1';
+const CACHE_NAME = 'pharmagister-v1';
+const STATIC_CACHE = 'pharmagister-static-v1';
+const DYNAMIC_CACHE = 'pharmagister-dynamic-v1';
 
 // Statikus fájlok, amiket mindig cache-elünk
 const STATIC_ASSETS = [
@@ -100,11 +100,11 @@ self.addEventListener('push', (event) => {
   console.log('[SW] Push received:', event);
   
   let data = {
-    title: 'CareConnect',
+    title: 'Pharmagister',
     body: 'Új értesítésed érkezett!',
     icon: '/icons/icon-192x192.png',
     badge: '/icons/icon-72x72.png',
-    tag: 'careconnect-notification',
+    tag: 'pharmagister-notification',
     data: { url: '/' }
   };
 

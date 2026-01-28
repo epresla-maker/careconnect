@@ -27,16 +27,16 @@ export async function POST(request) {
 
     // Generálj Firebase email verification linket
     const verificationLink = await admin.auth().generateEmailVerificationLink(email, {
-      url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://careconnect-fawn.vercel.app'}/login?verified=true`,
+      url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://pharmagister.vercel.app'}/login?verified=true`,
     });
 
     console.log('📧 Verification link generated for:', email);
 
     // Email küldése Resend-del
     const { data, error } = await resend.emails.send({
-      from: 'CareConnect <noreply@valifriend.com>',
+      from: 'Pharmagister <noreply@valifriend.com>',
       to: [email],
-      subject: 'Erősítsd meg az email címedet - CareConnect',
+      subject: 'Erősítsd meg az email címedet - Pharmagister',
       html: `
         <!DOCTYPE html>
         <html>
@@ -72,7 +72,7 @@ export async function POST(request) {
           <body>
             <div class="container">
               <h2>Szia ${displayName}! 👋</h2>
-              <p>Köszönjük, hogy regisztráltál a CareConnect Pharmagister platformon!</p>
+              <p>Köszönjük, hogy regisztráltál a Pharmagister platformon!</p>
               <p>Kérjük, erősítsd meg az email címedet:</p>
               <div style="text-align: center;">
                 <a href="${verificationLink}" class="button">

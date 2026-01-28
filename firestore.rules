@@ -9,9 +9,9 @@ service cloud.firestore {
       // Írás: csak saját profil
       allow create, delete: if request.auth != null && request.auth.uid == userId;
       
-      // Update: saját profil VAGY email verifikáció
+      // Update: saját profil VAGY email verifikáció (bárki frissítheti ezeket a mezőket)
       allow update: if (request.auth != null && request.auth.uid == userId) ||
-                       (request.resource.data.keys().hasOnly(['emailVerified', 'verificationToken', 'verificationTokenExpires']) &&
+                       (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['emailVerified', 'verificationToken', 'verificationTokenExpires']) &&
                         request.resource.data.emailVerified == true);
     }
     

@@ -208,8 +208,8 @@ export default function HelpPage() {
             <h3 className={`font-semibold ${darkMode ? 'text-white' : 'text-gray-900'} mb-2`}>Kapcsolat</h3>
             <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
               Ha további kérdésed van, vedd fel velünk a kapcsolatot az{' '}
-              <a href="mailto:support@careconnect.hu" className="text-[#6B46C1] underline">
-                support@careconnect.hu
+              <a href="mailto:support@pharmagister.hu" className="text-[#6B46C1] underline">
+                support@pharmagister.hu
               </a>{' '}
               címen.
             </p>

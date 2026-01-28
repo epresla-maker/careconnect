@@ -10,8 +10,8 @@ import GlobalBottomNav from "@/app/components/GlobalBottomNav";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata = {
-  title: "CareConnect - Pharmagister & Tutomagister",
-  description: "Gyógyszertári helyettesítés és idősgondozás platform",
+  title: "Pharmagister - Gyógyszertári helyettesítés",
+  description: "Gyógyszertári helyettesítés platform",
   manifest: "/manifest.json",
   appleWebAppCapable: "yes",
   appleWebAppStatusBarStyle: "default",
@@ -28,10 +28,10 @@ export default function RootLayout({ children }) {
   return (
     <html lang="hu">
       <head>
-        <meta name="application-name" content="CareConnect" />
+        <meta name="application-name" content="Pharmagister" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-        <meta name="apple-mobile-web-app-title" content="CareConnect" />
+        <meta name="apple-mobile-web-app-title" content="Pharmagister" />
         <meta name="format-detection" content="telephone=no" />
         <meta name="mobile-web-app-capable" content="yes" />
         <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />

@@ -1,18 +1,18 @@
-# CareConnect Projekt - Összefoglaló
+# Pharmagister Projekt - Összefoglaló
 
 ## 🎯 Mi történt?
 
-A Pharmagister és Tutomagister modulokat **kivettük a Nexus projektből** és **létrehoztunk egy új, külön CareConnect projektet** számukra.
+A Pharmagister modult **kivettük a Nexus projektből** és **létrehoztunk egy új, külön Pharmagister projektet**.
 
 ## 📁 Projekt Helyek
 
 - **Nexus** (főprojekt): `/Users/epresl/Desktop/nexus`
-- **CareConnect** (új projekt): `/Users/epresl/Desktop/careconnect`
+- **Pharmagister** (új projekt): `/Users/epresl/Desktop/careconnect`
 
-## 🏗️ CareConnect Projekt Struktúra
+## 🏗️ Pharmagister Projekt Struktúra
 
 ```
-careconnect/
+pharmagister/
 ├── app/
 │   ├── components/
 │   │   ├── Toast.js

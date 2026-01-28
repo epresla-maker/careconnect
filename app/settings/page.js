@@ -209,7 +209,7 @@ export default function SettingsPage() {
 
       {/* App Version */}
       <div className="mt-8 text-center">
-        <p className={`text-xs ${darkMode ? 'text-gray-600' : 'text-gray-400'}`}>CareConnect v1.0.0</p>
+        <p className={`text-xs ${darkMode ? 'text-gray-600' : 'text-gray-400'}`}>Pharmagister v1.0.0</p>
       </div>
 
       {/* Logout Confirmation Modal */}

@@ -1,7 +1,7 @@
 {
-  "name": "CareConnect",
-  "short_name": "CareConnect",
-  "description": "Pharmagister és Tutomagister platform",
+  "name": "Pharmagister",
+  "short_name": "Pharmagister",
+  "description": "Gyógyszertári helyettesítés platform",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",

@@ -84,7 +84,7 @@ export default function AdminPage() {
       <div className="max-w-full sm:max-w-3xl lg:max-w-6xl xl:max-w-7xl mx-auto">
         <div className="bg-white rounded-lg shadow-lg p-3 sm:p-6 mb-3 sm:mb-6">
           <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold mb-2">Admin Panel</h1>
-          <p className="text-xs sm:text-sm lg:text-base text-gray-600 mb-3">Üdvözöl a CareConnect admin felület</p>
+          <p className="text-xs sm:text-sm lg:text-base text-gray-600 mb-3">Üdvözöl a Pharmagister admin felület</p>
           <div className="flex flex-col gap-2">
             <button
               onClick={() => router.push('/pharmagister')}

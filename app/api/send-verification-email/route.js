@@ -8,9 +8,9 @@ export async function POST(request) {
     const { email, displayName, verificationLink } = await request.json();
 
     const { data, error } = await resend.emails.send({
-      from: 'CareConnect <noreply@valifriend.com>',
+      from: 'Pharmagister <noreply@valifriend.com>',
       to: [email],
-      subject: 'Erősítsd meg az email címedet - CareConnect',
+      subject: 'Erősítsd meg az email címedet - Pharmagister',
       html: `
         <!DOCTYPE html>
         <html>
@@ -70,13 +70,13 @@ export async function POST(request) {
           <body>
             <div class="container">
               <div class="header">
-                <div class="logo">CareConnect</div>
-                <p style="color: #666; margin: 0;">Pharmagister Platform</p>
+                <div class="logo">Pharmagister</div>
+                <p style="color: #666; margin: 0;">Gyógyszertári helyettesítés platform</p>
               </div>
               
               <h2 style="color: #333; margin-bottom: 20px;">Szia ${displayName || 'Felhasználó'}! 👋</h2>
               
-              <p>Köszönjük, hogy regisztráltál a CareConnect Pharmagister platformon!</p>
+              <p>Köszönjük, hogy regisztráltál a Pharmagister platformon!</p>
               
               <p>Kérjük, erősítsd meg az email címedet az alábbi gombra kattintva:</p>
               
@@ -99,7 +99,7 @@ export async function POST(request) {
               
               <div class="footer">
                 <p>Ha nem te regisztráltál, kérjük, hagyd figyelmen kívül ezt az emailt.</p>
-                <p style="margin-top: 15px; font-weight: 600;">Üdvözlettel,<br>A CareConnect csapata</p>
+                <p style="margin-top: 15px; font-weight: 600;"Üdvözlettel,<br>A Pharmagister csapata</p>
               </div>
             </div>
           </body>

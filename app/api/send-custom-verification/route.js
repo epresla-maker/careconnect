@@ -11,12 +11,12 @@ export async function POST(request) {
     console.log('🔑 Resend API Key present:', !!process.env.RESEND_API_KEY);
     console.log('🌐 App URL:', process.env.NEXT_PUBLIC_APP_URL);
     
-    const verificationUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://careconnect-fawn.vercel.app'}/verify-email?token=${verificationToken}`;
+    const verificationUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://pharmagister.vercel.app'}/verify-email?token=${verificationToken}`;
 
     const { data, error } = await resend.emails.send({
-      from: 'CareConnect <noreply@valifriend.com>',
+      from: 'Pharmagister <noreply@valifriend.com>',
       to: [email],
-      subject: 'Erősítsd meg az email címedet - CareConnect Pharmagister',
+      subject: 'Erősítsd meg az email címedet - Pharmagister',
       html: `
         <!DOCTYPE html>
         <html>
@@ -70,9 +70,9 @@ export async function POST(request) {
           </head>
           <body>
             <div class="container">
-              <div class="logo">CareConnect</div>
+              <div class="logo">Pharmagister</div>
               
-              <h2 style="color: #333; margin-bottom: 20px;">Üdv a CareConnect-nél! 👋</h2>
+              <h2 style="color: #333; margin-bottom: 20px;">Üdv a Pharmagister-nél! 👋</h2>
               
               <p>Köszönjük a regisztrációt! Már csak egy lépés van hátra.</p>
               
@@ -93,7 +93,7 @@ export async function POST(request) {
               
               <div class="footer">
                 <p>Ez az email automatikusan lett generálva. Kérjük ne válaszolj rá.</p>
-                <p>© ${new Date().getFullYear()} CareConnect Pharmagister</p>
+                <p>© ${new Date().getFullYear()} Pharmagister</p>
               </div>
             </div>
           </body>

@@ -1,6 +1,6 @@
-# CareConnect - Pharmagister & Tutomagister
+# Pharmagister
 
-Külön platform a Pharmagister (gyógyszertári helyettesítés) és Tutomagister (idősgondozás) moduloknak.
+Gyógyszertári helyettesítés platform.
 
 ## Technológiák
 
@@ -40,7 +40,7 @@ Ez a projekt **ugyanazt a Firebase projektet használja mint a Nexus**, így az 
 ## Projekt Struktúra
 
 ```
-careconnect/
+pharmagister/
 ├── app/
 │   ├── components/        # Újrafelhasználható komponensek
 │   ├── pharmagister/      # Pharmagister modul
