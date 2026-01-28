@@ -1,0 +1,302 @@
+"use client";
+import { useState, useEffect } from 'react';
+import { useParams, useRouter } from 'next/navigation';
+import { useAuth } from '@/context/AuthContext';
+import { useTheme } from '@/context/ThemeContext';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import RouteGuard from '@/app/components/RouteGuard';
+import { ArrowLeft, User, Phone, Mail, MapPin, Clock, Code, DollarSign, FileText, Shield, Loader2 } from 'lucide-react';
+
+export default function ProfilePage() {
+  const params = useParams();
+  const router = useRouter();
+  const { user } = useAuth();
+  const { darkMode } = useTheme();
+  const userId = params.id;
+  
+  const [profileData, setProfileData] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadProfile();
+  }, [userId]);
+
+  const loadProfile = async () => {
+    if (!userId) return;
+    
+    setLoading(true);
+    try {
+      const userDoc = await getDoc(doc(db, 'users', userId));
+      if (userDoc.exists()) {
+        setProfileData(userDoc.data());
+      } else {
+        alert('A felhasználó nem található.');
+        router.back();
+      }
+    } catch (error) {
+      console.error('Error loading profile:', error);
+      alert('Hiba történt az adatlap betöltése során.');
+      router.back();
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Privacy beállítások ellenőrzése
+  const canShow = (field) => {
+    if (!profileData?.privacySettings?.substitute) return true; // Default: minden látható
+    return profileData.privacySettings.substitute[field] !== false;
+  };
+
+  if (loading) {
+    return (
+      <RouteGuard>
+        <div className={`min-h-screen ${darkMode ? 'bg-gray-900' : 'bg-gray-50'} flex items-center justify-center`}>
+          <Loader2 className="w-8 h-8 animate-spin text-purple-600" />
+        </div>
+      </RouteGuard>
+    );
+  }
+
+  if (!profileData) {
+    return null;
+  }
+
+  const isSubstitute = profileData.pharmagisterRole === 'pharmacist' || profileData.pharmagisterRole === 'assistant';
+  const roleLabel = profileData.pharmagisterRole === 'pharmacist' ? 'Gyógyszerész' : 
+                    profileData.pharmagisterRole === 'assistant' ? 'Szakasszisztens' : 'Gyógyszertár';
+
+  return (
+    <RouteGuard>
+      <div className={`min-h-screen ${darkMode ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'} pb-20`}>
+        <div className="max-w-2xl mx-auto px-4 py-6">
+          {/* Header */}
+          <div className="flex items-center gap-3 mb-6">
+            <button
+              onClick={() => router.back()}
+              className={`p-2 rounded-lg ${darkMode ? 'hover:bg-gray-800' : 'hover:bg-gray-200'}`}
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </button>
+            <h1 className="text-2xl font-bold">Adatlap</h1>
+          </div>
+
+          {/* Profile Card */}
+          <div className={`${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-xl border shadow-sm overflow-hidden`}>
+            {/* Header with photo */}
+            <div className="bg-gradient-to-r from-purple-600 to-pink-600 h-32 relative">
+              <div className="absolute -bottom-12 left-6">
+                {profileData.photoURL ? (
+                  <img
+                    src={profileData.photoURL}
+                    alt={profileData.displayName}
+                    className="w-24 h-24 rounded-full border-4 border-white object-cover"
+                  />
+                ) : (
+                  <div className="w-24 h-24 rounded-full border-4 border-white bg-gray-300 flex items-center justify-center">
+                    <User className="w-12 h-12 text-gray-600" />
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Profile Info */}
+            <div className="pt-16 px-6 pb-6">
+              <div className="mb-4">
+                <h2 className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                  {profileData.displayName || 'Névtelen'}
+                </h2>
+                <div className="flex items-center gap-2 mt-1">
+                  <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm font-medium">
+                    {roleLabel}
+                  </span>
+                  {profileData.pharmaApproved && (
+                    <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium flex items-center gap-1">
+                      <Shield className="w-3 h-3" />
+                      Jóváhagyott
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {isSubstitute ? (
+                // Helyettesítő adatok
+                <div className="space-y-4">
+                  {/* Elérhetőség */}
+                  <div>
+                    <h3 className={`text-sm font-semibold ${darkMode ? 'text-gray-400' : 'text-gray-500'} uppercase mb-3`}>
+                      Elérhetőség
+                    </h3>
+                    <div className="space-y-3">
+                      {canShow('shareEmail') ? (
+                        <div className="flex items-center gap-3">
+                          <Mail className="w-5 h-5 text-blue-600" />
+                          <span className={darkMode ? 'text-gray-300' : 'text-gray-700'}>
+                            {profileData.email || 'Nincs megadva'}
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-3 opacity-50">
+                          <Mail className="w-5 h-5 text-gray-400" />
+                          <span className={`text-sm italic ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+                            Email nem nyilvános
+                          </span>
+                        </div>
+                      )}
+
+                      {canShow('sharePhone') ? (
+                        profileData.phone ? (
+                          <div className="flex items-center gap-3">
+                            <Phone className="w-5 h-5 text-green-600" />
+                            <span className={darkMode ? 'text-gray-300' : 'text-gray-700'}>
+                              {profileData.phone}
+                            </span>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-3 opacity-50">
+                            <Phone className="w-5 h-5 text-gray-400" />
+                            <span className={`text-sm italic ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+                              Telefon nincs megadva
+                            </span>
+                          </div>
+                        )
+                      ) : (
+                        <div className="flex items-center gap-3 opacity-50">
+                          <Phone className="w-5 h-5 text-gray-400" />
+                          <span className={`text-sm italic ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+                            Telefon nem nyilvános
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Szakmai adatok */}
+                  <div>
+                    <h3 className={`text-sm font-semibold ${darkMode ? 'text-gray-400' : 'text-gray-500'} uppercase mb-3`}>
+                      Szakmai adatok
+                    </h3>
+                    <div className="space-y-3">
+                      {canShow('shareExperience') && profileData.pharmaYearsOfExperience && (
+                        <div className="flex items-center gap-3">
+                          <Clock className="w-5 h-5 text-orange-600" />
+                          <div>
+                            <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Tapasztalat</p>
+                            <p className={`font-medium ${darkMode ? 'text-gray-200' : 'text-gray-900'}`}>
+                              {profileData.pharmaYearsOfExperience} év
+                            </p>
+                          </div>
+                        </div>
+                      )}
+
+                      {canShow('shareSoftwareKnowledge') && profileData.pharmaSoftwareKnowledge?.length > 0 && (
+                        <div className="flex items-start gap-3">
+                          <Code className="w-5 h-5 text-purple-600 mt-1" />
+                          <div className="flex-1">
+                            <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'} mb-2`}>Szoftverismeret</p>
+                            <div className="flex flex-wrap gap-2">
+                              {profileData.pharmaSoftwareKnowledge.map((software, idx) => (
+                                <span
+                                  key={idx}
+                                  className={`px-2 py-1 ${darkMode ? 'bg-purple-900/30 text-purple-300' : 'bg-purple-100 text-purple-700'} rounded text-sm`}
+                                >
+                                  {software}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {canShow('shareHourlyRate') && profileData.pharmaHourlyRate && (
+                        <div className="flex items-center gap-3">
+                          <DollarSign className="w-5 h-5 text-teal-600" />
+                          <div>
+                            <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Órabér</p>
+                            <p className={`font-medium ${darkMode ? 'text-gray-200' : 'text-gray-900'}`}>
+                              {profileData.pharmaHourlyRate} Ft/óra
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Bemutatkozás */}
+                  {canShow('shareBio') && profileData.pharmaBio && (
+                    <div>
+                      <h3 className={`text-sm font-semibold ${darkMode ? 'text-gray-400' : 'text-gray-500'} uppercase mb-3`}>
+                        Bemutatkozás
+                      </h3>
+                      <div className="flex items-start gap-3">
+                        <FileText className="w-5 h-5 text-indigo-600 mt-1" />
+                        <p className={`${darkMode ? 'text-gray-300' : 'text-gray-700'} text-sm leading-relaxed`}>
+                          {profileData.pharmaBio}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                // Gyógyszertár adatok
+                <div className="space-y-4">
+                  <div>
+                    <h3 className={`text-sm font-semibold ${darkMode ? 'text-gray-400' : 'text-gray-500'} uppercase mb-3`}>
+                      Gyógyszertár adatok
+                    </h3>
+                    <div className="space-y-3">
+                      {profileData.pharmacyName && (
+                        <div className="flex items-center gap-3">
+                          <MapPin className="w-5 h-5 text-purple-600" />
+                          <div>
+                            <p className={`font-medium ${darkMode ? 'text-gray-200' : 'text-gray-900'}`}>
+                              {profileData.pharmacyName}
+                            </p>
+                            {(profileData.pharmacyCity || profileData.pharmacyStreet) && (
+                              <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                                {profileData.pharmacyZipCode} {profileData.pharmacyCity}, {profileData.pharmacyStreet} {profileData.pharmacyHouseNumber}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {profileData.pharmacyPhone && (
+                        <div className="flex items-center gap-3">
+                          <Phone className="w-5 h-5 text-green-600" />
+                          <span className={darkMode ? 'text-gray-300' : 'text-gray-700'}>
+                            {profileData.pharmacyPhone}
+                          </span>
+                        </div>
+                      )}
+
+                      {profileData.pharmacyEmail && (
+                        <div className="flex items-center gap-3">
+                          <Mail className="w-5 h-5 text-blue-600" />
+                          <span className={darkMode ? 'text-gray-300' : 'text-gray-700'}>
+                            {profileData.pharmacyEmail}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Privacy Notice */}
+              <div className={`mt-6 pt-4 border-t ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+                <div className="flex items-start gap-2">
+                  <Shield className={`w-4 h-4 ${darkMode ? 'text-gray-400' : 'text-gray-500'} mt-0.5`} />
+                  <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                    Az adatok az adatvédelmi beállításoknak megfelelően jelennek meg.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </RouteGuard>
+  );
+}
