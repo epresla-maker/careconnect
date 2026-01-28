@@ -127,7 +127,6 @@ export default function DemandDetailPage() {
       });
 
       // Send notification to pharmacy
-      const { addDoc, collection, serverTimestamp } = await import('firebase/firestore');
       console.log('📧 Értesítés küldése gyógyszertárnak:', {
         pharmacyId: demand.pharmacyId,
         demandDate: demand.date,
