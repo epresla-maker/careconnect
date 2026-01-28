@@ -62,7 +62,7 @@
       "queryScope": "COLLECTION",
       "fields": [
         { "fieldPath": "demandId", "order": "ASCENDING" },
-        { "fieldPath": "createdAt", "order": "ASCENDING" }
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
       ]
     },
     {

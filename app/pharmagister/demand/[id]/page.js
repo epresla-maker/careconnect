@@ -107,6 +107,7 @@ export default function DemandDetailPage() {
       setApplying(true);
 
       const applicantData = {
+        applicantId: user.uid,
         userId: user.uid,
         displayName: userData.displayName || 'Névtelen',
         photoURL: userData.photoURL || null,
@@ -121,12 +122,32 @@ export default function DemandDetailPage() {
         status: 'pending' // pending, accepted, rejected
       };
 
+      // 1. Mentés az igény documentbe (gyors olvasáshoz)
       const demandRef = doc(db, 'pharmaDemands', demandId);
       await updateDoc(demandRef, {
         applicants: arrayUnion(applicantData)
       });
 
-      // Send notification to pharmacy
+      // 2. Külön document létrehozása a pharmaApplications collection-ben (kezeléshez)
+      await addDoc(collection(db, 'pharmaApplications'), {
+        demandId: demandId,
+        pharmacyId: demand.pharmacyId,
+        applicantId: user.uid,
+        displayName: userData.displayName || 'Névtelen',
+        photoURL: userData.photoURL || null,
+        pharmagisterRole: userData.pharmagisterRole,
+        email: userData.email,
+        phone: userData.pharmaPhone || userData.phone || null,
+        experience: userData.pharmaYearsOfExperience || null,
+        hourlyRate: userData.pharmaHourlyRate || null,
+        software: userData.pharmaSoftwareKnowledge || [],
+        bio: userData.pharmaBio || '',
+        status: 'pending',
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      });
+
+      // 3. Értesítés küldése gyógyszertárnak
       console.log('📧 Értesítés küldése gyógyszertárnak:', {
         pharmacyId: demand.pharmacyId,
         demandDate: demand.date,
