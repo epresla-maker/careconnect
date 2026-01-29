@@ -94,9 +94,9 @@ export default function DemandDetailPage() {
       return;
     }
 
-    // Check if profile is approved
-    if (userData.pharmaPendingApproval && !userData.pharmaProfileComplete) {
-      alert('A profilod még jóváhagyásra vár. Amíg az admin nem ellenőrzi az NNK számodat, nem tudsz jelentkezni.');
+    // Check if profile is complete
+    if (!userData.pharmaProfileComplete) {
+      alert('Kérlek először töltsd ki a profilodat!');
       return;
     }
 
@@ -710,7 +710,7 @@ export default function DemandDetailPage() {
               ) : isPendingApproval ? (
                 <div className="bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-400 rounded-xl p-4 text-center">
                   <span className="text-xl mr-2">⏳</span>
-                  A profilod még jóváhagyásra vár. Amíg az admin nem ellenőrzi az NNK számodat, nem tudsz jelentkezni.
+                  Kérlek először töltsd ki a profilodat a beállításokban!
                 </div>
               ) : !roleMatches && userData?.pharmagisterRole && userData.pharmagisterRole !== 'pharmacy' ? (
                 <div className="flex gap-3">

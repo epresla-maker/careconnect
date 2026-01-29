@@ -439,9 +439,9 @@ function CreateDemandForm({ date, darkMode, onSuccess, onCancel }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // Ellenőrizzük, hogy a gyógyszertár jóvá van-e hagyva
-    if (userData?.pharmagisterRole === 'pharmacy' && userData?.pharmaApproved !== true) {
-      alert('Csak jóváhagyott gyógyszertárak adhatnak fel igényt! Az NKK számot az admin jóváhagyja.');
+    // Ellenőrizzük, hogy a profil ki van-e töltve
+    if (userData?.pharmagisterRole === 'pharmacy' && !userData?.pharmaProfileComplete) {
+      alert('Kérlek először töltsd ki a profilodat!');
       return;
     }
     
@@ -522,12 +522,11 @@ function CreateDemandForm({ date, darkMode, onSuccess, onCancel }) {
     <form onSubmit={handleSubmit} className="space-y-4">
       <h4 className={`font-semibold ${darkMode ? 'text-white' : 'text-[#111827]'} mb-4 text-lg`}>Új igény létrehozása</h4>
 
-      {/* Jóváhagyás figyelmeztetés */}
-      {userData?.pharmagisterRole === 'pharmacy' && userData?.pharmaApproved !== true && (
+      {/* Profil figyelmeztetés */}
+      {userData?.pharmagisterRole === 'pharmacy' && !userData?.pharmaProfileComplete && (
         <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-4">
           <p className="text-sm text-orange-800">
-            ⚠️ <strong>Figyelem!</strong> Még nem vagy jóváhagyva. Az NKK számodat az admin ellenőrzi. 
-            Igényt csak jóváhagyás után tudsz feladni.
+            ⚠️ <strong>Figyelem!</strong> Kérlek töltsd ki a profilodat a beállításokban!
           </p>
         </div>
       )}

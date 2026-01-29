@@ -2,9 +2,8 @@
 import { useState, useEffect, useRef, Suspense } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { doc, updateDoc, addDoc, collection, serverTimestamp, setDoc } from 'firebase/firestore';
+import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { createNotificationWithPush } from '@/lib/notifications';
 import RouteGuard from '@/app/components/RouteGuard';
 import { Loader2, Camera, ArrowLeft, Building2, User, Users } from 'lucide-react';
 
@@ -35,7 +34,6 @@ function PharmagisterSetupContent() {
     zipCode: '',
     street: '',
     houseNumber: '',
-    nkkNumber: '',
     
     // Helyettesítő specifikus
     yearsOfExperience: '',
@@ -75,7 +73,6 @@ function PharmagisterSetupContent() {
         zipCode: userData.pharmacyZipCode || userData.zipCode || '',
         street: userData.pharmacyStreet || userData.street || '',
         houseNumber: userData.pharmacyHouseNumber || userData.houseNumber || '',
-        nkkNumber: userData.nkkNumber || '',
         yearsOfExperience: userData.pharmaYearsOfExperience || '',
         softwareKnowledge: userData.pharmaSoftwareKnowledge || [],
         hourlyRate: userData.pharmaHourlyRate || '',
@@ -165,14 +162,13 @@ function PharmagisterSetupContent() {
       
       const dataToUpdate = {
         pharmagisterRole: selectedRole,
-        pharmaProfileComplete: false, // Admin jóváhagyásig false
-        pharmaPendingApproval: true,
+        pharmaProfileComplete: true,
         updatedAt: new Date().toISOString(),
       };
 
       if (selectedRole === 'pharmacy') {
         // Gyógyszertár validáció - TELJES CÍM KÖTELEZŐ
-        if (!formData.pharmacyName || !formData.contactName || !formData.city || !formData.zipCode || !formData.street || !formData.houseNumber || !formData.nkkNumber) {
+        if (!formData.pharmacyName || !formData.contactName || !formData.city || !formData.zipCode || !formData.street || !formData.houseNumber) {
           alert('Kérlek töltsd ki az összes kötelező mezőt! A gyógyszertár teljes címe kötelező (város, irányítószám, utca, házszám).');
           setLoading(false);
           return;
@@ -189,11 +185,10 @@ function PharmagisterSetupContent() {
           pharmacyHouseNumber: formData.houseNumber,
           pharmacyPhone: formData.phone,
           pharmacyEmail: user.email,
-          nkkNumber: formData.nkkNumber,
         });
       } else {
         // Helyettesítő validáció
-        if (!formData.displayName || !formData.yearsOfExperience || formData.softwareKnowledge.length === 0 || !formData.nkkNumber) {
+        if (!formData.displayName || !formData.yearsOfExperience || formData.softwareKnowledge.length === 0) {
           alert('Kérlek töltsd ki az összes kötelező mezőt!');
           setLoading(false);
           return;
@@ -207,42 +202,15 @@ function PharmagisterSetupContent() {
           pharmaSoftwareKnowledge: formData.softwareKnowledge,
           pharmaHourlyRate: formData.hourlyRate || null,
           pharmaBio: formData.bio,
-          nkkNumber: formData.nkkNumber,
         });
       }
 
       await updateDoc(userRef, dataToUpdate);
       
-      // Jóváhagyási kérelem létrehozása (csak új regisztrációnál vagy ha változott az NNK szám)
-      if (!editMode || userData?.nkkNumber !== formData.nkkNumber) {
-        await addDoc(collection(db, 'pharmagisterApprovals'), {
-          userId: user.uid,
-          userEmail: user.email,
-          userName: selectedRole === 'pharmacy' ? formData.contactName : formData.displayName,
-          role: selectedRole,
-          nkkNumber: formData.nkkNumber,
-          status: 'pending',
-          submittedAt: serverTimestamp(),
-        });
-
-        // Értesítés az adminnak push-sal (epresla@icloud.com user UID: Z8uUDktrQAfeQHT51REJaRP2z9n2)
-        await createNotificationWithPush({
-          userId: 'Z8uUDktrQAfeQHT51REJaRP2z9n2',
-          type: 'admin_approval_request',
-          title: 'Új jóváhagyási kérelem 🔔',
-          message: `${selectedRole === 'pharmacy' ? formData.pharmacyName || formData.contactName : formData.displayName} (${user.email}) jóváhagyást kér. NKK szám: ${formData.nkkNumber}`,
-          data: {
-            relatedUserId: user.uid,
-            relatedUserEmail: user.email,
-          },
-          url: '/admin/approvals'
-        });
-      }
-      
       if (editMode) {
         alert('✅ Profil sikeresen frissítve!');
       } else {
-        alert('✅ Profil sikeresen beküldve!\n\n⏳ A profil aktiválásához admin jóváhagyás szükséges az NNK működési nyilvántartási szám ellenőrzése után.\n\nÉrtesítést fogsz kapni, amikor a profilod jóváhagyásra került.');
+        alert('✅ Profil sikeresen létrehozva!');
       }
       
       router.push('/pharmagister');
@@ -486,50 +454,6 @@ function PharmagisterSetupContent() {
                       />
                     </div>
                   </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      NNK Nyilvántartási szám <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.nkkNumber}
-                      onChange={(e) => setFormData({ ...formData, nkkNumber: e.target.value })}
-                      className={`w-full px-4 py-3 border-2 rounded-lg focus:outline-none focus:ring-2 ${
-                        userData?.pharmaApproved === true
-                          ? 'border-green-500 bg-green-50 text-green-900 focus:ring-green-500 cursor-not-allowed'
-                          : userData?.pharmaApproved === false
-                          ? 'border-red-500 bg-red-50 text-red-900 focus:ring-red-500'
-                          : 'border-orange-500 bg-orange-50 text-orange-900 focus:ring-orange-500'
-                      }`}
-                      placeholder="12345-6/7890/2024"
-                      required
-                      readOnly={userData?.pharmaApproved === true}
-                      disabled={userData?.pharmaApproved === true}
-                    />
-                    <div className={`mt-2 p-3 border rounded-lg ${
-                      userData?.pharmaApproved === true
-                        ? 'bg-green-50 border-green-200'
-                        : userData?.pharmaApproved === false
-                        ? 'bg-red-50 border-red-200'
-                        : 'bg-yellow-50 border-yellow-200'
-                    }`}>
-                      <p className={`text-xs ${
-                        userData?.pharmaApproved === true
-                          ? 'text-green-800'
-                          : userData?.pharmaApproved === false
-                          ? 'text-red-800'
-                          : 'text-yellow-800'
-                      }`}>
-                        {userData?.pharmaApproved === true
-                          ? '✅ Jóváhagyva! Az NNK számod ellenőrizve és megerősítve.'
-                          : userData?.pharmaApproved === false
-                          ? '❌ Elutasítva. Kérlek, javítsd az adatokat és próbáld újra!'
-                          : '⚠️ Fontos: Az NNK szám ellenőrzése után admin jóváhagyás szükséges. Addig nem tudsz igényt feladni vagy jelentkezni.'
-                        }
-                      </p>
-                    </div>
-                  </div>
                 </>
               ) : (
                 /* Helyettesítő űrlap (Gyógyszerész & Szakasszisztens) */
@@ -637,50 +561,6 @@ function PharmagisterSetupContent() {
                       className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
                       placeholder="Írj néhány mondatot magadról, ami meggyőzi a gyógyszertárakat..."
                     />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      NNK Nyilvántartási szám <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.nkkNumber}
-                      onChange={(e) => setFormData({ ...formData, nkkNumber: e.target.value })}
-                      className={`w-full px-4 py-3 border-2 rounded-lg focus:outline-none focus:ring-2 ${
-                        userData?.pharmaApproved === true
-                          ? 'border-green-500 bg-green-50 text-green-900 focus:ring-green-500 cursor-not-allowed'
-                          : userData?.pharmaApproved === false
-                          ? 'border-red-500 bg-red-50 text-red-900 focus:ring-red-500'
-                          : 'border-orange-500 bg-orange-50 text-orange-900 focus:ring-orange-500'
-                      }`}
-                      placeholder="12345-6/7890/2024"
-                      required
-                      readOnly={userData?.pharmaApproved === true}
-                      disabled={userData?.pharmaApproved === true}
-                    />
-                    <div className={`mt-2 p-3 border rounded-lg ${
-                      userData?.pharmaApproved === true
-                        ? 'bg-green-50 border-green-200'
-                        : userData?.pharmaApproved === false
-                        ? 'bg-red-50 border-red-200'
-                        : 'bg-yellow-50 border-yellow-200'
-                    }`}>
-                      <p className={`text-xs ${
-                        userData?.pharmaApproved === true
-                          ? 'text-green-800'
-                          : userData?.pharmaApproved === false
-                          ? 'text-red-800'
-                          : 'text-yellow-800'
-                      }`}>
-                        {userData?.pharmaApproved === true
-                          ? '✅ Jóváhagyva! Az NNK számod ellenőrizve és megerősítve.'
-                          : userData?.pharmaApproved === false
-                          ? '❌ Elutasítva. Kérlek, javítsd az adatokat és próbáld újra!'
-                          : '⚠️ Fontos: Az NNK szám ellenőrzése után admin jóváhagyás szükséges. Addig nem tudsz igényre jelentkezni.'
-                        }
-                      </p>
-                    </div>
                   </div>
                 </>
               )}

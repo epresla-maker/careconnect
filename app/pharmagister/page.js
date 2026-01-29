@@ -240,15 +240,15 @@ function PharmagisterContent() {
           {/* Fő tartalom - ha már van szerepkör */}
           {pharmaRole && (
             <div className="space-y-4">
-              {/* Függőben állapot figyelmeztetés */}
+              {/* Profil nem kész figyelmeztetés */}
               {userData?.pharmaPendingApproval && !userData?.pharmaProfileComplete && (
                 <div className={`${darkMode ? 'bg-yellow-900/30 border-yellow-600' : 'bg-yellow-50 border-yellow-300'} border rounded-xl p-4`}>
                   <div className="flex items-start gap-3">
                     <span className="text-2xl">⏳</span>
                     <div>
-                      <h3 className={`font-semibold ${darkMode ? 'text-yellow-300' : 'text-yellow-800'}`}>Jóváhagyásra vár</h3>
+                      <h3 className={`font-semibold ${darkMode ? 'text-yellow-300' : 'text-yellow-800'}`}>Profil hiányos</h3>
                       <p className={`text-sm ${darkMode ? 'text-yellow-400' : 'text-yellow-700'} mt-1`}>
-                        Az NNK nyilvántartási számod ellenőrzése folyamatban van. Amíg a profilod nincs jóváhagyva, nem tudsz igényt feladni vagy jelentkezni.
+                        Kérlek töltsd ki a profilodat a beállításokban, hogy használhasd a Pharmagister funkcióit.
                       </p>
                     </div>
                   </div>
