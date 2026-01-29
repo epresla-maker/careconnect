@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { onAuthStateChanged, signOut as authSignOut } from "firebase/auth";
 import { auth, db } from "@/lib/firebase";
-import { doc, onSnapshot, setDoc, serverTimestamp } from "firebase/firestore";
+import { doc, onSnapshot, updateDoc, serverTimestamp } from "firebase/firestore";
 
 const AuthContext = createContext();
 
@@ -25,15 +25,18 @@ export const AuthProvider = ({ children }) => {
         setUser(firebaseUser);
         const userDocRef = doc(db, "users", firebaseUser.uid);
 
-        // Frissítjük a lastSeen értéket (setDoc merge-el hogy ne dobjon hibát ha nincs doc)
-        setDoc(userDocRef, {
-          lastSeen: serverTimestamp()
-        }, { merge: true });
-
         unsubscribeSnapshot = onSnapshot(
           userDocRef,
           (docSnap) => {
-            setUserData(docSnap.exists() ? docSnap.data() : null);
+            if (docSnap.exists()) {
+              setUserData(docSnap.data());
+              // Csak akkor frissítjük a lastSeen-t, ha a doc létezik
+              updateDoc(userDocRef, {
+                lastSeen: serverTimestamp()
+              }).catch(() => {}); // Silent fail ha nincs jogosultság
+            } else {
+              setUserData(null);
+            }
             setLoading(false); 
           },
           (error) => {
@@ -54,19 +57,19 @@ export const AuthProvider = ({ children }) => {
     };
   }, []);
 
-  // LastSeen frissítés 30 másodpercenként
+  // LastSeen frissítés 30 másodpercenként (csak ha a user doc létezik)
   useEffect(() => {
-    if (!user) return;
+    if (!user || !userData) return;
 
     const interval = setInterval(() => {
       const userDocRef = doc(db, "users", user.uid);
-      setDoc(userDocRef, {
+      updateDoc(userDocRef, {
         lastSeen: serverTimestamp()
-      }, { merge: true });
+      }).catch(() => {}); // Silent fail
     }, 30000); // 30 másodperc
 
     return () => clearInterval(interval);
-  }, [user]);
+  }, [user, userData]);
 
   const signOut = async () => {
     try {
