@@ -133,6 +133,39 @@ export default function NotificationsSettingsPage() {
     }
   };
 
+  const handleDisablePush = async () => {
+    try {
+      console.log('🔔 Disabling push subscription...');
+      
+      const registration = await navigator.serviceWorker.ready;
+      const subscription = await registration.pushManager.getSubscription();
+      
+      if (subscription) {
+        // Unsubscribe from push
+        await subscription.unsubscribe();
+        console.log('🔔 Unsubscribed from push');
+        
+        // Remove from server
+        const response = await fetch('/api/push-subscription', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: user.uid,
+            endpoint: subscription.endpoint
+          })
+        });
+        
+        console.log('🔔 Server delete response:', await response.json());
+      }
+      
+      setIsPushSubscribed(false);
+      alert('Push értesítések kikapcsolva.');
+    } catch (error) {
+      console.error('🔔 Error disabling push:', error);
+      alert('Hiba történt: ' + error.message);
+    }
+  };
+
   const handleToggle = async (key) => {
     const newSettings = {
       ...settings,
@@ -265,7 +298,12 @@ export default function NotificationsSettingsPage() {
                     Bekapcsolás
                   </button>
                 ) : isPushSubscribed ? (
-                  <span className="text-green-600 text-sm font-medium">Aktív</span>
+                  <button
+                    onClick={handleDisablePush}
+                    className="px-3 py-1.5 bg-gray-200 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-300 transition-colors"
+                  >
+                    Kikapcsolás
+                  </button>
                 ) : (
                   <span className="text-red-500 text-xs">Böngésző tiltja</span>
                 )}
