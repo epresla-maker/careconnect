@@ -1,10 +1,10 @@
 // hooks/useDashboardBadges.js
-// OPTIMIZED: Polling instead of real-time listeners (saves ~80% Firestore reads)
+// Hybrid: Real-time for messages, polling for others
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { db } from '@/lib/firebase';
-import { collection, query, where, getDocs, getCountFromServer } from 'firebase/firestore';
+import { collection, query, where, getDocs, getCountFromServer, onSnapshot } from 'firebase/firestore';
 
-const POLL_INTERVAL = 60000; // 60 másodperc
+const POLL_INTERVAL = 120000; // 2 perc
 
 export function useDashboardBadges(user, userData) {
   const [badges, setBadges] = useState({
@@ -19,26 +19,18 @@ export function useDashboardBadges(user, userData) {
   
   const isMountedRef = useRef(true);
 
-  const fetchBadges = useCallback(async () => {
-    if (!user || !userData || !isMountedRef.current) return;
+  // Real-time listener CSAK a chatekhez (legfontosabb)
+  useEffect(() => {
+    if (!user) return;
 
-    try {
-      // 1. Értesítések (getCountFromServer - olcsóbb mint getDocs!)
-      const notificationsQuery = query(
-        collection(db, 'notifications'),
-        where('userId', '==', user.uid),
-        where('read', '==', false)
-      );
-      const notifCount = await getCountFromServer(notificationsQuery);
-      
-      // 2. Olvasatlan üzenetek
-      const chatsQuery = query(
-        collection(db, 'chats'),
-        where('members', 'array-contains', user.uid)
-      );
-      const chatsSnapshot = await getDocs(chatsQuery);
+    const chatsQuery = query(
+      collection(db, 'chats'),
+      where('members', 'array-contains', user.uid)
+    );
+    
+    const unsub = onSnapshot(chatsQuery, (snapshot) => {
       let unreadCount = 0;
-      chatsSnapshot.docs.forEach(chatDoc => {
+      snapshot.docs.forEach(chatDoc => {
         const data = chatDoc.data();
         const isGhost = data.lastMessageSenderId === null;
         const isArchived = data.archivedBy?.includes(user.uid);
@@ -51,13 +43,31 @@ export function useDashboardBadges(user, userData) {
           unreadCount++;
         }
       });
+      setBadges(prev => ({ ...prev, messages: unreadCount }));
+    }, () => {});
 
-      // 3-5. userData-ból - nincs Firestore lekérés
+    return () => unsub();
+  }, [user]);
+
+  // Polling a többi badge-hez (ritkább)
+  const fetchOtherBadges = useCallback(async () => {
+    if (!user || !userData || !isMountedRef.current) return;
+
+    try {
+      // Értesítések
+      const notificationsQuery = query(
+        collection(db, 'notifications'),
+        where('userId', '==', user.uid),
+        where('read', '==', false)
+      );
+      const notifCount = await getCountFromServer(notificationsQuery);
+
+      // userData-ból
       const requestsCount = (userData.friendRequests || []).length;
       const friendsCount = (userData.friends || []).length;
       const followingCount = (userData.following || []).length;
 
-      // 6. Timemagister
+      // Timemagister
       let timeMagisterCount = 0;
       if (userData.status === 'Full Tag') {
         const appointmentsQuery = query(
@@ -69,7 +79,7 @@ export function useDashboardBadges(user, userData) {
         timeMagisterCount = appCount.data().count;
       }
 
-      // 7. Pharmagister
+      // Pharmagister
       let pharmaMagisterCount = 0;
       if ((userData.pharmagisterRole === 'pharmacist' || userData.pharmagisterRole === 'assistant') 
           && userData.zipCodes?.length > 0) {
@@ -83,15 +93,15 @@ export function useDashboardBadges(user, userData) {
       }
 
       if (isMountedRef.current) {
-        setBadges({
+        setBadges(prev => ({
+          ...prev,
           notifications: notifCount.data().count,
-          messages: unreadCount,
           requests: requestsCount,
           friends: friendsCount,
           following: followingCount,
           timemagister: timeMagisterCount,
           pharmagister: pharmaMagisterCount
-        });
+        }));
       }
     } catch (error) {
       // Silent fail
@@ -102,16 +112,16 @@ export function useDashboardBadges(user, userData) {
     isMountedRef.current = true;
     if (!user || !userData) return;
 
-    fetchBadges();
-    const interval = setInterval(fetchBadges, POLL_INTERVAL);
+    fetchOtherBadges();
+    const interval = setInterval(fetchOtherBadges, POLL_INTERVAL);
 
     return () => {
       isMountedRef.current = false;
       clearInterval(interval);
     };
-  }, [user, userData, fetchBadges]);
+  }, [user, userData, fetchOtherBadges]);
 
-  const refreshBadges = useCallback(() => fetchBadges(), [fetchBadges]);
+  const refreshBadges = useCallback(() => fetchOtherBadges(), [fetchOtherBadges]);
 
   return { badges, refreshBadges };
 }
