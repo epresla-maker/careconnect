@@ -871,7 +871,7 @@ function DemandCard({ demand, pharmaRole, darkMode }) {
           {demand.pharmacyCity && (
             <div className={`flex items-center gap-1 text-sm ${darkMode ? 'text-gray-400' : 'text-[#6B7280]'} font-medium mb-2`}>
               <MapPin className="w-4 h-4" />
-              {demand.pharmacyZipCode && `${demand.pharmacyZipCode} `}{demand.pharmacyCity}
+              {demand.pharmacyFullAddress || `${demand.pharmacyZipCode || ''} ${demand.pharmacyCity || ''}`}
             </div>
           )}
           {demand.workHours && (

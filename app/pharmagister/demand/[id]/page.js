@@ -450,13 +450,8 @@ export default function DemandDetailPage() {
                 <div>
                   <h2 className="font-bold text-lg">{demand.pharmacyName}</h2>
                   <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                    {demand.pharmacyZipCode} {demand.pharmacyCity}
+                    {demand.pharmacyFullAddress || `${demand.pharmacyZipCode || ''} ${demand.pharmacyCity || ''}`}
                   </p>
-                  {demand.pharmacyAddress && (
-                    <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                      {demand.pharmacyAddress}
-                    </p>
-                  )}
                 </div>
               </div>
             </div>

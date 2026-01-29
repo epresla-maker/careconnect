@@ -690,7 +690,7 @@ export default function PharmaDashboard({ pharmaRole, expandDemandId }) {
                         </p>
                         {application.demand?.pharmacyCity && (
                           <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                            📍 {application.demand.pharmacyZipCode && `${application.demand.pharmacyZipCode} `}{application.demand.pharmacyCity}
+                            📍 {application.demand.pharmacyFullAddress || `${application.demand.pharmacyZipCode || ''} ${application.demand.pharmacyCity || ''}`}
                           </p>
                         )}
                         {application.demand?.workHours && (
@@ -798,7 +798,7 @@ export default function PharmaDashboard({ pharmaRole, expandDemandId }) {
                         <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-[#6B7280]'}`}>
                           {new Date(demand.date).toLocaleDateString('hu-HU')}
                           {demand.workHours && ` • ${demand.workHours}`}
-                          {demand.pharmacyCity && ` • ${demand.pharmacyZipCode && `${demand.pharmacyZipCode} `}${demand.pharmacyCity}`}
+                          {demand.pharmacyCity && ` • ${demand.pharmacyFullAddress || `${demand.pharmacyZipCode || ''} ${demand.pharmacyCity || ''}`}`}
                         </p>
                       </div>
                     </div>
