@@ -9,27 +9,17 @@ const ThemeContext = createContext();
 
 export const ThemeProvider = ({ children }) => {
   const { user, userData } = useAuth();
+  // Világos mód az alapértelmezett, sötét mód kikapcsolva
   const [darkMode, setDarkMode] = useState(false);
   const [mounted, setMounted] = useState(false);
 
-  // Betöltjük a sötét mód beállítását
+  // Mindig világos mód
   useEffect(() => {
     setMounted(true);
-    
-    // Először localStorage-ból töltjük be (gyorsabb)
-    const savedDarkMode = localStorage.getItem('darkMode');
-    if (savedDarkMode !== null) {
-      setDarkMode(savedDarkMode === 'true');
-    }
+    // Világos mód kényszerítése
+    setDarkMode(false);
+    localStorage.setItem('darkMode', 'false');
   }, []);
-
-  // Ha van userData, szinkronizáljuk
-  useEffect(() => {
-    if (userData?.darkMode !== undefined) {
-      setDarkMode(userData.darkMode);
-      localStorage.setItem('darkMode', userData.darkMode.toString());
-    }
-  }, [userData]);
 
   // Apply dark mode to document
   useEffect(() => {

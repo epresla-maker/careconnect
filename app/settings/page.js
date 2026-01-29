@@ -10,9 +10,7 @@ import {
   Shield, 
   HelpCircle, 
   LogOut, 
-  ChevronRight,
-  Moon,
-  Sun
+  ChevronRight
 } from 'lucide-react';
 import { signOut } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
@@ -20,7 +18,7 @@ import { auth } from '@/lib/firebase';
 export default function SettingsPage() {
   const router = useRouter();
   const { user, userData, loading } = useAuth();
-  const { darkMode, toggleDarkMode } = useTheme();
+  const { darkMode } = useTheme();
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   useEffect(() => {
@@ -71,16 +69,7 @@ export default function SettingsPage() {
           label: 'Értesítések',
           onClick: () => router.push('/settings/notifications'),
           color: 'text-orange-600',
-          bgColor: darkMode ? 'bg-orange-900/30' : 'bg-orange-100'
-        },
-        {
-          icon: darkMode ? Moon : Sun,
-          label: 'Sötét mód',
-          value: darkMode ? 'Bekapcsolva' : 'Kikapcsolva',
-          onClick: toggleDarkMode,
-          color: 'text-purple-600',
-          bgColor: darkMode ? 'bg-purple-900/30' : 'bg-purple-100',
-          isToggle: true
+          bgColor: 'bg-orange-100'
         }
       ]
     },
