@@ -434,12 +434,13 @@ export default function PharmaDashboard({ pharmaRole, expandDemandId }) {
             </div>
           ) : (
             <div className="space-y-2">
-              {myDemands.map(demand => {
-                console.log('🔍 Demand ID:', demand.id, '| Expanded:', expandedDemand, '| Match:', expandedDemand === demand.id);
-                return (
+              {myDemands.map(demand => (
                 <div key={demand.id} className={`${darkMode ? 'bg-gray-700 border-gray-600' : 'bg-white border-[#E5E7EB]'} border-b pb-3 pt-2`}>
                   <div
-                    onClick={() => setExpandedDemand(expandedDemand === demand.id ? null : demand.id)}
+                    onClick={() => {
+                      console.log('🔍 Demand ID:', demand.id, '| Expanded:', expandedDemand, '| Match:', expandedDemand === demand.id);
+                      setExpandedDemand(expandedDemand === demand.id ? null : demand.id);
+                    }}
                     className="cursor-pointer"
                   >
                     <div className="flex items-start justify-between gap-2">
