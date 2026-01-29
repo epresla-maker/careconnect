@@ -376,92 +376,142 @@ export default function ModernServiceFeed() {
               return name.substring(0, 2).toUpperCase();
             };
 
+            // Színek pozíció szerint - mint a naptárban
+            const isPharmacist = post.position === 'pharmacist';
+            const colorScheme = isPharmacist 
+              ? {
+                  gradient: 'from-blue-500 to-indigo-600',
+                  gradientLight: 'from-blue-50 to-indigo-50',
+                  gradientDark: 'from-blue-900/20 to-indigo-900/20',
+                  border: 'border-blue-500',
+                  bg: 'bg-blue-500',
+                  bgHover: 'hover:bg-blue-600',
+                  text: 'text-blue-600',
+                  badge: 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300',
+                  icon: '👨‍⚕️'
+                }
+              : {
+                  gradient: 'from-emerald-500 to-teal-600',
+                  gradientLight: 'from-emerald-50 to-teal-50',
+                  gradientDark: 'from-emerald-900/20 to-teal-900/20',
+                  border: 'border-emerald-500',
+                  bg: 'bg-emerald-500',
+                  bgHover: 'hover:bg-emerald-600',
+                  text: 'text-emerald-600',
+                  badge: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300',
+                  icon: '🧑‍⚕️'
+                };
+
             return (
-              <div key={post.id} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+              <div key={post.id} className="bg-white dark:bg-gray-800 rounded-2xl shadow-md border border-gray-100 dark:border-gray-700 overflow-hidden hover:shadow-lg transition-shadow duration-300">
+                {/* Színes felső csík */}
+                <div className={`h-2 bg-gradient-to-r ${colorScheme.gradient}`}></div>
+                
                 {/* Header */}
-                <div className="p-4 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/10 dark:to-emerald-900/10">
+                <div className={`p-4 bg-gradient-to-r ${colorScheme.gradientLight} dark:${colorScheme.gradientDark}`}>
                   <div className="flex items-center gap-3">
-                    {post.pharmacyPhotoURL ? (
-                      <img 
-                        src={post.pharmacyPhotoURL} 
-                        alt={post.pharmacyName}
-                        className="w-12 h-12 rounded-full object-cover border-2 border-green-600"
-                      />
-                    ) : (
-                      <div className="w-12 h-12 bg-green-600 rounded-full flex items-center justify-center border-2 border-green-700">
-                        <span className="text-white font-bold text-lg">
-                          {getMonogram(post.pharmacyName)}
-                        </span>
+                    {/* Profilkép vagy monogram */}
+                    <div className="relative">
+                      {post.pharmacyPhotoURL ? (
+                        <img 
+                          src={post.pharmacyPhotoURL} 
+                          alt={post.pharmacyName}
+                          className={`w-14 h-14 rounded-xl object-cover border-2 ${colorScheme.border} shadow-sm`}
+                        />
+                      ) : (
+                        <div className={`w-14 h-14 ${colorScheme.bg} rounded-xl flex items-center justify-center shadow-sm`}>
+                          <span className="text-white font-bold text-xl">
+                            {getMonogram(post.pharmacyName)}
+                          </span>
+                        </div>
+                      )}
+                      {/* Pozíció ikon */}
+                      <div className="absolute -bottom-1 -right-1 text-lg bg-white dark:bg-gray-800 rounded-full w-7 h-7 flex items-center justify-center shadow-sm">
+                        {colorScheme.icon}
                       </div>
-                    )}
-                    <div>
-                      <h3 className="font-semibold text-gray-900 dark:text-white">
+                    </div>
+                    
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-bold text-gray-900 dark:text-white truncate">
                         {post.pharmacyName}
                       </h3>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        {post.pharmacyFullAddress || `${post.pharmacyZipCode || ''} ${post.pharmacyCity || ''}`}
+                      <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1">
+                        <span>📍</span>
+                        <span className="truncate">{post.pharmacyFullAddress || `${post.pharmacyZipCode || ''} ${post.pharmacyCity || ''}`}</span>
                       </p>
                     </div>
-                    <div className="ml-auto">
-                      <span className="bg-green-600 text-white px-3 py-1 rounded-full text-xs font-medium">
-                        Pharmagister
-                      </span>
+                    
+                    {/* Pozíció badge */}
+                    <div className={`px-3 py-1.5 rounded-full text-xs font-semibold ${colorScheme.badge}`}>
+                      {isPharmacist ? 'Gyógyszerész' : 'Szakasszisztens'}
                     </div>
                   </div>
                 </div>
 
-                {/* Content */}
-                <div className="p-4 space-y-3">
-                  <h4 className="text-base font-semibold text-gray-900 dark:text-white">
-                    {post.positionLabel} helyettesítés szükséges
-                  </h4>
-
-                  <div className="space-y-2 text-sm">
-                    {/* Helyszín - teljes cím */}
-                    {(post.pharmacyFullAddress || post.pharmacyCity) && (
-                      <div className="flex justify-between py-2 border-b border-gray-100 dark:border-gray-700">
-                        <span className="text-gray-600 dark:text-gray-400">📍 Helyszín</span>
-                        <span className="font-medium text-gray-900 dark:text-white text-right">
-                          {post.pharmacyFullAddress || `${post.pharmacyZipCode || ''} ${post.pharmacyCity || ''}`}
-                        </span>
-                      </div>
-                    )}
-                    
-                    <div className="flex justify-between py-2 border-b border-gray-100 dark:border-gray-700">
-                      <span className="text-gray-600 dark:text-gray-400">Dátum</span>
-                      <span className="font-medium text-gray-900 dark:text-white">
-                        {new Date(post.date).toLocaleDateString('hu-HU')}
+                {/* Fő tartalom */}
+                <div className="p-4">
+                  {/* Dátum kiemelt kártya */}
+                  <div className={`flex items-center gap-4 p-3 rounded-xl bg-gradient-to-r ${colorScheme.gradientLight} dark:${colorScheme.gradientDark} mb-4`}>
+                    <div className={`w-14 h-14 ${colorScheme.bg} rounded-xl flex flex-col items-center justify-center text-white shadow-sm`}>
+                      <span className="text-xs font-medium uppercase">
+                        {new Date(post.date).toLocaleDateString('hu-HU', { month: 'short' })}
+                      </span>
+                      <span className="text-xl font-bold">
+                        {new Date(post.date).getDate()}
                       </span>
                     </div>
-                    
+                    <div>
+                      <p className="font-semibold text-gray-900 dark:text-white">
+                        {new Date(post.date).toLocaleDateString('hu-HU', { weekday: 'long' })}
+                      </p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        {new Date(post.date).toLocaleDateString('hu-HU', { year: 'numeric', month: 'long', day: 'numeric' })}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Részletek grid */}
+                  <div className="grid grid-cols-2 gap-3 mb-4">
                     {post.workHours && (
-                      <div className="flex justify-between py-2 border-b border-gray-100 dark:border-gray-700">
-                        <span className="text-gray-600 dark:text-gray-400">Munkaidő</span>
-                        <span className="font-medium text-gray-900 dark:text-white">{post.workHours}</span>
+                      <div className="flex items-center gap-2 p-2.5 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                        <span className="text-lg">🕐</span>
+                        <div>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">Munkaidő</p>
+                          <p className="text-sm font-medium text-gray-900 dark:text-white">{post.workHours}</p>
+                        </div>
                       </div>
                     )}
 
                     {post.minExperience && (
-                      <div className="flex justify-between py-2 border-b border-gray-100 dark:border-gray-700">
-                        <span className="text-gray-600 dark:text-gray-400">Tapasztalat</span>
-                        <span className="font-medium text-gray-900 dark:text-white">{post.minExperience}</span>
+                      <div className="flex items-center gap-2 p-2.5 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                        <span className="text-lg">⭐</span>
+                        <div>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">Tapasztalat</p>
+                          <p className="text-sm font-medium text-gray-900 dark:text-white">{post.minExperience}</p>
+                        </div>
                       </div>
                     )}
 
                     {post.maxHourlyRate && (
-                      <div className="flex justify-between py-2 border-b border-gray-100 dark:border-gray-700">
-                        <span className="text-gray-600 dark:text-gray-400">Maximum órabér</span>
-                        <span className="font-medium text-gray-900 dark:text-white">{post.maxHourlyRate} Ft/óra</span>
+                      <div className="flex items-center gap-2 p-2.5 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                        <span className="text-lg">💰</span>
+                        <div>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">Max. órabér</p>
+                          <p className="text-sm font-medium text-gray-900 dark:text-white">{post.maxHourlyRate} Ft</p>
+                        </div>
                       </div>
                     )}
                   </div>
 
+                  {/* Szoftverek */}
                   {post.requiredSoftware && post.requiredSoftware.length > 0 && (
-                    <div className="pt-2">
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Szoftverismeret:</p>
-                      <div className="flex flex-wrap gap-2">
+                    <div className="mb-4">
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mb-2 flex items-center gap-1">
+                        <span>💻</span> Elvárt szoftverismeret
+                      </p>
+                      <div className="flex flex-wrap gap-1.5">
                         {post.requiredSoftware.map((software, idx) => (
-                          <span key={idx} className="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-2 py-1 rounded text-xs">
+                          <span key={idx} className={`px-2.5 py-1 rounded-full text-xs font-medium ${colorScheme.badge}`}>
                             {software}
                           </span>
                         ))}
@@ -469,22 +519,26 @@ export default function ModernServiceFeed() {
                     </div>
                   )}
 
+                  {/* Megjegyzés */}
                   {post.additionalRequirements && (
-                    <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
-                      <p className="text-sm text-gray-700 dark:text-gray-300">
-                        {post.additionalRequirements}
+                    <div className="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg border-l-4 border-gray-300 dark:border-gray-600">
+                      <p className="text-sm text-gray-600 dark:text-gray-300 italic">
+                        "{post.additionalRequirements}"
                       </p>
                     </div>
                   )}
                 </div>
 
-                {/* Action Button */}
-                <div className="p-4 border-t border-gray-200 dark:border-gray-700">
+                {/* Akció gomb */}
+                <div className="p-4 pt-0">
                   <button
                     onClick={() => router.push(`/pharmagister/demand/${post.pharmaDemandId}`)}
-                    className="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-4 rounded-lg transition-colors flex items-center justify-center gap-2"
+                    className={`w-full ${colorScheme.bg} ${colorScheme.bgHover} text-white font-semibold py-3.5 px-4 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 shadow-sm hover:shadow-md`}
                   >
-                    <span>Megnézem</span>
+                    <span>Részletek megtekintése</span>
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
                   </button>
                 </div>
               </div>
