@@ -1,5 +1,5 @@
 import webpush from 'web-push';
-import { db } from '@/lib/firebaseAdmin';
+import { getFirebaseAdmin } from '@/lib/firebaseAdmin';
 
 // VAPID keys for push notifications
 const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
@@ -13,6 +13,9 @@ webpush.setVapidDetails(
 
 export async function POST(request) {
   try {
+    const admin = getFirebaseAdmin();
+    const db = admin.firestore();
+    
     const { userId, title, body, url, tag } = await request.json();
 
     if (!userId) {
@@ -20,8 +23,9 @@ export async function POST(request) {
     }
 
     // Get user's push subscriptions from Firestore
-    const subscriptionsRef = db.collection('pushSubscriptions').where('userId', '==', userId);
-    const subscriptionsSnapshot = await subscriptionsRef.get();
+    const subscriptionsSnapshot = await db.collection('pushSubscriptions')
+      .where('userId', '==', userId)
+      .get();
 
     if (subscriptionsSnapshot.empty) {
       console.log(`No push subscriptions found for user: ${userId}`);

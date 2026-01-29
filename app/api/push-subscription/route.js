@@ -1,8 +1,10 @@
-import { db } from '@/lib/firebaseAdmin';
-import { FieldValue } from 'firebase-admin/firestore';
+import { getFirebaseAdmin } from '@/lib/firebaseAdmin';
 
 export async function POST(request) {
   try {
+    const admin = getFirebaseAdmin();
+    const db = admin.firestore();
+    
     const { userId, subscription } = await request.json();
 
     if (!userId || !subscription) {
@@ -20,7 +22,7 @@ export async function POST(request) {
       const docId = existingQuery.docs[0].id;
       await db.collection('pushSubscriptions').doc(docId).update({
         subscription,
-        updatedAt: FieldValue.serverTimestamp()
+        updatedAt: admin.firestore.FieldValue.serverTimestamp()
       });
       return Response.json({ success: true, message: 'Subscription updated', id: docId });
     }
@@ -29,8 +31,8 @@ export async function POST(request) {
     const docRef = await db.collection('pushSubscriptions').add({
       userId,
       subscription,
-      createdAt: FieldValue.serverTimestamp(),
-      updatedAt: FieldValue.serverTimestamp()
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp()
     });
 
     return Response.json({ success: true, message: 'Subscription saved', id: docRef.id });
@@ -43,6 +45,9 @@ export async function POST(request) {
 
 export async function DELETE(request) {
   try {
+    const admin = getFirebaseAdmin();
+    const db = admin.firestore();
+    
     const { userId, endpoint } = await request.json();
 
     if (!userId) {
