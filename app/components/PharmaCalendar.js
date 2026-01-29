@@ -425,7 +425,7 @@ function CreateDemandForm({ date, darkMode, onSuccess, onCancel }) {
     additionalRequirements: '',
   });
 
-  const softwareOptions = ['Phoenix', 'Medea', 'Pharma+', 'Nexon', 'Meditech', 'Farmdata', 'Egyéb'];
+  const softwareOptions = ['Lx-Line', 'Novodata', 'Quadro Byte', 'Daxa', 'Primula', 'Egyéb'];
 
   const handleSoftwareToggle = (software) => {
     setFormData(prev => ({

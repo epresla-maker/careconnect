@@ -43,12 +43,11 @@ function PharmagisterSetupContent() {
   });
 
   const softwareOptions = [
-    'Phoenix',
-    'Medea',
-    'Pharma+',
-    'Nexon',
-    'Meditech',
-    'Farmdata',
+    'Lx-Line',
+    'Novodata',
+    'Quadro Byte',
+    'Daxa',
+    'Primula',
     'Egyéb'
   ];
 
