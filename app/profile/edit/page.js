@@ -67,6 +67,7 @@ export default function ProfileEditPage() {
       );
 
       const data = await response.json();
+      console.log('Cloudinary response:', data);
       
       if (!response.ok) {
         console.error('Cloudinary error:', data);
@@ -74,10 +75,17 @@ export default function ProfileEditPage() {
       }
 
       const imageUrl = data.secure_url;
+      console.log('Image URL to save:', imageUrl);
+      console.log('User UID:', user.uid);
+
+      if (!imageUrl) {
+        throw new Error('Nem kaptunk vissza URL-t a Cloudinary-tól');
+      }
 
       await updateDoc(doc(db, 'users', user.uid), {
         photoURL: imageUrl
       });
+      console.log('Firestore updated successfully');
 
       alert('✅ Profilkép sikeresen frissítve!');
       window.location.reload();
