@@ -67,9 +67,6 @@ export default function DemandDetailPage() {
               setHasApplied(true);
             }
           }
-              setPharmacyData(pharmacySnap.data());
-            }
-          }
         } else {
           setError('Az igény nem található.');
         }
