@@ -17,16 +17,10 @@ if (!admin.apps.length) {
 const db = admin.firestore();
 
 async function sendTestNotification() {
-  // Find user by email
-  const usersSnapshot = await db.collection('users').where('email', '==', 'epresla@icloud.com').get();
-  
-  if (usersSnapshot.empty) {
-    console.log('❌ User not found');
-    return;
-  }
-  
-  const userId = usersSnapshot.docs[0].id;
-  console.log('✅ User ID:', userId);
+  // Find user by email - use Firebase Auth UID
+  const authUser = await admin.auth().getUserByEmail('epresla@icloud.com');
+  const userId = authUser.uid;
+  console.log('✅ Auth User ID:', userId);
   
   // Create app notification
   const notificationRef = await db.collection('notifications').add({

@@ -1,8 +1,8 @@
 require('dotenv').config({ path: '.env.local' });
 const admin = require('firebase-admin');
 
-// A te userId-d
-const EPRESL_USER_ID = 'HBnESxUbVXhdQlpnX1pz3PVQM1P2';
+// A te userId-d (Firebase Auth UID)
+const EPRESL_USER_ID = 'eegiIb8G5ZfAtTyLc6EF0aKAgHo2';
 
 if (!admin.apps.length) {
   admin.initializeApp({
