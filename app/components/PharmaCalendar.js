@@ -453,11 +453,17 @@ function CreateDemandForm({ date, darkMode, onSuccess, onCancel }) {
       const day = String(date.getDate()).padStart(2, '0');
       const localDateString = `${year}-${month}-${day}`;
       
+      // Teljes cím összeállítása
+      const fullAddress = `${userData.pharmacyZipCode || ''} ${userData.pharmacyCity || ''}, ${userData.pharmacyStreet || ''} ${userData.pharmacyHouseNumber || ''}`.trim();
+      
       const demandData = {
         pharmacyId: user.uid,
         pharmacyName: userData.pharmacyName || 'Gyógyszertár',
         pharmacyCity: userData.pharmacyCity || '',
         pharmacyZipCode: userData.pharmacyZipCode || '',
+        pharmacyStreet: userData.pharmacyStreet || '',
+        pharmacyHouseNumber: userData.pharmacyHouseNumber || '',
+        pharmacyFullAddress: fullAddress,
         pharmacyPhotoURL: userData.photoURL || userData.pharmaPhotoURL || '',
         date: localDateString,
         position: formData.position,
@@ -484,6 +490,9 @@ function CreateDemandForm({ date, darkMode, onSuccess, onCancel }) {
         pharmacyName: userData.pharmacyName || 'Gyógyszertár',
         pharmacyCity: userData.pharmacyCity || '',
         pharmacyZipCode: userData.pharmacyZipCode || '',
+        pharmacyStreet: userData.pharmacyStreet || '',
+        pharmacyHouseNumber: userData.pharmacyHouseNumber || '',
+        pharmacyFullAddress: fullAddress,
         pharmacyPhotoURL: userData.photoURL || userData.pharmaPhotoURL || '',
         position: formData.position,
         positionLabel: formData.position === 'pharmacist' ? 'Gyógyszerész' : 'Szakasszisztens',

@@ -170,9 +170,9 @@ function PharmagisterSetupContent() {
       };
 
       if (selectedRole === 'pharmacy') {
-        // Gyógyszertár validáció
-        if (!formData.pharmacyName || !formData.contactName || !formData.city || !formData.street || !formData.nkkNumber) {
-          alert('Kérlek töltsd ki az összes kötelező mezőt!');
+        // Gyógyszertár validáció - TELJES CÍM KÖTELEZŐ
+        if (!formData.pharmacyName || !formData.contactName || !formData.city || !formData.zipCode || !formData.street || !formData.houseNumber || !formData.nkkNumber) {
+          alert('Kérlek töltsd ki az összes kötelező mezőt! A gyógyszertár teljes címe kötelező (város, irányítószám, utca, házszám).');
           setLoading(false);
           return;
         }
@@ -443,7 +443,7 @@ function PharmagisterSetupContent() {
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Irányítószám
+                        Irányítószám <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="text"
@@ -451,6 +451,7 @@ function PharmagisterSetupContent() {
                         onChange={(e) => setFormData({ ...formData, zipCode: e.target.value })}
                         className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
                         placeholder="1234"
+                        required
                       />
                     </div>
                   </div>
@@ -471,7 +472,7 @@ function PharmagisterSetupContent() {
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Házszám
+                        Házszám <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="text"
@@ -479,6 +480,7 @@ function PharmagisterSetupContent() {
                         onChange={(e) => setFormData({ ...formData, houseNumber: e.target.value })}
                         className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
                         placeholder="12"
+                        required
                       />
                     </div>
                   </div>

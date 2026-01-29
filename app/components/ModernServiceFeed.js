@@ -399,7 +399,7 @@ export default function ModernServiceFeed() {
                         {post.pharmacyName}
                       </h3>
                       <p className="text-sm text-gray-600 dark:text-gray-400">
-                        {post.pharmacyZipCode} {post.pharmacyCity}
+                        {post.pharmacyFullAddress || `${post.pharmacyZipCode || ''} ${post.pharmacyCity || ''}`}
                       </p>
                     </div>
                     <div className="ml-auto">
@@ -417,6 +417,16 @@ export default function ModernServiceFeed() {
                   </h4>
 
                   <div className="space-y-2 text-sm">
+                    {/* Helyszín - teljes cím */}
+                    {(post.pharmacyFullAddress || post.pharmacyCity) && (
+                      <div className="flex justify-between py-2 border-b border-gray-100 dark:border-gray-700">
+                        <span className="text-gray-600 dark:text-gray-400">📍 Helyszín</span>
+                        <span className="font-medium text-gray-900 dark:text-white text-right">
+                          {post.pharmacyFullAddress || `${post.pharmacyZipCode || ''} ${post.pharmacyCity || ''}`}
+                        </span>
+                      </div>
+                    )}
+                    
                     <div className="flex justify-between py-2 border-b border-gray-100 dark:border-gray-700">
                       <span className="text-gray-600 dark:text-gray-400">Dátum</span>
                       <span className="font-medium text-gray-900 dark:text-white">
