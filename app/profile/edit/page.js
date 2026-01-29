@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useTheme } from '@/context/ThemeContext';
 import { useRouter } from 'next/navigation';
-import { doc, updateDoc } from 'firebase/firestore';
+import { doc, updateDoc, setDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Loader2, Save, X, Camera, ArrowLeft, User } from 'lucide-react';
 import RouteGuard from '@/app/components/RouteGuard';
@@ -86,16 +86,11 @@ export default function ProfileEditPage() {
         throw new Error('Nem kaptunk vissza URL-t a Cloudinary-tól');
       }
 
-      console.log('Saving to Firestore... User UID:', user.uid, 'Image URL:', imageUrl);
-      
-      // Firestore update
+      // Firestore update - setDoc merge-gel megbízhatóbb
       const userDocRef = doc(db, 'users', user.uid);
-      await updateDoc(userDocRef, {
-        photoURL: imageUrl
-      });
+      await setDoc(userDocRef, { photoURL: imageUrl }, { merge: true });
       
-      console.log('Firestore updated successfully!');
-      alert('✅ Profilkép sikeresen mentve!');
+      alert('✅ Kép mentve! Frissítés...');
       window.location.reload();
     } catch (error) {
       console.error('Error uploading photo:', error);
