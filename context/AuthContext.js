@@ -30,10 +30,7 @@ export const AuthProvider = ({ children }) => {
           (docSnap) => {
             if (docSnap.exists()) {
               setUserData(docSnap.data());
-              // Csak akkor frissítjük a lastSeen-t, ha a doc létezik
-              updateDoc(userDocRef, {
-                lastSeen: serverTimestamp()
-              }).catch(() => {}); // Silent fail ha nincs jogosultság
+              // NE frissítsük itt a lastSeen-t - végtelen ciklust okoz!
             } else {
               setUserData(null);
             }
@@ -57,16 +54,21 @@ export const AuthProvider = ({ children }) => {
     };
   }, []);
 
-  // LastSeen frissítés 30 másodpercenként (csak ha a user doc létezik)
+  // LastSeen frissítés 5 percenként (csak ha a user doc létezik)
   useEffect(() => {
     if (!user || !userData) return;
 
+    // Első frissítés bejelentkezéskor
+    const userDocRef = doc(db, "users", user.uid);
+    updateDoc(userDocRef, {
+      lastSeen: serverTimestamp()
+    }).catch(() => {});
+
     const interval = setInterval(() => {
-      const userDocRef = doc(db, "users", user.uid);
       updateDoc(userDocRef, {
         lastSeen: serverTimestamp()
       }).catch(() => {}); // Silent fail
-    }, 30000); // 30 másodperc
+    }, 300000); // 5 perc (300000ms)
 
     return () => clearInterval(interval);
   }, [user, userData]);
