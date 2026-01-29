@@ -125,13 +125,6 @@ export default function PushNotificationSetup() {
     }
   };
 
-  // Auto-subscribe if permission was already granted
-  useEffect(() => {
-    if (user && permission === 'granted' && !isSubscribed) {
-      subscribeUser();
-    }
-  }, [user, permission, isSubscribed]);
-
   // Export functions for use in other components
   useEffect(() => {
     window.pushNotificationUtils = {
