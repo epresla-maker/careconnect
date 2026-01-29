@@ -32,8 +32,8 @@ export default function HomePage() {
           <div className="max-w-xl mx-auto px-4 py-3 flex items-center justify-between">
             {/* Logo */}
             <h1 className="text-2xl font-bold">
-              <span className="text-green-600">Care</span>
-              <span className="text-blue-600">Connect</span>
+              <span className="text-green-600">Pharmagister</span>
+              <span className="text-cyan-500"> vF</span>
             </h1>
 
             {/* Profile Button */}
