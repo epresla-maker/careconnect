@@ -49,6 +49,11 @@ export default function ProfileEditPage() {
 
     setUploadingPhoto(true);
     try {
+      // Ellenőrzés: van-e user
+      if (!user || !user.uid) {
+        throw new Error('Nincs bejelentkezve felhasználó!');
+      }
+
       const formDataUpload = new FormData();
       formDataUpload.append('file', file);
       formDataUpload.append('upload_preset', 'pharmagister_profiles');
@@ -58,6 +63,7 @@ export default function ProfileEditPage() {
         throw new Error('Cloudinary nincs konfigurálva');
       }
 
+      console.log('Uploading to Cloudinary...');
       const response = await fetch(
         `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
         {
@@ -76,21 +82,24 @@ export default function ProfileEditPage() {
 
       const imageUrl = data.secure_url;
       
-      alert(`DEBUG: Image URL = ${imageUrl}, User UID = ${user?.uid}`);
-
       if (!imageUrl) {
         throw new Error('Nem kaptunk vissza URL-t a Cloudinary-tól');
       }
 
-      await updateDoc(doc(db, 'users', user.uid), {
+      console.log('Saving to Firestore... User UID:', user.uid, 'Image URL:', imageUrl);
+      
+      // Firestore update
+      const userDocRef = doc(db, 'users', user.uid);
+      await updateDoc(userDocRef, {
         photoURL: imageUrl
       });
       
-      alert('✅ Profilkép sikeresen mentve Firestore-ba! Újratöltés...');
+      console.log('Firestore updated successfully!');
+      alert('✅ Profilkép sikeresen mentve!');
       window.location.reload();
     } catch (error) {
       console.error('Error uploading photo:', error);
-      alert(`Hiba történt a kép feltöltése során: ${error.message}`);
+      alert(`Hiba történt: ${error.message}`);
     } finally {
       setUploadingPhoto(false);
     }
