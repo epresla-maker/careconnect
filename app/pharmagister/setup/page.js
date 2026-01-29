@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef, Suspense } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { doc, updateDoc, addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { doc, updateDoc, addDoc, collection, serverTimestamp, setDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import RouteGuard from '@/app/components/RouteGuard';
 import { Loader2, Camera, ArrowLeft, Building2, User, Users } from 'lucide-react';
@@ -139,8 +139,13 @@ function PharmagisterSetupContent() {
         throw new Error(data.error?.message || 'Feltöltés sikertelen');
       }
 
-      setFormData(prev => ({ ...prev, photoURL: data.secure_url }));
-      alert('Profilkép sikeresen feltöltve!');
+      const imageUrl = data.secure_url;
+      
+      // Azonnal mentjük Firestore-ba
+      await setDoc(doc(db, 'users', user.uid), { photoURL: imageUrl }, { merge: true });
+      
+      setFormData(prev => ({ ...prev, photoURL: imageUrl }));
+      alert('✅ Profilkép mentve!');
     } catch (error) {
       console.error('Error uploading photo:', error);
       alert('Hiba történt a kép feltöltése során: ' + error.message);
