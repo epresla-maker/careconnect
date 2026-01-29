@@ -57,6 +57,9 @@ export function useServiceFeed({ userData }) {
       // Filter out reactionActivity posts
       if (post.postType === 'reactionActivity') return false;
       
+      // Filter out accepted demands - they should not appear in the feed
+      if (post.status === 'accepted') return false;
+      
       // Module-specific posts
       if (post.module) {
         return userModules.includes(post.module);
