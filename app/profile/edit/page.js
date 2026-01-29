@@ -75,8 +75,8 @@ export default function ProfileEditPage() {
       }
 
       const imageUrl = data.secure_url;
-      console.log('Image URL to save:', imageUrl);
-      console.log('User UID:', user.uid);
+      
+      alert(`DEBUG: Image URL = ${imageUrl}, User UID = ${user?.uid}`);
 
       if (!imageUrl) {
         throw new Error('Nem kaptunk vissza URL-t a Cloudinary-tól');
@@ -85,9 +85,8 @@ export default function ProfileEditPage() {
       await updateDoc(doc(db, 'users', user.uid), {
         photoURL: imageUrl
       });
-      console.log('Firestore updated successfully');
-
-      alert('✅ Profilkép sikeresen frissítve!');
+      
+      alert('✅ Profilkép sikeresen mentve Firestore-ba! Újratöltés...');
       window.location.reload();
     } catch (error) {
       console.error('Error uploading photo:', error);
