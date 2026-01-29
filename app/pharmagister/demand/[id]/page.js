@@ -6,6 +6,7 @@ import { useRouter, useParams } from 'next/navigation';
 import RouteGuard from '@/app/components/RouteGuard';
 import { doc, getDoc, updateDoc, arrayUnion, arrayRemove, Timestamp, collection, addDoc, query, where, getDocs, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { createNotificationWithPush } from '@/lib/notifications';
 import { MessageCircle, Send, X } from 'lucide-react';
 
 export default function DemandDetailPage() {
@@ -163,22 +164,23 @@ export default function DemandDetailPage() {
         updatedAt: serverTimestamp(),
       });
 
-      // 3. Értesítés küldése gyógyszertárnak
+      // 3. Értesítés küldése gyógyszertárnak push-sal
       console.log('📧 Értesítés küldése gyógyszertárnak:', {
         pharmacyId: demand.pharmacyId,
         demandDate: demand.date,
         applicantName: userData.displayName
       });
       
-      await addDoc(collection(db, 'notifications'), {
+      await createNotificationWithPush({
         userId: demand.pharmacyId,
         type: 'pharma_application',
         title: 'Új jelentkező! 📝',
         message: `${userData.displayName || 'Valaki'} jelentkezett a ${new Date(demand.date).toLocaleDateString('hu-HU')}-i helyettesítésre.`,
-        demandId: demandId,
-        applicantId: user.uid,
-        read: false,
-        createdAt: serverTimestamp(),
+        data: {
+          demandId: demandId,
+          applicantId: user.uid,
+        },
+        url: `/pharmagister?tab=dashboard&expand=${demandId}`
       });
       
       console.log('✅ Értesítés sikeresen létrehozva!');
@@ -269,16 +271,17 @@ export default function DemandDetailPage() {
         relatedDemandDate: demand.date
       });
       
-      // Send notification to pharmacy
-      await addDoc(collection(db, 'notifications'), {
+      // Send notification with push to pharmacy
+      await createNotificationWithPush({
         userId: demand.pharmacyId,
         type: 'new_message',
         title: 'Új üzenet érkezett! 💬',
         message: `${userData?.displayName || 'Valaki'} üzenetet küldött a ${new Date(demand.date).toLocaleDateString('hu-HU')}-i igényeddel kapcsolatban.`,
-        chatId: chatId,
-        senderId: user.uid,
-        read: false,
-        createdAt: serverTimestamp(),
+        data: {
+          chatId: chatId,
+          senderId: user.uid,
+        },
+        url: `/chat/${chatId}`
       });
       
       setShowMessageModal(false);

@@ -4,6 +4,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { doc, updateDoc, addDoc, collection, serverTimestamp, setDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { createNotificationWithPush } from '@/lib/notifications';
 import RouteGuard from '@/app/components/RouteGuard';
 import { Loader2, Camera, ArrowLeft, Building2, User, Users } from 'lucide-react';
 
@@ -224,16 +225,17 @@ function PharmagisterSetupContent() {
           submittedAt: serverTimestamp(),
         });
 
-        // Értesítés az adminnak (epresla@icloud.com user UID: Z8uUDktrQAfeQHT51REJaRP2z9n2)
-        await addDoc(collection(db, 'notifications'), {
+        // Értesítés az adminnak push-sal (epresla@icloud.com user UID: Z8uUDktrQAfeQHT51REJaRP2z9n2)
+        await createNotificationWithPush({
           userId: 'Z8uUDktrQAfeQHT51REJaRP2z9n2',
           type: 'admin_approval_request',
-          title: '🔔 Új Pharmagister jóváhagyási kérelem',
+          title: 'Új jóváhagyási kérelem 🔔',
           message: `${selectedRole === 'pharmacy' ? formData.pharmacyName || formData.contactName : formData.displayName} (${user.email}) jóváhagyást kér. NKK szám: ${formData.nkkNumber}`,
-          read: false,
-          createdAt: serverTimestamp(),
-          relatedUserId: user.uid,
-          relatedUserEmail: user.email,
+          data: {
+            relatedUserId: user.uid,
+            relatedUserEmail: user.email,
+          },
+          url: '/admin/approvals'
         });
       }
       

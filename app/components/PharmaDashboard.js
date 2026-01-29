@@ -5,6 +5,7 @@ import { useTheme } from '@/context/ThemeContext';
 import { useRouter } from 'next/navigation';
 import { collection, query, where, getDocs, orderBy, updateDoc, doc, addDoc, deleteDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { createNotificationWithPush } from '@/lib/notifications';
 import { Loader2, Search, ChevronDown, ChevronUp, MapPin, Clock, CheckCircle, XCircle, MessageCircle, User, Calendar, Edit2, Trash2, Eye, CalendarDays, Filter } from 'lucide-react';
 
 export default function PharmaDashboard({ pharmaRole, expandDemandId }) {
@@ -164,18 +165,19 @@ export default function PharmaDashboard({ pharmaRole, expandDemandId }) {
       const demandDoc = await getDoc(doc(db, 'pharmaDemands', demandId));
       const demandData = demandDoc.data();
 
-      // Send notification to applicant
-      await addDoc(collection(db, 'notifications'), {
+      // Send notification with push to applicant
+      await createNotificationWithPush({
         userId: appData.applicantId,
         type: 'approval_accepted',
-        title: 'Pharmagister - Jelentkezés elfogadva! ✅',
+        title: 'Jelentkezés elfogadva! ✅',
         message: `${userData.pharmacyName || userData.displayName} elfogadta a jelentkezésedet.`,
-        demandId: demandId,
-        pharmacyId: user.uid,
-        demandDate: demandData?.date,
-        position: demandData?.position,
-        read: false,
-        createdAt: serverTimestamp(),
+        data: {
+          demandId: demandId,
+          pharmacyId: user.uid,
+          demandDate: demandData?.date,
+          position: demandData?.position,
+        },
+        url: `/pharmagister/demand/${demandId}`
       });
 
       alert('Jelentkezés elfogadva!');
@@ -200,14 +202,13 @@ export default function PharmaDashboard({ pharmaRole, expandDemandId }) {
         updatedAt: new Date().toISOString(),
       });
 
-      // Send notification to applicant
-      await addDoc(collection(db, 'notifications'), {
+      // Send notification with push to applicant
+      await createNotificationWithPush({
         userId: appData.applicantId,
-        type: 'rejection',
-        title: 'Pharmagister - Jelentkezés elutasítva',
+        type: 'approval_rejected',
+        title: 'Jelentkezés elutasítva ❌',
         message: `${userData.pharmacyName || userData.displayName} elutasította a jelentkezésedet. Indok: ${reason}`,
-        read: false,
-        createdAt: serverTimestamp(),
+        url: '/pharmagister?tab=dashboard'
       });
 
       alert('Jelentkezés elutasítva.');
@@ -349,14 +350,14 @@ export default function PharmaDashboard({ pharmaRole, expandDemandId }) {
         updatedAt: new Date().toISOString(),
       });
 
-      // Send notification to pharmacy owner
-      await addDoc(collection(db, 'notifications'), {
+      // Send notification with push to pharmacy owner
+      await createNotificationWithPush({
         userId: demandData.pharmacyId,
-        type: 'message',
-        title: 'Pharmagister - Új jelentkezés',
-        message: `${user.displayName || 'Egy gyógyszerész/asszisztens'} jelentkezett az igényedre.`,
-        read: false,
-        createdAt: serverTimestamp(),
+        type: 'pharma_application',
+        title: 'Új jelentkező! 📝',
+        message: `${user.displayName || 'Valaki'} jelentkezett az igényedre.`,
+        data: { demandId },
+        url: `/pharmagister?tab=dashboard&expand=${demandId}`
       });
 
       alert('Jelentkezés sikeresen elküldve!');

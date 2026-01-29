@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { collection, query, where, getDocs, doc, updateDoc, deleteDoc, orderBy, addDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { createNotificationWithPush } from '@/lib/notifications';
 
 const ADMIN_EMAILS = ['epresla@icloud.com'];
 
@@ -80,14 +81,13 @@ export default function ApprovalsPage() {
         approvedBy: user.email
       });
 
-      // Értesítés küldése a usernek
-      await addDoc(collection(db, 'notifications'), {
+      // Értesítés küldése a usernek push-sal
+      await createNotificationWithPush({
         userId: approval.userId,
         type: 'approval_approved',
-        title: '✅ Pharmagister profil jóváhagyva!',
+        title: 'Profil jóváhagyva! ✅',
         message: `Gratulálunk! A Pharmagister profilod sikeresen jóváhagyásra került. Most már teljes funkcióval használhatod a platformot.`,
-        read: false,
-        createdAt: serverTimestamp()
+        url: '/pharmagister'
       });
 
       alert('✅ Profil jóváhagyva!');
@@ -120,14 +120,13 @@ export default function ApprovalsPage() {
         pharmaRejectionReason: reason
       });
 
-      // Értesítés küldése a usernek
-      await addDoc(collection(db, 'notifications'), {
+      // Értesítés küldése a usernek push-sal
+      await createNotificationWithPush({
         userId: approval.userId,
         type: 'approval_rejected',
-        title: '❌ Pharmagister profil elutasítva',
+        title: 'Profil elutasítva ❌',
         message: `A Pharmagister profilod elutasításra került. Indok: ${reason}\n\nKérjük, javítsd a hibákat és küldd be újra!`,
-        read: false,
-        createdAt: serverTimestamp()
+        url: '/pharmagister/setup?edit=true'
       });
 
       alert('❌ Profil elutasítva!');

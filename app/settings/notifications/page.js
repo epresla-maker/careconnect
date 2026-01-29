@@ -5,7 +5,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useTheme } from '@/context/ThemeContext';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { ArrowLeft, Bell, MessageCircle, Calendar, CheckCircle, Loader2 } from 'lucide-react';
+import { ArrowLeft, Bell, MessageCircle, Calendar, CheckCircle, Loader2, Smartphone } from 'lucide-react';
 import RouteGuard from '@/app/components/RouteGuard';
 
 export default function NotificationsSettingsPage() {
@@ -13,6 +13,8 @@ export default function NotificationsSettingsPage() {
   const { user, userData } = useAuth();
   const { darkMode } = useTheme();
   const [saving, setSaving] = useState(false);
+  const [pushPermission, setPushPermission] = useState('default');
+  const [isPushSubscribed, setIsPushSubscribed] = useState(false);
   
   const pharmaRole = userData?.pharmagisterRole;
   
@@ -33,7 +35,46 @@ export default function NotificationsSettingsPage() {
         ...userData.notificationSettings
       }));
     }
+    
+    // Check push permission status
+    if ('Notification' in window) {
+      setPushPermission(Notification.permission);
+    }
+    
+    // Check push subscription status
+    checkPushSubscription();
   }, [userData]);
+  
+  const checkPushSubscription = async () => {
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+      return;
+    }
+    try {
+      const registration = await navigator.serviceWorker.ready;
+      const subscription = await registration.pushManager.getSubscription();
+      setIsPushSubscribed(!!subscription);
+    } catch (error) {
+      console.error('Error checking push subscription:', error);
+    }
+  };
+  
+  const handleEnablePush = async () => {
+    if (window.pushNotificationUtils) {
+      const result = await window.pushNotificationUtils.subscribe();
+      if (result) {
+        setPushPermission('granted');
+        setIsPushSubscribed(true);
+      }
+    } else {
+      // Fallback - request permission directly
+      const permission = await Notification.requestPermission();
+      setPushPermission(permission);
+      if (permission === 'granted') {
+        // Reload to trigger subscription
+        window.location.reload();
+      }
+    }
+  };
 
   const handleToggle = async (key) => {
     const newSettings = {
@@ -146,14 +187,40 @@ export default function NotificationsSettingsPage() {
               </h3>
             </div>
             <div className={`divide-y ${darkMode ? 'divide-gray-700' : 'divide-gray-100'}`}>
+              {/* Push notification engedélyezés */}
+              <div className="flex items-center justify-between px-4 py-3">
+                <div className="flex items-center gap-3">
+                  <div className={`p-2 rounded-lg ${isPushSubscribed ? (darkMode ? 'bg-green-900/30' : 'bg-green-100') : (darkMode ? 'bg-gray-700' : 'bg-gray-100')}`}>
+                    <Smartphone className={`w-5 h-5 ${isPushSubscribed ? 'text-green-600' : (darkMode ? 'text-gray-400' : 'text-gray-500')}`} />
+                  </div>
+                  <div>
+                    <p className={`font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>Push értesítések</p>
+                    <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                      {isPushSubscribed ? 'Bekapcsolva ✓' : pushPermission === 'denied' ? 'Letiltva a böngészőben' : 'Nincs bekapcsolva'}
+                    </p>
+                  </div>
+                </div>
+                {!isPushSubscribed && pushPermission !== 'denied' ? (
+                  <button
+                    onClick={handleEnablePush}
+                    className="px-3 py-1.5 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-700 transition-colors"
+                  >
+                    Bekapcsolás
+                  </button>
+                ) : isPushSubscribed ? (
+                  <span className="text-green-600 text-sm font-medium">Aktív</span>
+                ) : (
+                  <span className="text-red-500 text-xs">Böngésző tiltja</span>
+                )}
+              </div>
               <div className="flex items-center justify-between px-4 py-3">
                 <div className="flex items-center gap-3">
                   <div className={`p-2 rounded-lg ${darkMode ? 'bg-purple-900/30' : 'bg-purple-100'}`}>
                     <Bell className="w-5 h-5 text-purple-600" />
                   </div>
                   <div>
-                    <p className={`font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>Push értesítések</p>
-                    <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Értesítések a telefonra</p>
+                    <p className={`font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>App értesítések</p>
+                    <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Értesítések az alkalmazásban</p>
                   </div>
                 </div>
                 <Toggle enabled={settings.pushEnabled} onToggle={() => handleToggle('pushEnabled')} />
