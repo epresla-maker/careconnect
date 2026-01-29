@@ -10,7 +10,7 @@ export default function BottomNavigation({ isVisible = true }) {
   const pathname = usePathname();
   const { user, userData, loading } = useAuth();
   const { darkMode } = useTheme();
-  const badges = useDashboardBadges(user, userData);
+  const { badges } = useDashboardBadges(user, userData);
 
   // Ne jelenjen meg, ha nincs bejelentkezve a felhasználó vagy még tölt
   if (!user || loading) {

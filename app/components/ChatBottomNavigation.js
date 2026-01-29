@@ -11,7 +11,7 @@ export default function ChatBottomNavigation({ isVisible = true, onMenuOpen }) {
   const router = useRouter();
   const pathname = usePathname();
   const { user, userData } = useAuth();
-  const badges = useDashboardBadges(user, userData);
+  const { badges } = useDashboardBadges(user, userData);
   const [darkMode, setDarkMode] = useState(false);
 
   // Load dark mode setting

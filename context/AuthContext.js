@@ -54,7 +54,7 @@ export const AuthProvider = ({ children }) => {
     };
   }, []);
 
-  // LastSeen frissítés 5 percenként (csak ha a user doc létezik)
+  // LastSeen frissítés 10 percenként
   useEffect(() => {
     if (!user || !userData) return;
 
@@ -67,8 +67,8 @@ export const AuthProvider = ({ children }) => {
     const interval = setInterval(() => {
       updateDoc(userDocRef, {
         lastSeen: serverTimestamp()
-      }).catch(() => {}); // Silent fail
-    }, 300000); // 5 perc (300000ms)
+      }).catch(() => {});
+    }, 600000); // 10 perc (600000ms)
 
     return () => clearInterval(interval);
   }, [user, userData]);

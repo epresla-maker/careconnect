@@ -1,6 +1,10 @@
-import { useState, useEffect } from 'react';
+// hooks/useDashboardBadges.js
+// OPTIMIZED: Polling instead of real-time listeners (saves ~80% Firestore reads)
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { db } from '@/lib/firebase';
-import { collection, query, where, onSnapshot, getDocs } from 'firebase/firestore';
+import { collection, query, where, getDocs, getCountFromServer } from 'firebase/firestore';
+
+const POLL_INTERVAL = 60000; // 60 másodperc
 
 export function useDashboardBadges(user, userData) {
   const [badges, setBadges] = useState({
@@ -12,94 +16,102 @@ export function useDashboardBadges(user, userData) {
     timemagister: 0,
     pharmagister: 0
   });
+  
+  const isMountedRef = useRef(true);
 
-  useEffect(() => {
-    if (!user || !userData) return;
+  const fetchBadges = useCallback(async () => {
+    if (!user || !userData || !isMountedRef.current) return;
 
-    const unsubscribers = [];
-
-    // 1. Értesítések (notifications collection)
-    const notificationsQuery = query(
-      collection(db, 'notifications'),
-      where('userId', '==', user.uid),
-      where('read', '==', false)
-    );
-    const unsubNotifications = onSnapshot(notificationsQuery, (snapshot) => {
-      setBadges(prev => ({ ...prev, notifications: snapshot.size }));
-    });
-    unsubscribers.push(unsubNotifications);
-
-    // 2. Olvasatlan üzenetek
-    const chatsQuery = query(
-      collection(db, 'chats'),
-      where('members', 'array-contains', user.uid)
-    );
-    const unsubChats = onSnapshot(chatsQuery, (snapshot) => {
+    try {
+      // 1. Értesítések (getCountFromServer - olcsóbb mint getDocs!)
+      const notificationsQuery = query(
+        collection(db, 'notifications'),
+        where('userId', '==', user.uid),
+        where('read', '==', false)
+      );
+      const notifCount = await getCountFromServer(notificationsQuery);
+      
+      // 2. Olvasatlan üzenetek
+      const chatsQuery = query(
+        collection(db, 'chats'),
+        where('members', 'array-contains', user.uid)
+      );
+      const chatsSnapshot = await getDocs(chatsQuery);
       let unreadCount = 0;
-      snapshot.docs.forEach(chatDoc => {
+      chatsSnapshot.docs.forEach(chatDoc => {
         const data = chatDoc.data();
-        
-        // Kihagyjuk a szellem, archivált és törölt chateket
         const isGhost = data.lastMessageSenderId === null;
         const isArchived = data.archivedBy?.includes(user.uid);
         const isDeleted = data.deletedBy?.includes(user.uid);
         
-        if (isGhost || isArchived || isDeleted) {
-          return;
-        }
+        if (isGhost || isArchived || isDeleted) return;
         
         const readBy = data.readBy || [];
         if (!readBy.includes(user.uid) && data.lastMessageSenderId !== user.uid) {
           unreadCount++;
         }
       });
-      console.log(`📊 Dashboard badges - unread messages: ${unreadCount}`);
-      setBadges(prev => ({ ...prev, messages: unreadCount }));
-    });
-    unsubscribers.push(unsubChats);
 
-    // 3. Friend requests (jelölések)
-    const requestsCount = (userData.friendRequests || []).length;
-    setBadges(prev => ({ ...prev, requests: requestsCount }));
+      // 3-5. userData-ból - nincs Firestore lekérés
+      const requestsCount = (userData.friendRequests || []).length;
+      const friendsCount = (userData.friends || []).length;
+      const followingCount = (userData.following || []).length;
 
-    // 4. Barátok száma
-    const friendsCount = (userData.friends || []).length;
-    setBadges(prev => ({ ...prev, friends: friendsCount }));
+      // 6. Timemagister
+      let timeMagisterCount = 0;
+      if (userData.status === 'Full Tag') {
+        const appointmentsQuery = query(
+          collection(db, 'appointments'),
+          where('providerId', '==', user.uid),
+          where('status', '==', 'accepted')
+        );
+        const appCount = await getCountFromServer(appointmentsQuery);
+        timeMagisterCount = appCount.data().count;
+      }
 
-    // 5. Követett felhasználók száma
-    const followingCount = (userData.following || []).length;
-    setBadges(prev => ({ ...prev, following: followingCount }));
+      // 7. Pharmagister
+      let pharmaMagisterCount = 0;
+      if ((userData.pharmagisterRole === 'pharmacist' || userData.pharmagisterRole === 'assistant') 
+          && userData.zipCodes?.length > 0) {
+        const pharmaQuery = query(
+          collection(db, 'substitutionRequests'),
+          where('status', '==', 'active'),
+          where('zipCode', 'in', userData.zipCodes.slice(0, 10))
+        );
+        const pharmaCount = await getCountFromServer(pharmaQuery);
+        pharmaMagisterCount = pharmaCount.data().count;
+      }
 
-    // 6. Timemagister - elfogadott időpontok ahol várnak (ha van serviceProfile)
-    if (userData.status === 'Full Tag') {
-      const appointmentsQuery = query(
-        collection(db, 'appointments'),
-        where('providerId', '==', user.uid),
-        where('status', '==', 'accepted')
-      );
-      const unsubAppointments = onSnapshot(appointmentsQuery, (snapshot) => {
-        setBadges(prev => ({ ...prev, timemagister: snapshot.size }));
-      });
-      unsubscribers.push(unsubAppointments);
+      if (isMountedRef.current) {
+        setBadges({
+          notifications: notifCount.data().count,
+          messages: unreadCount,
+          requests: requestsCount,
+          friends: friendsCount,
+          following: followingCount,
+          timemagister: timeMagisterCount,
+          pharmagister: pharmaMagisterCount
+        });
+      }
+    } catch (error) {
+      // Silent fail
     }
-
-    // 8. Pharmagister - helyettesítési igények az érdekeltsági körömben
-    if (userData.profession === 'Gyógyszerész' && userData.zipCodes && userData.zipCodes.length > 0) {
-      const pharmaQuery = query(
-        collection(db, 'substitutionRequests'),
-        where('status', '==', 'active'),
-        where('zipCode', 'in', userData.zipCodes.slice(0, 10)) // Firestore max 10 item in array
-      );
-      const unsubPharma = onSnapshot(pharmaQuery, (snapshot) => {
-        setBadges(prev => ({ ...prev, pharmagister: snapshot.size }));
-      });
-      unsubscribers.push(unsubPharma);
-    }
-
-    return () => {
-      unsubscribers.forEach(unsub => unsub());
-    };
   }, [user, userData]);
 
-  return badges;
+  useEffect(() => {
+    isMountedRef.current = true;
+    if (!user || !userData) return;
+
+    fetchBadges();
+    const interval = setInterval(fetchBadges, POLL_INTERVAL);
+
+    return () => {
+      isMountedRef.current = false;
+      clearInterval(interval);
+    };
+  }, [user, userData, fetchBadges]);
+
+  const refreshBadges = useCallback(() => fetchBadges(), [fetchBadges]);
+
+  return { badges, refreshBadges };
 }
