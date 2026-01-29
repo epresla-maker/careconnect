@@ -75,6 +75,7 @@ export default function NotificationsPage() {
   const getNotificationIcon = (type) => {
     switch (type) {
       case 'approval_approved':
+      case 'approval_accepted':
         return '✅';
       case 'approval_rejected':
         return '❌';
@@ -90,6 +91,7 @@ export default function NotificationsPage() {
   const getNotificationColor = (type) => {
     switch (type) {
       case 'approval_approved':
+      case 'approval_accepted':
         return 'bg-green-50 border-green-200';
       case 'approval_rejected':
         return 'bg-red-50 border-red-200';
@@ -106,6 +108,10 @@ export default function NotificationsPage() {
     // Pharmagister jelentkezés értesítés - vezérlőpultra navigálás a konkrét igénnyel
     if (notification.type === 'pharma_application' && notification.demandId) {
       router.push(`/pharmagister?tab=dashboard&expand=${notification.demandId}`);
+    }
+    // Elfogadott jelentkezés - igény részletei és gyógyszertár adatlapja
+    else if (notification.type === 'approval_accepted' && notification.demandId && notification.pharmacyId) {
+      router.push(`/pharmagister/demand/${notification.demandId}`);
     }
     // Admin jóváhagyási kérelem - approvals oldalra
     else if (notification.type === 'admin_approval_request') {

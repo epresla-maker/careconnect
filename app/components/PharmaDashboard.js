@@ -160,12 +160,20 @@ export default function PharmaDashboard({ pharmaRole, expandDemandId }) {
         updatedAt: new Date().toISOString(),
       });
 
+      // Get demand details for notification
+      const demandDoc = await getDoc(doc(db, 'pharmaDemands', demandId));
+      const demandData = demandDoc.data();
+
       // Send notification to applicant
       await addDoc(collection(db, 'notifications'), {
         userId: appData.applicantId,
-        type: 'approval',
+        type: 'approval_accepted',
         title: 'Pharmagister - Jelentkezés elfogadva! ✅',
         message: `${userData.pharmacyName || userData.displayName} elfogadta a jelentkezésedet.`,
+        demandId: demandId,
+        pharmacyId: user.uid,
+        demandDate: demandData?.date,
+        position: demandData?.position,
         read: false,
         createdAt: serverTimestamp(),
       });

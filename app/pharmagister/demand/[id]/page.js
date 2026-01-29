@@ -17,6 +17,7 @@ export default function DemandDetailPage() {
 
   const [demand, setDemand] = useState(null);
   const [pharmacyData, setPharmacyData] = useState(null);
+  const [myApplication, setMyApplication] = useState(null);
   const [loading, setLoading] = useState(true);
   const [applying, setApplying] = useState(false);
   const [hasApplied, setHasApplied] = useState(false);
@@ -48,6 +49,24 @@ export default function DemandDetailPage() {
             const pharmacyRef = doc(db, 'users', demandData.pharmacyId);
             const pharmacySnap = await getDoc(pharmacyRef);
             if (pharmacySnap.exists()) {
+              setPharmacyData(pharmacySnap.data());
+            }
+          }
+
+          // Check user's application status in pharmaApplications collection
+          if (user) {
+            const appQuery = query(
+              collection(db, 'pharmaApplications'),
+              where('demandId', '==', demandId),
+              where('applicantId', '==', user.uid)
+            );
+            const appSnapshot = await getDocs(appQuery);
+            if (!appSnapshot.empty) {
+              const appData = { id: appSnapshot.docs[0].id, ...appSnapshot.docs[0].data() };
+              setMyApplication(appData);
+              setHasApplied(true);
+            }
+          }
               setPharmacyData(pharmacySnap.data());
             }
           }
@@ -369,6 +388,51 @@ export default function DemandDetailPage() {
         </div>
 
         <div className="max-w-lg mx-auto p-4 space-y-4">
+          {/* Application Status Banner */}
+          {myApplication && (
+            <div className={`p-4 rounded-xl border ${
+              myApplication.status === 'accepted' 
+                ? 'bg-green-50 border-green-200 dark:bg-green-900/20 dark:border-green-800' 
+                : myApplication.status === 'rejected'
+                ? 'bg-red-50 border-red-200 dark:bg-red-900/20 dark:border-red-800'
+                : 'bg-yellow-50 border-yellow-200 dark:bg-yellow-900/20 dark:border-yellow-800'
+            }`}>
+              <div className="flex items-center gap-3">
+                <span className="text-2xl">
+                  {myApplication.status === 'accepted' ? '✅' : myApplication.status === 'rejected' ? '❌' : '⏳'}
+                </span>
+                <div className="flex-1">
+                  <h3 className={`font-semibold ${
+                    myApplication.status === 'accepted' 
+                      ? 'text-green-800 dark:text-green-300' 
+                      : myApplication.status === 'rejected'
+                      ? 'text-red-800 dark:text-red-300'
+                      : 'text-yellow-800 dark:text-yellow-300'
+                  }`}>
+                    {myApplication.status === 'accepted' 
+                      ? 'Jelentkezésed elfogadva!' 
+                      : myApplication.status === 'rejected'
+                      ? 'Jelentkezésed elutasítva'
+                      : 'Jelentkezésed elbírálás alatt'}
+                  </h3>
+                  <p className={`text-sm mt-1 ${
+                    myApplication.status === 'accepted' 
+                      ? 'text-green-700 dark:text-green-400' 
+                      : myApplication.status === 'rejected'
+                      ? 'text-red-700 dark:text-red-400'
+                      : 'text-yellow-700 dark:text-yellow-400'
+                  }`}>
+                    {myApplication.status === 'accepted' 
+                      ? 'A gyógyszertár elfogadta a jelentkezésedet. Az elérhetőségeik lent találhatók!' 
+                      : myApplication.status === 'rejected'
+                      ? `Indok: ${myApplication.rejectionReason || 'Nincs megadva'}`
+                      : 'A gyógyszertár hamarosan válaszol a jelentkezésedre.'}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Pharmacy Info Card */}
           <div className={`${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border rounded-xl overflow-hidden`}>
             <div className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border-b border-gray-200 dark:border-gray-700">
@@ -533,6 +597,58 @@ export default function DemandDetailPage() {
               )}
             </div>
           </div>
+
+          {/* Pharmacy Contact Details - Show only if application accepted */}
+          {myApplication?.status === 'accepted' && pharmacyData && (
+            <div className={`${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border rounded-xl p-6`}>
+              <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+                <span>📞</span>
+                Gyógyszertár elérhetőségei
+              </h3>
+              
+              <div className="space-y-4">
+                {pharmacyData.pharmacyPhone && (
+                  <div className="flex items-center gap-3 py-3 border-b border-gray-200 dark:border-gray-700">
+                    <span className="text-2xl">📱</span>
+                    <div className="flex-1">
+                      <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Telefon</p>
+                      <a href={`tel:${pharmacyData.pharmacyPhone}`} className="font-semibold text-purple-600 hover:underline">
+                        {pharmacyData.pharmacyPhone}
+                      </a>
+                    </div>
+                  </div>
+                )}
+
+                {pharmacyData.email && (
+                  <div className="flex items-center gap-3 py-3 border-b border-gray-200 dark:border-gray-700">
+                    <span className="text-2xl">📧</span>
+                    <div className="flex-1">
+                      <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Email</p>
+                      <a href={`mailto:${pharmacyData.email}`} className="font-semibold text-purple-600 hover:underline">
+                        {pharmacyData.email}
+                      </a>
+                    </div>
+                  </div>
+                )}
+
+                {pharmacyData.pharmacyNKK && (
+                  <div className="flex items-center gap-3 py-3">
+                    <span className="text-2xl">🏥</span>
+                    <div className="flex-1">
+                      <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>NKK szám</p>
+                      <p className="font-semibold">{pharmacyData.pharmacyNKK}</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className={`mt-6 p-4 rounded-lg ${darkMode ? 'bg-green-900/20' : 'bg-green-50'}`}>
+                <p className={`text-sm ${darkMode ? 'text-green-400' : 'text-green-700'}`}>
+                  💡 <strong>Tipp:</strong> Vedd fel a kapcsolatot a gyógyszertárral mielőbb, hogy megbeszéljétek a részleteket!
+                </p>
+              </div>
+            </div>
+          )}
 
           {/* Applicants count for pharmacy owners */}
           {isOwnDemand && demand.applicants && demand.applicants.length > 0 && (
