@@ -118,11 +118,12 @@ export default function PWAInstallBanner() {
             {isIOS ? (
               // iOS utasítások
               <div className="bg-white/20 rounded-lg p-3">
-                <p className="text-white text-xs font-medium mb-2">📱 Telepítés iOS-en:</p>
+                <p className="text-white text-xs font-medium mb-2">📱 Telepítés iOS Safari-ban:</p>
                 <ol className="text-white/90 text-xs space-y-1">
-                  <li>1. Nyomd meg a <span className="font-bold">Megosztás</span> gombot ⬆️</li>
-                  <li>2. Válaszd a <span className="font-bold">"Hozzáadás a kezdőképernyőhöz"</span> opciót</li>
-                  <li>3. Koppints a <span className="font-bold">"Hozzáadás"</span> gombra</li>
+                  <li>1. Koppints a <span className="font-bold">⋯ három pontra</span> alul</li>
+                  <li>2. Válaszd a <span className="font-bold">Megosztás</span> opciót</li>
+                  <li>3. Görgess és koppints a <span className="font-bold">Továbbiak</span> gombra</li>
+                  <li>4. Válaszd a <span className="font-bold">"Főképernyőhöz adás"</span> lehetőséget</li>
                 </ol>
               </div>
             ) : (
