@@ -123,7 +123,7 @@ function PharmagisterSetupContent() {
     try {
       const uploadFormData = new FormData();
       uploadFormData.append('file', file);
-      uploadFormData.append('upload_preset', 'careconnect_profiles');
+      uploadFormData.append('upload_preset', 'pharmagister_profiles');
 
       const response = await fetch(
         `https://api.cloudinary.com/v1_1/dyoq9pcdx/image/upload`,

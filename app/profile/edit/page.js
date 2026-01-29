@@ -51,7 +51,7 @@ export default function ProfileEditPage() {
     try {
       const formDataUpload = new FormData();
       formDataUpload.append('file', file);
-      formDataUpload.append('upload_preset', 'careconnect_profiles');
+      formDataUpload.append('upload_preset', 'pharmagister_profiles');
       formDataUpload.append('folder', 'profiles');
 
       const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
