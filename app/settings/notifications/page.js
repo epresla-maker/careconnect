@@ -8,6 +8,21 @@ import { db } from '@/lib/firebase';
 import { ArrowLeft, Bell, MessageCircle, Calendar, CheckCircle, Loader2, Smartphone } from 'lucide-react';
 import RouteGuard from '@/app/components/RouteGuard';
 
+const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding)
+    .replace(/-/g, '+')
+    .replace(/_/g, '/');
+  const rawData = window.atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+  for (let i = 0; i < rawData.length; ++i) {
+    outputArray[i] = rawData.charCodeAt(i);
+  }
+  return outputArray;
+}
+
 export default function NotificationsSettingsPage() {
   const router = useRouter();
   const { user, userData } = useAuth();
@@ -59,20 +74,62 @@ export default function NotificationsSettingsPage() {
   };
   
   const handleEnablePush = async () => {
-    if (window.pushNotificationUtils) {
-      const result = await window.pushNotificationUtils.subscribe();
-      if (result) {
-        setPushPermission('granted');
-        setIsPushSubscribed(true);
+    try {
+      console.log('🔔 Starting push subscription...');
+      
+      // 1. Check if supported
+      if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+        alert('A böngésződ nem támogatja a push értesítéseket.');
+        return;
       }
-    } else {
-      // Fallback - request permission directly
+      
+      // 2. Request notification permission
+      console.log('🔔 Requesting permission...');
       const permission = await Notification.requestPermission();
+      console.log('🔔 Permission result:', permission);
       setPushPermission(permission);
-      if (permission === 'granted') {
-        // Reload to trigger subscription
-        window.location.reload();
+      
+      if (permission !== 'granted') {
+        alert('Az értesítések engedélyezése szükséges a push értesítésekhez.');
+        return;
       }
+      
+      // 3. Get service worker registration
+      console.log('🔔 Getting service worker...');
+      const registration = await navigator.serviceWorker.ready;
+      console.log('🔔 Service worker ready:', registration);
+      
+      // 4. Subscribe to push
+      console.log('🔔 Subscribing to push with VAPID key:', VAPID_PUBLIC_KEY?.substring(0, 20) + '...');
+      const subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+      });
+      console.log('🔔 Subscription created:', subscription);
+      
+      // 5. Save to server
+      console.log('🔔 Saving subscription to server...');
+      const response = await fetch('/api/push-subscription', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: user.uid,
+          subscription: subscription.toJSON()
+        })
+      });
+      
+      const result = await response.json();
+      console.log('🔔 Server response:', result);
+      
+      if (response.ok) {
+        setIsPushSubscribed(true);
+        alert('✅ Push értesítések sikeresen bekapcsolva!');
+      } else {
+        throw new Error(result.error || 'Server error');
+      }
+    } catch (error) {
+      console.error('🔔 Push subscription error:', error);
+      alert('Hiba történt a push értesítések bekapcsolásakor: ' + error.message);
     }
   };
 

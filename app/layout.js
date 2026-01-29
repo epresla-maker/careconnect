@@ -5,6 +5,7 @@ import { AuthProvider } from "@/context/AuthContext";
 import { ThemeProvider } from "@/context/ThemeContext";
 import { ToastProvider } from "@/context/ToastContext";
 import PushNotificationSetup from "@/app/components/PushNotificationSetup";
+import PWARegister from "@/app/components/PWARegister";
 import GlobalBottomNav from "@/app/components/GlobalBottomNav";
 import StartupRedirect from "@/app/components/StartupRedirect";
 import PWAInstallBanner from "@/app/components/PWAInstallBanner";
@@ -40,6 +41,7 @@ export default function RootLayout({ children }) {
       </head>
       <body className={`${inter.className}`}>
         <AuthProvider>
+          <PWARegister />
           <StartupRedirect />
           <PushNotificationSetup />
           <ThemeProvider>
