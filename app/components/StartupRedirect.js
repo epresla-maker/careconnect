@@ -4,6 +4,7 @@ import { useRouter, usePathname } from 'next/navigation';
 
 // Ez a komponens biztosítja, hogy az app mindig a főoldalon induljon
 // amikor a felhasználó bezárja és újra megnyitja az alkalmazást
+// CSAK PWA módban működik, böngészőben nem
 export default function StartupRedirect() {
   const router = useRouter();
   const pathname = usePathname();
@@ -13,6 +14,15 @@ export default function StartupRedirect() {
     // Csak egyszer fusson le az app indulásakor
     if (hasRedirected.current) return;
     hasRedirected.current = true;
+
+    // Ellenőrizzük, hogy PWA módban vagyunk-e
+    const isPWA = window.matchMedia('(display-mode: standalone)').matches || 
+                  window.navigator.standalone === true;
+    
+    // Ha nem PWA mód, ne irányítsunk át
+    if (!isPWA) {
+      return;
+    }
 
     // Ne irányítsuk át ha login/register oldalon van (még nem lépett be)
     const publicRoutes = ['/login', '/register', '/verify-email', '/privacy'];
