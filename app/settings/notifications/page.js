@@ -3,9 +3,8 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useTheme } from '@/context/ThemeContext';
-import { doc } from 'firebase/firestore';
+import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { trackedUpdateDoc } from '@/lib/firestoreTracker';
 import { ArrowLeft, Bell, MessageCircle, Calendar, CheckCircle, Loader2, Smartphone } from 'lucide-react';
 import RouteGuard from '@/app/components/RouteGuard';
 
@@ -177,7 +176,7 @@ export default function NotificationsSettingsPage() {
     // Save to Firestore
     setSaving(true);
     try {
-      await trackedUpdateDoc(doc(db, 'users', user.uid), {
+      await updateDoc(doc(db, 'users', user.uid), {
         notificationSettings: newSettings
       });
     } catch (error) {

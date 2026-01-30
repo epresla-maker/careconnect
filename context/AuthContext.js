@@ -4,7 +4,6 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 import { onAuthStateChanged, signOut as authSignOut } from "firebase/auth";
 import { auth, db } from "@/lib/firebase";
 import { doc, onSnapshot, updateDoc, serverTimestamp } from "firebase/firestore";
-import { initTracker, stopTracker, trackOperation } from "@/lib/firestoreTracker";
 
 const AuthContext = createContext();
 
@@ -60,30 +59,23 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     if (!user?.uid) return;
 
-    // Tracker inicializálása
-    initTracker(user.uid);
-
     // Első frissítés bejelentkezéskor
     const userDocRef = doc(db, "users", user.uid);
     updateDoc(userDocRef, {
       lastSeen: serverTimestamp()
-    }).then(() => trackOperation('write')).catch(() => {});
+    }).catch(() => {});
 
     const interval = setInterval(() => {
       updateDoc(userDocRef, {
         lastSeen: serverTimestamp()
-      }).then(() => trackOperation('write')).catch(() => {});
+      }).catch(() => {});
     }, 600000); // 10 perc (600000ms)
 
-    return () => {
-      clearInterval(interval);
-      stopTracker();
-    };
+    return () => clearInterval(interval);
   }, [user?.uid]); // ← Csak user.uid, NEM userData!
 
   const signOut = async () => {
     try {
-      stopTracker();
       await authSignOut(auth);
     } catch (error) {
       // Silent fail

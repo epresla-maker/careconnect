@@ -2,9 +2,8 @@
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { collection, query, where, doc, orderBy } from "firebase/firestore";
+import { collection, query, where, getDocs, doc, updateDoc, orderBy, deleteDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { trackedGetDocs, trackedUpdateDoc, trackedDeleteDoc } from "@/lib/firestoreTracker";
 import RouteGuard from "@/app/components/RouteGuard";
 
 export default function NotificationsPage() {
@@ -30,7 +29,7 @@ export default function NotificationsPage() {
         orderBy('createdAt', 'desc')
       );
       
-      const snapshot = await trackedGetDocs(q);
+      const snapshot = await getDocs(q);
       console.log(`📧 Betöltött értesítések száma: ${snapshot.size}`);
       
       const notificationsData = snapshot.docs.map(doc => ({
@@ -46,7 +45,7 @@ export default function NotificationsPage() {
       console.log(`📧 Olvasatlan értesítések: ${unreadNotifications.length}`);
       
       for (const notification of unreadNotifications) {
-        await trackedUpdateDoc(doc(db, 'notifications', notification.id), { read: true });
+        await updateDoc(doc(db, 'notifications', notification.id), { read: true });
       }
       
       // Frissítjük a lokális state-et is az olvasott státusszal
@@ -65,7 +64,7 @@ export default function NotificationsPage() {
   const deleteNotification = async (notificationId) => {
     console.log(`🗑️ Törlés kérés: ${notificationId}`);
     try {
-      await trackedDeleteDoc(doc(db, 'notifications', notificationId));
+      await deleteDoc(doc(db, 'notifications', notificationId));
       setNotifications(notifications.filter(n => n.id !== notificationId));
       console.log(`✅ Törölve: ${notificationId}`);
     } catch (error) {

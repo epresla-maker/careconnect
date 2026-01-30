@@ -2,9 +2,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createUserWithEmailAndPassword, sendEmailVerification, signOut } from 'firebase/auth';
-import { doc } from 'firebase/firestore';
+import { doc, setDoc } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
-import { trackedSetDoc } from '@/lib/firestoreTracker';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -40,7 +39,7 @@ export default function RegisterPage() {
       // Egyedi verification token generálása
       const verificationToken = Math.random().toString(36).substring(2) + Date.now().toString(36);
       
-      await trackedSetDoc(doc(db, 'users', userCredential.user.uid), {
+      await setDoc(doc(db, 'users', userCredential.user.uid), {
         email: userCredential.user.email,
         createdAt: new Date().toISOString(),
         pharmagisterRole: null,
