@@ -50,6 +50,7 @@ export default function RootLayout({ children }) {
               {children}
               <GlobalBottomNav />
               <PWAInstallBanner />
+              <FirestoreMonitor />
             </ToastProvider>
           </ThemeProvider>
         </AuthProvider>
