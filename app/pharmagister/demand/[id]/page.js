@@ -7,7 +7,7 @@ import RouteGuard from '@/app/components/RouteGuard';
 import { doc, getDoc, updateDoc, arrayUnion, arrayRemove, Timestamp, collection, addDoc, query, where, getDocs, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { createNotificationWithPush } from '@/lib/notifications';
-import { MessageCircle, Send, X } from 'lucide-react';
+import { MessageCircle } from 'lucide-react';
 
 export default function DemandDetailPage() {
   const { user, userData } = useAuth();
@@ -23,9 +23,7 @@ export default function DemandDetailPage() {
   const [applying, setApplying] = useState(false);
   const [hasApplied, setHasApplied] = useState(false);
   const [error, setError] = useState(null);
-  const [showMessageModal, setShowMessageModal] = useState(false);
-  const [messageText, setMessageText] = useState('');
-  const [sendingMessage, setSendingMessage] = useState(false);
+  const [openingChat, setOpeningChat] = useState(false);
 
   useEffect(() => {
     const fetchDemand = async () => {
@@ -196,10 +194,13 @@ export default function DemandDetailPage() {
     }
   };
 
-  const handleSendMessage = async () => {
-    if (!user || !messageText.trim()) return;
+  const handleOpenChat = async () => {
+    if (!user) {
+      router.push('/login');
+      return;
+    }
     
-    setSendingMessage(true);
+    setOpeningChat(true);
     try {
       // Check if chat already exists for this specific demand
       const chatsRef = collection(db, 'chats');
@@ -232,70 +233,43 @@ export default function DemandDetailPage() {
           },
           createdAt: serverTimestamp(),
           lastMessageAt: serverTimestamp(),
-          lastMessage: messageText.trim(),
+          lastMessage: '',
+          lastMessageSenderId: null, // Ghost chat - no message yet
           relatedDemandId: demandId,
           relatedDemandDate: demand.date,
           relatedDemandPosition: demand.position,
           relatedDemandPositionLabel: demand.position === 'pharmacist' ? 'Gyógyszerész' : 'Szakasszisztens',
+          readBy: [user.uid], // Mark as read for creator
           archivedBy: [],
           deletedBy: []
         });
         chatId = newChatRef.id;
       } else {
-        // Update existing chat with last message info
+        // If chat exists, just restore it if archived/deleted
         const chatDoc = await getDoc(doc(db, 'chats', chatId));
-        const updateData = {
-          lastMessageAt: serverTimestamp(),
-          lastMessage: messageText.trim()
-        };
-        
-        // Csak akkor használjuk az arrayRemove-ot, ha a mezők léteznek
         const chatData = chatDoc.data();
-        if (chatData?.deletedBy) {
+        const updateData = {};
+        
+        if (chatData?.deletedBy?.includes(user.uid)) {
           updateData.deletedBy = arrayRemove(user.uid);
         }
-        if (chatData?.archivedBy) {
+        if (chatData?.archivedBy?.includes(user.uid)) {
           updateData.archivedBy = arrayRemove(user.uid);
         }
         
-        await updateDoc(doc(db, 'chats', chatId), updateData);
+        if (Object.keys(updateData).length > 0) {
+          await updateDoc(doc(db, 'chats', chatId), updateData);
+        }
       }
-      
-      // Add message to the chat
-      await addDoc(collection(db, 'chats', chatId, 'messages'), {
-        senderId: user.uid,
-        senderName: userData?.displayName || 'Felhasználó',
-        text: messageText.trim(),
-        createdAt: serverTimestamp(),
-        relatedDemandId: demandId,
-        relatedDemandDate: demand.date
-      });
-      
-      // Send notification with push to pharmacy
-      await createNotificationWithPush({
-        userId: demand.pharmacyId,
-        type: 'new_message',
-        title: 'Új üzenet érkezett! 💬',
-        message: `${userData?.displayName || 'Valaki'} üzenetet küldött a ${new Date(demand.date).toLocaleDateString('hu-HU')}-i igényeddel kapcsolatban.`,
-        data: {
-          chatId: chatId,
-          senderId: user.uid,
-        },
-        url: `/chat/${chatId}`
-      });
-      
-      setShowMessageModal(false);
-      setMessageText('');
-      alert('Üzenet sikeresen elküldve!');
       
       // Navigate to chat
       router.push(`/chat/${chatId}`);
       
     } catch (err) {
-      console.error('Error sending message:', err);
-      alert('Hiba történt az üzenet küldése során.');
+      console.error('Error opening chat:', err);
+      alert('Hiba történt a chat megnyitásakor.');
     } finally {
-      setSendingMessage(false);
+      setOpeningChat(false);
     }
   };
 
@@ -582,10 +556,15 @@ export default function DemandDetailPage() {
                     )}
                   </button>
                   <button
-                    onClick={() => setShowMessageModal(true)}
-                    className="px-4 py-3 bg-[#6B46C1] hover:bg-[#5a3aa3] text-white font-semibold rounded-xl transition-colors flex items-center gap-2"
+                    onClick={handleOpenChat}
+                    disabled={openingChat}
+                    className="px-4 py-3 bg-[#6B46C1] hover:bg-[#5a3aa3] text-white font-semibold rounded-xl transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <MessageCircle className="w-5 h-5" />
+                    {openingChat ? (
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                    ) : (
+                      <MessageCircle className="w-5 h-5" />
+                    )}
                     Üzenet
                   </button>
                 </div>
@@ -765,10 +744,15 @@ export default function DemandDetailPage() {
                     Regisztrálj a Pharmagisterbe
                   </button>
                   <button
-                    onClick={() => setShowMessageModal(true)}
-                    className="flex items-center gap-2 px-4 py-3 bg-[#6B46C1] hover:bg-[#5a3aa3] text-white font-semibold rounded-xl transition-colors"
+                    onClick={handleOpenChat}
+                    disabled={openingChat}
+                    className="flex items-center gap-2 px-4 py-3 bg-[#6B46C1] hover:bg-[#5a3aa3] text-white font-semibold rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <MessageCircle className="w-5 h-5" />
+                    {openingChat ? (
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                    ) : (
+                      <MessageCircle className="w-5 h-5" />
+                    )}
                     Üzenet
                   </button>
                 </div>
@@ -777,59 +761,7 @@ export default function DemandDetailPage() {
           </div>
         )}
 
-        {/* Message Modal */}
-        {showMessageModal && (
-          <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-4">
-            <div className={`w-full max-w-lg ${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-t-2xl sm:rounded-2xl p-6`}>
-              <div className="flex items-center justify-between mb-4">
-                <h3 className={`text-lg font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                  Üzenet küldése - {demand.pharmacyName}
-                </h3>
-                <button
-                  onClick={() => setShowMessageModal(false)}
-                  className={`p-2 rounded-full ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-              
-              <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'} mb-4`}>
-                Írj üzenetet a gyógyszertárnak a {new Date(demand.date).toLocaleDateString('hu-HU')}-i igénnyel kapcsolatban.
-              </p>
-              
-              <textarea
-                value={messageText}
-                onChange={(e) => setMessageText(e.target.value)}
-                placeholder="Îrd ide az üzeneted..."
-                rows={4}
-                className={`w-full px-4 py-3 rounded-xl border ${darkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'bg-white border-gray-200 text-gray-900 placeholder-gray-400'} focus:ring-2 focus:ring-[#6B46C1] focus:border-transparent resize-none`}
-              />
-              
-              <div className="flex gap-3 mt-4">
-                <button
-                  onClick={() => setShowMessageModal(false)}
-                  className={`flex-1 py-3 px-4 rounded-xl font-medium ${darkMode ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
-                >
-                  Mégsem
-                </button>
-                <button
-                  onClick={handleSendMessage}
-                  disabled={!messageText.trim() || sendingMessage}
-                  className="flex-1 py-3 px-4 rounded-xl font-medium bg-[#6B46C1] hover:bg-[#5a3aa3] text-white disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                >
-                  {sendingMessage ? (
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                  ) : (
-                    <>
-                      <Send className="w-4 h-4" />
-                      Küldés
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+
       </div>
     </RouteGuard>
   );
