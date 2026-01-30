@@ -259,18 +259,30 @@ export default function ChatRoomPage() {
               }
             }
             
-            // Valós idejű figyelés a partner lastSeen változásaira
-            unsubscribePartner = onSnapshot(doc(db, "users", otherUserId), (userDoc) => {
-              if (userDoc.exists()) {
-                const data = userDoc.data();
-                if (data.lastSeen) {
-                  const lastSeenDate = data.lastSeen.toDate();
-                  setPartnerLastSeen(lastSeenDate);
-                  const diff = Date.now() - lastSeenDate.getTime();
-                  setIsPartnerOnline(diff < 60000); // Ha kevesebb mint 1 perc, online
+            // ✅ OPTIMALIZÁLVA: Polling helyett az onSnapshot-ot, 30mp-enként frissítjük a partner státuszt
+            // Ez sokkal kevesebb read-et generál mint a real-time listener
+            const pollPartnerStatus = async () => {
+              try {
+                const freshDoc = await getDoc(doc(db, "users", otherUserId));
+                if (freshDoc.exists()) {
+                  const data = freshDoc.data();
+                  if (data.lastSeen) {
+                    const lastSeenDate = data.lastSeen.toDate();
+                    setPartnerLastSeen(lastSeenDate);
+                    const diff = Date.now() - lastSeenDate.getTime();
+                    setIsPartnerOnline(diff < 60000);
+                  }
                 }
+              } catch (err) {
+                // Silent fail
               }
-            });
+            };
+            
+            // Partner státusz polling 30 másodpercenként
+            const partnerPollInterval = setInterval(pollPartnerStatus, 30000);
+            
+            // Cleanup function-ba mentjük az intervalt
+            unsubscribePartner = () => clearInterval(partnerPollInterval);
           }
         } else {
           router.push("/chat"); 

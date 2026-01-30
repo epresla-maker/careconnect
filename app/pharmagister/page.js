@@ -5,7 +5,7 @@ import { useTheme } from '@/context/ThemeContext';
 import { useRouter, useSearchParams } from 'next/navigation';
 import RouteGuard from '@/app/components/RouteGuard';
 import PharmaNavbar from '@/app/components/PharmaNavbar';
-import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import { useDashboardBadges } from '@/hooks/useDashboardBadges';
 import { db } from '@/lib/firebase';
 
 function PharmagisterContent() {
@@ -16,7 +16,9 @@ function PharmagisterContent() {
   const [isStandalone, setIsStandalone] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [showInstallButton, setShowInstallButton] = useState(false);
-  const [unreadCount, setUnreadCount] = useState(0);
+  
+  // ✅ Használjuk a közös badges hook-ot a duplikált listener helyett
+  const { notifications: unreadCount } = useDashboardBadges(user, userData);
   
   // Az aktív tab a query paraméterből jön (alapértelmezett: 'calendar')
   const activeTab = searchParams.get('tab') || 'calendar';
@@ -78,22 +80,7 @@ function PharmagisterContent() {
     }
   }, [searchParams, isStandalone, deferredPrompt, handleInstallClick]);
 
-  // Listen for unread notifications
-  useEffect(() => {
-    if (!user) return;
-
-    const q = query(
-      collection(db, 'notifications'),
-      where('userId', '==', user.uid),
-      where('read', '==', false)
-    );
-
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      setUnreadCount(snapshot.size);
-    });
-
-    return () => unsubscribe();
-  }, [user]);
+  // ✅ TÖRÖLVE: Duplikált notification listener - most már useDashboardBadges-ből jön
 
   return (
     <RouteGuard>
