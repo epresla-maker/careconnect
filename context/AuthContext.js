@@ -55,8 +55,9 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   // LastSeen frissítés 10 percenként
+  // FONTOS: Csak user.uid-tól függ, NEM userData-tól (különben végtelen ciklus!)
   useEffect(() => {
-    if (!user || !userData) return;
+    if (!user?.uid) return;
 
     // Első frissítés bejelentkezéskor
     const userDocRef = doc(db, "users", user.uid);
@@ -71,7 +72,7 @@ export const AuthProvider = ({ children }) => {
     }, 600000); // 10 perc (600000ms)
 
     return () => clearInterval(interval);
-  }, [user, userData]);
+  }, [user?.uid]); // ← Csak user.uid, NEM userData!
 
   const signOut = async () => {
     try {
