@@ -389,42 +389,13 @@ export default function ChatRoomPage() {
         });
         console.log('✅ Chat marked as read');
         
-        // Update PWA badge immediately after marking as read
-        if (typeof window !== 'undefined' && 'setAppBadge' in navigator) {
-          // Get current unread counts and update badge
-          const chatsQuery = query(
-            collection(db, 'chats'),
-            where('members', 'array-contains', user.uid)
-          );
-          const chatsSnapshot = await getDocs(chatsQuery);
-          let unreadMessages = 0;
-          chatsSnapshot.docs.forEach(chatDoc => {
-            const data = chatDoc.data();
-            const isGhost = data.lastMessageSenderId === null;
-            const isArchived = data.archivedBy?.includes(user.uid);
-            const isDeleted = data.deletedBy?.includes(user.uid);
-            if (isGhost || isArchived || isDeleted) return;
-            const readBy = data.readBy || [];
-            if (!readBy.includes(user.uid) && data.lastMessageSenderId !== user.uid) {
-              unreadMessages++;
-            }
-          });
-          
-          const notificationsQuery = query(
-            collection(db, 'notifications'),
-            where('userId', '==', user.uid),
-            where('read', '==', false)
-          );
-          const notifSnapshot = await getDocs(notificationsQuery);
-          const unreadNotifications = notifSnapshot.size;
-          
-          const totalBadge = unreadMessages + unreadNotifications;
-          if (totalBadge > 0) {
-            await navigator.setAppBadge(totalBadge);
-          } else {
-            await navigator.clearAppBadge();
-          }
-          console.log(`🔵 PWA badge updated: ${totalBadge} (${unreadMessages} messages + ${unreadNotifications} notifications)`);
+        // ✅ OPTIMALIZÁLVA: Badge frissítés csak clearAppBadge - 
+        // a pontos számot a useDashboardBadges hook kezeli real-time
+        // Nem kérdezünk le minden chatet és notificationt minden chat megnyitáskor!
+        if (typeof window !== 'undefined' && 'clearAppBadge' in navigator) {
+          // Nem töröljük a badge-et, mert lehet más olvasatlan is van
+          // A useDashboardBadges majd frissíti automatikusan
+          console.log('🔵 Chat marked as read, badge will update via listener');
         }
       } catch (err) {
         console.error('Error marking chat as read:', err);

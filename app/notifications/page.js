@@ -2,7 +2,7 @@
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { collection, query, where, getDocs, doc, updateDoc, orderBy, deleteDoc } from "firebase/firestore";
+import { collection, query, where, getDocs, doc, updateDoc, orderBy, deleteDoc, writeBatch } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import RouteGuard from "@/app/components/RouteGuard";
 
@@ -40,12 +40,16 @@ export default function NotificationsPage() {
       
       console.log('📧 Értesítések:', notificationsData);
       
-      // Jelöljük meg az olvasatlanokat olvasottnak
+      // Jelöljük meg az olvasatlanokat olvasottnak - BATCH-eléssel (1 write sok helyett!)
       const unreadNotifications = notificationsData.filter(n => !n.read);
       console.log(`📧 Olvasatlan értesítések: ${unreadNotifications.length}`);
       
-      for (const notification of unreadNotifications) {
-        await updateDoc(doc(db, 'notifications', notification.id), { read: true });
+      if (unreadNotifications.length > 0) {
+        const batch = writeBatch(db);
+        for (const notification of unreadNotifications) {
+          batch.update(doc(db, 'notifications', notification.id), { read: true });
+        }
+        await batch.commit(); // Egyetlen write művelet!
       }
       
       // Frissítjük a lokális state-et is az olvasott státusszal
