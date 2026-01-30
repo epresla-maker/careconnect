@@ -21,6 +21,7 @@ export default function PharmaDashboard({ pharmaRole, expandDemandId }) {
   const [statusFilter, setStatusFilter] = useState('all'); // 'all', 'pending', 'accepted', 'rejected'
 
   useEffect(() => {
+    console.log('🔄 PharmaDashboard useEffect triggered - user:', user?.uid, 'pharmaRole:', pharmaRole);
     loadData();
   }, [user, pharmaRole]);
 
@@ -33,6 +34,7 @@ export default function PharmaDashboard({ pharmaRole, expandDemandId }) {
   }, [expandDemandId]);
 
   const loadData = async () => {
+    console.log('📊 loadData called');
     if (!user || !pharmaRole) {
       setLoading(false);
       return;
@@ -41,8 +43,10 @@ export default function PharmaDashboard({ pharmaRole, expandDemandId }) {
     setLoading(true);
     try {
       if (pharmaRole === 'pharmacy') {
+        console.log('🏥 Loading pharmacy data...');
         await loadPharmacyData();
       } else {
+        console.log('💊 Loading substitute data...');
         await loadSubstituteData();
       }
     } catch (error) {
