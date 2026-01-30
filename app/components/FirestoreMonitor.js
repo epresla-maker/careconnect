@@ -1,12 +1,16 @@
 "use client";
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { getStats, resetStats } from '@/lib/firestoreMonitor';
-import { X, RotateCcw, TrendingUp, Database } from 'lucide-react';
+import { X, RotateCcw, TrendingUp, Database, Move } from 'lucide-react';
 
 export default function FirestoreMonitor() {
   const [stats, setStats] = useState(null);
   const [isVisible, setIsVisible] = useState(true);
   const [isMinimized, setIsMinimized] = useState(false);
+  const [position, setPosition] = useState({ x: 16, y: 16 }); // bottom-4 right-4
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const panelRef = useRef(null);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -16,13 +20,54 @@ export default function FirestoreMonitor() {
     return () => clearInterval(interval);
   }, []);
 
+  const handleMouseDown = (e) => {
+    if (e.target.closest('button')) return; // Ne húzzuk ha gombra kattintunk
+    setIsDragging(true);
+    setDragStart({
+      x: e.clientX - position.x,
+      y: e.clientY - position.y
+    });
+  };
+
+  const handleMouseMove = (e) => {
+    if (!isDragging) return;
+    
+    const newX = e.clientX - dragStart.x;
+    const newY = e.clientY - dragStart.y;
+    
+    // Boundary check
+    const maxX = window.innerWidth - (panelRef.current?.offsetWidth || 280);
+    const maxY = window.innerHeight - (panelRef.current?.offsetHeight || 400);
+    
+    setPosition({
+      x: Math.max(0, Math.min(newX, maxX)),
+      y: Math.max(0, Math.min(newY, maxY))
+    });
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  useEffect(() => {
+    if (isDragging) {
+      window.addEventListener('mousemove', handleMouseMove);
+      window.addEventListener('mouseup', handleMouseUp);
+      return () => {
+        window.removeEventListener('mousemove', handleMouseMove);
+        window.removeEventListener('mouseup', handleMouseUp);
+      };
+    }
+  }, [isDragging, dragStart, position]);
+
   if (!isVisible) return null;
 
   if (isMinimized) {
     return (
       <div
         onClick={() => setIsMinimized(false)}
-        className="fixed bottom-4 right-4 z-[9999] bg-purple-600 text-white p-3 rounded-full shadow-2xl cursor-pointer hover:bg-purple-700 transition-all"
+        style={{ bottom: `${position.y}px`, right: `${position.x}px` }}
+        className="fixed z-[9999] bg-purple-600 text-white p-3 rounded-full shadow-2xl cursor-pointer hover:bg-purple-700 transition-all"
       >
         <Database className="w-6 h-6" />
       </div>
@@ -30,9 +75,19 @@ export default function FirestoreMonitor() {
   }
 
   return (
-    <div className="fixed bottom-4 right-4 z-[9999] bg-gray-900 text-white p-4 rounded-xl shadow-2xl border border-purple-500 min-w-[280px]">
+    <div
+      ref={panelRef}
+      style={{ 
+        bottom: `${position.y}px`, 
+        right: `${position.x}px`,
+        cursor: isDragging ? 'grabbing' : 'grab'
+      }}
+      onMouseDown={handleMouseDown}
+      className="fixed z-[9999] bg-gray-900 text-white p-4 rounded-xl shadow-2xl border border-purple-500 min-w-[280px] select-none"
+    >
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
+          <Move className="w-4 h-4 text-gray-500" />
           <Database className="w-5 h-5 text-purple-400" />
           <h3 className="font-bold text-sm">Firestore Monitor</h3>
         </div>
