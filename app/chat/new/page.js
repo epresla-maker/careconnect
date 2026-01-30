@@ -3,8 +3,9 @@ import { useState, useRef, Suspense } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter, useSearchParams } from 'next/navigation';
 import RouteGuard from '@/app/components/RouteGuard';
-import { collection, addDoc, serverTimestamp, query, where, getDocs } from 'firebase/firestore';
+import { collection, serverTimestamp, query, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { trackedGetDocs, trackedAddDoc } from '@/lib/firestoreTracker';
 import { ArrowLeft, Send, Loader2 } from 'lucide-react';
 
 function NewChatContent() {
@@ -35,7 +36,7 @@ function NewChatContent() {
         chatsRef,
         where('members', 'array-contains', user.uid)
       );
-      const existingChats = await getDocs(existingChatQuery);
+      const existingChats = await trackedGetDocs(existingChatQuery);
       
       let chatId = null;
       existingChats.forEach((chatDoc) => {
@@ -47,7 +48,7 @@ function NewChatContent() {
 
       // Create new chat if doesn't exist
       if (!chatId) {
-        const newChatRef = await addDoc(chatsRef, {
+        const newChatRef = await trackedAddDoc(chatsRef, {
           members: [user.uid, recipientId],
           memberNames: {
             [user.uid]: userData?.pharmacyName || userData?.displayName || 'Felhasználó',
@@ -71,7 +72,7 @@ function NewChatContent() {
       }
 
       // Add first message
-      await addDoc(collection(db, 'chats', chatId, 'messages'), {
+      await trackedAddDoc(collection(db, 'chats', chatId, 'messages'), {
         senderId: user.uid,
         senderName: userData?.pharmacyName || userData?.displayName || 'Felhasználó',
         text: messageText.trim(),

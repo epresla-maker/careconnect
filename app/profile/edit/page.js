@@ -3,8 +3,9 @@ import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useTheme } from '@/context/ThemeContext';
 import { useRouter } from 'next/navigation';
-import { doc, updateDoc, setDoc } from 'firebase/firestore';
+import { doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { trackedUpdateDoc, trackedSetDoc } from '@/lib/firestoreTracker';
 import { Loader2, Save, X, Camera, ArrowLeft, User } from 'lucide-react';
 import RouteGuard from '@/app/components/RouteGuard';
 
@@ -88,7 +89,7 @@ export default function ProfileEditPage() {
 
       // Firestore update - setDoc merge-gel megbízhatóbb
       const userDocRef = doc(db, 'users', user.uid);
-      await setDoc(userDocRef, { photoURL: imageUrl }, { merge: true });
+      await trackedSetDoc(userDocRef, { photoURL: imageUrl }, { merge: true });
       
       alert('✅ Kép mentve! Frissítés...');
       window.location.reload();
@@ -103,7 +104,7 @@ export default function ProfileEditPage() {
   const handleSave = async () => {
     setLoading(true);
     try {
-      await updateDoc(doc(db, 'users', user.uid), {
+      await trackedUpdateDoc(doc(db, 'users', user.uid), {
         displayName: formData.displayName,
         email: formData.email || null,
         phone: formData.phone || null,
