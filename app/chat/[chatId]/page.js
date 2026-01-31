@@ -1038,7 +1038,7 @@ export default function ChatRoomPage() {
         ref={messagesContainerRef} 
         className={`absolute left-0 right-0 overflow-y-auto p-4 space-y-2 ${darkMode ? 'bg-[#f0f5f0]' : 'bg-gradient-to-br from-gray-50 via-white to-gray-100'}`}
         style={{ 
-          top: 'calc(90px + env(safe-area-inset-top, 0px))',
+          top: 'calc(110px + env(safe-area-inset-top, 0px))',
           bottom: '80px',
           overscrollBehavior: 'contain'
         }}
