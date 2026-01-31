@@ -521,7 +521,7 @@ export default function DemandDetailPage() {
                         <span>Jelentkezés...</span>
                       </>
                     ) : hasApplied ? (
-                      <span>✅ Már jelentkeztél</span>
+                      <span>✅ {myApplication?.status === 'accepted' ? 'Jelentkezésed elfogadva' : 'Jelentkezés elküldve'}</span>
                     ) : (
                       <span>Jelentkezem</span>
                     )}
@@ -640,14 +640,14 @@ export default function DemandDetailPage() {
           )}
         </div>
 
-        {/* Fixed Bottom Buttons */}
-        {showBottomButtons && (
+        {/* Fixed Bottom Buttons - Ne jelenjen meg ha már elfogadták a jelentkezést (mert felül már látszik) */}
+        {showBottomButtons && myApplication?.status !== 'accepted' && (
           <div className={`fixed bottom-0 left-0 right-0 ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border-t p-4`}>
             <div className="max-w-lg mx-auto">
               {hasApplied ? (
                 <div className="flex gap-3">
                   <div className="flex-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400 rounded-xl p-3 text-center text-sm">
-                    ✅ Már jelentkeztél
+                    ✅ Jelentkezés elküldve
                   </div>
                   <button
                     onClick={handleOpenChat}
