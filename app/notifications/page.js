@@ -46,6 +46,10 @@ export default function NotificationsPage() {
       const unreadNotifications = notificationsData.filter(n => !n.read);
       console.log(`📧 Olvasatlan értesítések: ${unreadNotifications.length}`);
       
+      // Megjelenítjük az értesítéseket az EREDETI read státusszal
+      setNotifications(notificationsData);
+      
+      // Aztán háttérben jelöljük olvasottnak
       if (unreadNotifications.length > 0) {
         const batch = writeBatch(db);
         for (const notification of unreadNotifications) {
@@ -53,13 +57,6 @@ export default function NotificationsPage() {
         }
         await batch.commit(); // Egyetlen write művelet!
       }
-      
-      // Frissítjük a lokális state-et is az olvasott státusszal
-      const updatedNotifications = notificationsData.map(n => ({
-        ...n,
-        read: true
-      }));
-      setNotifications(updatedNotifications);
     } catch (error) {
       console.error('❌ Error loading notifications:', error);
     } finally {
@@ -182,22 +179,32 @@ export default function NotificationsPage() {
                     notification.type === 'pharma_application' || notification.type === 'admin_approval_request' || notification.type === 'new_message' || notification.chatId || notification.url
                       ? 'cursor-pointer hover:shadow-xl transition-shadow'
                       : ''
-                  }`}
+                  } ${!notification.read ? 'ring-2 ring-purple-500 ring-offset-2' : ''}`}
                 >
                   <div className="flex items-start gap-4">
                     <div className="text-4xl flex-shrink-0">
                       {getNotificationIcon(notification.type)}
                     </div>
                     <div className="flex-1">
-                      <h3 className="font-bold text-lg mb-2">{notification.title}</h3>
+                      <div className="flex items-center gap-2 mb-2">
+                        <h3 className="font-bold text-lg">{notification.title}</h3>
+                        {!notification.read && (
+                          <span className="bg-purple-600 text-white text-xs px-2 py-0.5 rounded-full font-medium">
+                            Új
+                          </span>
+                        )}
+                      </div>
                       <p className="text-gray-700 mb-3">{notification.message}</p>
                       <div className="flex justify-between items-center">
                         <span className="text-sm text-gray-500">
                           {notification.createdAt?.toLocaleString('hu-HU')}
                         </span>
                         <button
-                          onClick={() => deleteNotification(notification.id)}
-                          className="text-sm text-red-600 hover:text-red-800"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            deleteNotification(notification.id);
+                          }}
+                          className="text-sm text-red-600 hover:text-red-800 font-medium px-3 py-1 rounded-lg hover:bg-red-50 transition-colors"
                         >
                           Törlés
                         </button>
