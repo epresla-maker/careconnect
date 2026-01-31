@@ -258,17 +258,30 @@ export default function PharmaDashboard({ pharmaRole, expandDemandId }) {
         // If chat exists, navigate to it
         router.push(`/chat/${chatId}`);
       } else {
-        // If no chat exists, navigate with query params to create on first message
-        const params = new URLSearchParams({
-          recipientId: application.applicantId,
-          recipientName: application.displayName || 'Jelentkező',
-          recipientPhoto: application.photoURL || '',
-          demandId: demand.id,
-          demandDate: demand.date,
-          demandPosition: demand.position,
-          demandPositionLabel: demand.position === 'pharmacist' ? 'Gyógyszerész' : 'Szakasszisztens'
+        // Create new chat directly and navigate to it
+        const newChatRef = await addDoc(chatsRef, {
+          members: [user.uid, application.applicantId],
+          memberNames: {
+            [user.uid]: userData?.pharmacyName || userData?.displayName || 'Felhasználó',
+            [application.applicantId]: application.applicantName || 'Jelentkező'
+          },
+          memberPhotos: {
+            [user.uid]: userData?.pharmaPhotoURL || userData?.photoURL || null,
+            [application.applicantId]: application.photoURL || null
+          },
+          createdAt: serverTimestamp(),
+          lastMessageAt: null,
+          lastMessage: null,
+          lastMessageSenderId: null,
+          relatedDemandId: demand.id,
+          relatedDemandDate: demand.date,
+          relatedDemandPosition: demand.position,
+          relatedDemandPositionLabel: demand.position === 'pharmacist' ? 'Gyógyszerész' : 'Szakasszisztens',
+          archivedBy: [],
+          deletedBy: [],
+          readBy: []
         });
-        router.push(`/chat/new?${params.toString()}`);
+        router.push(`/chat/${newChatRef.id}`);
       }
       
     } catch (error) {
