@@ -27,16 +27,19 @@ self.addEventListener('install', (event) => {
 self.addEventListener('activate', (event) => {
   console.log('[SW] Activating Service Worker...');
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames
-          .filter((name) => name !== STATIC_CACHE && name !== DYNAMIC_CACHE)
-          .map((name) => {
-            console.log('[SW] Deleting old cache:', name);
-            return caches.delete(name);
-          })
-      );
-    })
+    Promise.all([
+      caches.keys().then((cacheNames) => {
+        return Promise.all(
+          cacheNames
+            .filter((name) => name !== STATIC_CACHE && name !== DYNAMIC_CACHE)
+            .map((name) => {
+              console.log('[SW] Deleting old cache:', name);
+              return caches.delete(name);
+            })
+        );
+      }),
+      clearBadge()
+    ])
   );
   self.clients.claim();
 });
@@ -98,6 +101,7 @@ self.addEventListener('fetch', (event) => {
 // Push notifications
 self.addEventListener('push', (event) => {
   console.log('[SW] Push received:', event);
+  console.log('[SW] Push data:', event.data?.text());
   
   let data = {
     title: 'Pharmagister',
@@ -111,30 +115,35 @@ self.addEventListener('push', (event) => {
   if (event.data) {
     try {
       const payload = event.data.json();
+      console.log('[SW] Parsed payload:', payload);
       data = {
         ...data,
         ...payload,
         data: { url: payload.url || '/' }
       };
     } catch (e) {
+      console.error('[SW] Failed to parse push data:', e);
       data.body = event.data.text();
     }
   }
 
   event.waitUntil(
-    self.registration.showNotification(data.title, {
-      body: data.body,
-      icon: data.icon,
-      badge: data.badge,
-      tag: data.tag,
-      vibrate: [200, 100, 200],
-      requireInteraction: true,
-      actions: [
-        { action: 'open', title: 'Megnyitás' },
-        { action: 'close', title: 'Bezárás' }
-      ],
-      data: data.data
-    })
+    Promise.all([
+      self.registration.showNotification(data.title, {
+        body: data.body,
+        icon: data.icon,
+        badge: data.badge,
+        tag: data.tag,
+        vibrate: [200, 100, 200],
+        requireInteraction: true,
+        actions: [
+          { action: 'open', title: 'Megnyitás' },
+          { action: 'close', title: 'Bezárás' }
+        ],
+        data: data.data
+      }),
+      incrementBadge()
+    ])
   );
 });
 
@@ -151,19 +160,22 @@ self.addEventListener('notificationclick', (event) => {
   const urlToOpen = event.notification.data?.url || '/';
 
   event.waitUntil(
-    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
-      // Ha van már nyitva ablak, fókuszáljunk rá
-      for (const client of clientList) {
-        if (client.url.includes(self.location.origin) && 'focus' in client) {
-          client.navigate(urlToOpen);
-          return client.focus();
+    Promise.all([
+      clearBadge(),
+      clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+        // Ha van már nyitva ablak, fókuszáljunk rá
+        for (const client of clientList) {
+          if (client.url.includes(self.location.origin) && 'focus' in client) {
+            client.navigate(urlToOpen);
+            return client.focus();
+          }
         }
-      }
-      // Ha nincs, nyissunk újat
-      if (clients.openWindow) {
-        return clients.openWindow(urlToOpen);
-      }
-    })
+        // Ha nincs, nyissunk újat
+        if (clients.openWindow) {
+          return clients.openWindow(urlToOpen);
+        }
+      })
+    ])
   );
 });
 
@@ -199,6 +211,36 @@ self.addEventListener('periodicsync', (event) => {
 
 async function updateContent() {
   console.log('[SW] Periodic sync - updating content...');
+}
+
+// Badge management
+let badgeCount = 0;
+
+async function updateBadge(count) {
+  badgeCount = count;
+  if ('setAppBadge' in navigator) {
+    try {
+      if (count > 0) {
+        await navigator.setAppBadge(count);
+        console.log('[SW] Badge set to:', count);
+      } else {
+        await navigator.clearAppBadge();
+        console.log('[SW] Badge cleared');
+      }
+    } catch (error) {
+      console.error('[SW] Badge update error:', error);
+    }
+  } else {
+    console.log('[SW] Badge API not supported');
+  }
+}
+
+async function incrementBadge() {
+  await updateBadge(badgeCount + 1);
+}
+
+async function clearBadge() {
+  await updateBadge(0);
 }
 
 console.log('[SW] Service Worker loaded');
