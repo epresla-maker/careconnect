@@ -223,17 +223,30 @@ export default function DemandDetailPage() {
         // If chat exists, navigate to it
         router.push(`/chat/${chatId}`);
       } else {
-        // If no chat exists, navigate with query params to create on first message
-        const params = new URLSearchParams({
-          recipientId: demand.pharmacyId,
-          recipientName: demand.pharmacyName || 'Gyógyszertár',
-          recipientPhoto: pharmacyData?.pharmaPhotoURL || pharmacyData?.photoURL || '',
-          demandId: demandId,
-          demandDate: demand.date,
-          demandPosition: demand.position,
-          demandPositionLabel: demand.position === 'pharmacist' ? 'Gyógyszerész' : 'Szakasszisztens'
+        // Create new chat directly and navigate to it
+        const newChatRef = await addDoc(chatsRef, {
+          members: [user.uid, demand.pharmacyId],
+          memberNames: {
+            [user.uid]: userData?.displayName || 'Felhasználó',
+            [demand.pharmacyId]: demand.pharmacyName || 'Gyógyszertár'
+          },
+          memberPhotos: {
+            [user.uid]: userData?.photoURL || null,
+            [demand.pharmacyId]: pharmacyData?.pharmaPhotoURL || pharmacyData?.photoURL || null
+          },
+          createdAt: serverTimestamp(),
+          lastMessageAt: null,
+          lastMessage: null,
+          lastMessageSenderId: null,
+          relatedDemandId: demandId,
+          relatedDemandDate: demand.date,
+          relatedDemandPosition: demand.position,
+          relatedDemandPositionLabel: demand.position === 'pharmacist' ? 'Gyógyszerész' : 'Szakasszisztens',
+          archivedBy: [],
+          deletedBy: [],
+          readBy: []
         });
-        router.push(`/chat/new?${params.toString()}`);
+        router.push(`/chat/${newChatRef.id}`);
       }
       
     } catch (err) {
@@ -599,6 +612,43 @@ export default function DemandDetailPage() {
             </div>
           )}
         </div>
+
+        {/* Action Buttons - Fixed Bottom */}
+        {!isOwnDemand && demand.status === 'open' && (
+          <div className={`fixed bottom-0 left-0 right-0 ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border-t p-4 z-10`}>
+            <div className="max-w-lg mx-auto flex gap-3">
+              {roleMatches ? (
+                <>
+                  {!hasApplied ? (
+                    <button
+                      onClick={handleApply}
+                      disabled={applying || isPendingApproval}
+                      className="flex-1 px-4 py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl transition-colors font-semibold disabled:bg-gray-400 disabled:cursor-not-allowed"
+                    >
+                      {applying ? 'Jelentkezés...' : 'Jelentkezem'}
+                    </button>
+                  ) : (
+                    <div className="flex-1 px-4 py-3 bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 rounded-xl font-semibold text-center">
+                      ✅ Jelentkeztél
+                    </div>
+                  )}
+                  <button
+                    onClick={handleOpenChat}
+                    disabled={openingChat}
+                    className="px-4 py-3 bg-[#6B46C1] hover:bg-[#5a3aa3] text-white rounded-xl transition-colors font-semibold flex items-center gap-2 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                  >
+                    <MessageCircle className="w-5 h-5" />
+                    {openingChat ? 'Megnyitás...' : 'Üzenet'}
+                  </button>
+                </>
+              ) : (
+                <div className={`flex-1 px-4 py-3 rounded-xl text-center font-semibold ${darkMode ? 'bg-gray-700 text-gray-400' : 'bg-gray-100 text-gray-500'}`}>
+                  {demand.position === 'pharmacist' ? '👨‍⚕️ Csak gyógyszerészeknek' : '🧑‍⚕️ Csak szakasszisztenseknek'}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
       </div>
     </RouteGuard>
