@@ -19,7 +19,7 @@ export function useDashboardBadges(user, userData) {
   
   const isMountedRef = useRef(true);
 
-  // Real-time listener CSAK a chatekhez (legfontosabb)
+  // Real-time listener a chatekhez
   useEffect(() => {
     if (!user) return;
 
@@ -49,20 +49,30 @@ export function useDashboardBadges(user, userData) {
     return () => unsub();
   }, [user]);
 
-  // Polling a többi badge-hez (ritkább)
+  // Real-time listener az értesítésekhez is
+  useEffect(() => {
+    if (!user) return;
+
+    const notificationsQuery = query(
+      collection(db, 'notifications'),
+      where('userId', '==', user.uid),
+      where('read', '==', false)
+    );
+    
+    const unsub = onSnapshot(notificationsQuery, (snapshot) => {
+      // Üzenet értesítések kiszűrése - azok az Üzenetek badge-en látszanak
+      const notifCount = snapshot.docs.filter(doc => doc.data().type !== 'new_message').length;
+      setBadges(prev => ({ ...prev, notifications: notifCount }));
+    }, () => {});
+
+    return () => unsub();
+  }, [user]);
+
+  // Polling a többi badge-hez (ritkább) - értesítések már real-time
   const fetchOtherBadges = useCallback(async () => {
     if (!user || !userData || !isMountedRef.current) return;
 
     try {
-      // Értesítések (üzenet értesítések nélkül - azok az Üzenetek badge-en látszanak)
-      const notificationsQuery = query(
-        collection(db, 'notifications'),
-        where('userId', '==', user.uid),
-        where('read', '==', false)
-      );
-      const notifSnapshot = await getDocs(notificationsQuery);
-      const notifCount = notifSnapshot.docs.filter(doc => doc.data().type !== 'new_message').length;
-
       // userData-ból
       const requestsCount = (userData.friendRequests || []).length;
       const friendsCount = (userData.friends || []).length;
@@ -96,7 +106,6 @@ export function useDashboardBadges(user, userData) {
       if (isMountedRef.current) {
         setBadges(prev => ({
           ...prev,
-          notifications: notifCount,
           requests: requestsCount,
           friends: friendsCount,
           following: followingCount,
