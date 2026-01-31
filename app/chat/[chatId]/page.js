@@ -118,7 +118,7 @@ export default function ChatRoomPage() {
   const headerRef = useRef(null);
   
   // --- FEJLÉC MAGASSÁG DINAMIKUS KÖVETÉSE ---
-  const [headerHeight, setHeaderHeight] = useState(110);
+  const [headerHeight, setHeaderHeight] = useState(130);
   
   // Automatikus görgetés
   const scrollToBottom = (options = { behavior: "smooth" }) => {
@@ -1070,7 +1070,7 @@ export default function ChatRoomPage() {
         ref={messagesContainerRef} 
         className={`absolute left-0 right-0 overflow-y-auto p-4 space-y-2 ${darkMode ? 'bg-[#e8f5e9]' : 'bg-gradient-to-br from-gray-50 via-white to-gray-100'}`}
         style={{ 
-          top: `${headerHeight}px`,
+          top: `${headerHeight + 8}px`,
           bottom: '80px',
           overscrollBehavior: 'contain'
         }}
