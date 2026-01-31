@@ -577,12 +577,21 @@ export default function PharmaDashboard({ pharmaRole, expandDemandId }) {
                                     A helyettesítő elérhetőségei láthatók az adatlapján
                                   </p>
                                 </div>
-                                <button 
-                                  onClick={() => router.push(`/profil/${application.applicantId}`)}
-                                  className="px-3 py-1.5 text-xs bg-green-600 text-white rounded hover:bg-green-700"
-                                >
-                                  Adatlap
-                                </button>
+                                <div className="flex gap-2">
+                                  <button 
+                                    onClick={() => handleSendMessage(application, demand)}
+                                    className="px-3 py-1.5 text-xs bg-purple-600 text-white rounded hover:bg-purple-700 flex items-center gap-1"
+                                  >
+                                    <MessageCircle className="w-3 h-3" />
+                                    Üzenet
+                                  </button>
+                                  <button 
+                                    onClick={() => router.push(`/profil/${application.applicantId}`)}
+                                    className="px-3 py-1.5 text-xs bg-green-600 text-white rounded hover:bg-green-700"
+                                  >
+                                    Adatlap
+                                  </button>
+                                </div>
                               </div>
                             </div>
                           ))}
