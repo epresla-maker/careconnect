@@ -1251,10 +1251,10 @@ export default function ChatRoomPage() {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* --- INPUT (abszolút fix az alján) --- */}
+      {/* --- INPUT (FIXED az alján) --- */}
       <div
         ref={formRef}
-        className={`absolute bottom-0 left-0 right-0 p-4 border-t-2 z-50 ${
+        className={`fixed bottom-0 left-0 right-0 p-4 border-t-2 z-50 ${
           darkMode ? 'bg-black border-gray-800' : 'bg-white border-gray-200'
         }`}
         style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}
