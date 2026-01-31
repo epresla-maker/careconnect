@@ -89,7 +89,7 @@ export default function ProfilePage() {
             {/* Szerkesztés gomb - csak saját profilnál */}
             {isOwnProfile && (
               <button
-                onClick={() => router.push('/profile/edit')}
+                onClick={() => router.push('/pharmagister/setup?edit=true')}
                 className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${
                   darkMode 
                     ? 'bg-purple-600 hover:bg-purple-700 text-white' 
