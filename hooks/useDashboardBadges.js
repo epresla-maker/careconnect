@@ -54,13 +54,14 @@ export function useDashboardBadges(user, userData) {
     if (!user || !userData || !isMountedRef.current) return;
 
     try {
-      // Értesítések
+      // Értesítések (üzenet értesítések nélkül - azok az Üzenetek badge-en látszanak)
       const notificationsQuery = query(
         collection(db, 'notifications'),
         where('userId', '==', user.uid),
         where('read', '==', false)
       );
-      const notifCount = await getCountFromServer(notificationsQuery);
+      const notifSnapshot = await getDocs(notificationsQuery);
+      const notifCount = notifSnapshot.docs.filter(doc => doc.data().type !== 'new_message').length;
 
       // userData-ból
       const requestsCount = (userData.friendRequests || []).length;
@@ -95,7 +96,7 @@ export function useDashboardBadges(user, userData) {
       if (isMountedRef.current) {
         setBadges(prev => ({
           ...prev,
-          notifications: notifCount.data().count,
+          notifications: notifCount,
           requests: requestsCount,
           friends: friendsCount,
           following: followingCount,

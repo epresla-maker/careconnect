@@ -32,11 +32,13 @@ export default function NotificationsPage() {
       const snapshot = await getDocs(q);
       console.log(`📧 Betöltött értesítések száma: ${snapshot.size}`);
       
-      const notificationsData = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-        createdAt: doc.data().createdAt?.toDate()
-      }));
+      const notificationsData = snapshot.docs
+        .map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+          createdAt: doc.data().createdAt?.toDate()
+        }))
+        .filter(n => n.type !== 'new_message'); // Üzenet értesítések kiszűrése - azok az Üzenetek ikonon jelennek meg
       
       console.log('📧 Értesítések:', notificationsData);
       
