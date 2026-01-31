@@ -93,12 +93,6 @@ export default function ChatRoomPage() {
   const [partnerLastSeen, setPartnerLastSeen] = useState(null);
   const [isPartnerOnline, setIsPartnerOnline] = useState(false);
   
-  // --- KÉPFELTÖLTÉS ÁLLAPOTOK ---
-  const [selectedImage, setSelectedImage] = useState(null);
-  const [imagePreview, setImagePreview] = useState(null);
-  const [uploadingImage, setUploadingImage] = useState(false);
-  const fileInputRef = useRef(null);
-  
   // --- REAKCIÓ ÁLLAPOTOK ---
   const [showReactionPicker, setShowReactionPicker] = useState(null); // messageId vagy null
   const [longPressTimer, setLongPressTimer] = useState(null);
@@ -114,16 +108,7 @@ export default function ChatRoomPage() {
   const [replyTo, setReplyTo] = useState(null); // { id, text, senderId, senderName } - Az üzenet amire válaszolunk
   const [selectedMessageData, setSelectedMessageData] = useState(null); // A kiválasztott üzenet teljes adatai a popup-hoz
   
-  // --- HANGFELVÉTEL ÁLLAPOTOK ---
-  const [isRecording, setIsRecording] = useState(false);
-  const [audioBlob, setAudioBlob] = useState(null);
-  const [recordingDuration, setRecordingDuration] = useState(0);
-  const mediaRecorderRef = useRef(null);
-  const audioChunksRef = useRef([]);
-  const recordingTimerRef = useRef(null);
-  
-  // --- ATTACHMENT MENÜ ---
-  const [showAttachmentMenu, setShowAttachmentMenu] = useState(false);
+
   
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
@@ -524,186 +509,6 @@ export default function ChatRoomPage() {
       }
     };
   }, [newMessage, chatId, user, loading]);
-
-
-  // --- KÉPFELTÖLTÉS KEZELÉSE ---
-  const handleImageSelect = (e) => {
-    const file = e.target.files?.[0];
-    if (!file) {
-      // Ha nincs fájl kiválasztva (cancel), azonnal vissza a fókusz
-      setTimeout(() => inputRef.current?.focus(), 0);
-      return;
-    }
-
-    if (!file.type.startsWith('image/')) {
-      alert('Csak képfájlokat lehet feltölteni!');
-      setTimeout(() => inputRef.current?.focus(), 0);
-      return;
-    }
-
-    setSelectedImage(file);
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setImagePreview(reader.result);
-      // Fájl betöltése után is visszaadjuk a fókuszt
-      setTimeout(() => inputRef.current?.focus(), 0);
-    };
-    reader.readAsDataURL(file);
-  };
-
-  const removeImage = () => {
-    setSelectedImage(null);
-    setImagePreview(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
-  };
-
-  // --- HANGFELVÉTEL KEZELÉSE ---
-  const startRecording = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream);
-      mediaRecorderRef.current = mediaRecorder;
-      audioChunksRef.current = [];
-
-      mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
-          audioChunksRef.current.push(event.data);
-        }
-      };
-
-      mediaRecorder.onstop = () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-        setAudioBlob(audioBlob);
-        stream.getTracks().forEach(track => track.stop());
-      };
-
-      mediaRecorder.start();
-      setIsRecording(true);
-      setRecordingDuration(0);
-
-      // Időzítő a felvétel időtartamához
-      recordingTimerRef.current = setInterval(() => {
-        setRecordingDuration(prev => prev + 1);
-      }, 1000);
-    } catch (error) {
-      console.error('Mikrofon hozzáférési hiba:', error);
-      alert('Nem sikerült elérni a mikrofont. Kérlek engedélyezd a mikrofon hozzáférést!');
-    }
-  };
-
-  const stopRecording = () => {
-    if (mediaRecorderRef.current && isRecording) {
-      mediaRecorderRef.current.stop();
-      setIsRecording(false);
-      if (recordingTimerRef.current) {
-        clearInterval(recordingTimerRef.current);
-      }
-    }
-  };
-
-  const cancelRecording = () => {
-    if (mediaRecorderRef.current && isRecording) {
-      mediaRecorderRef.current.stop();
-      setIsRecording(false);
-      if (recordingTimerRef.current) {
-        clearInterval(recordingTimerRef.current);
-      }
-    }
-    setAudioBlob(null);
-    setRecordingDuration(0);
-  };
-
-  const uploadAudioToCloudinary = async (audioBlob) => {
-    const formData = new FormData();
-    formData.append('file', audioBlob, 'audio.webm');
-
-    try {
-      const response = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Feltöltés sikertelen');
-      }
-
-      const data = await response.json();
-      return data.url;
-    } catch (error) {
-      console.error('Cloudinary feltöltés hiba:', error);
-      throw error;
-    }
-  };
-
-  const sendAudioMessage = async () => {
-    if (!audioBlob || !user || !chatId) return;
-
-    try {
-      setUploadingImage(true); // Ugyanazt a loading státuszt használjuk
-      const audioUrl = await uploadAudioToCloudinary(audioBlob);
-
-      const messagesRef = collection(db, "chats", chatId, "messages");
-      const messageData = {
-        senderId: user.uid,
-        createdAt: serverTimestamp(),
-        readBy: [user.uid],
-        audioUrl: audioUrl,
-        audioDuration: recordingDuration
-      };
-
-      await addDoc(messagesRef, messageData);
-
-      const chatDocRef = doc(db, "chats", chatId);
-      await updateDoc(chatDocRef, {
-        lastMessage: '🎤 Hangüzenet',
-        lastMessageAt: serverTimestamp(),
-        lastMessageSenderId: user.uid,
-        typing: arrayRemove(user.uid),
-        readBy: [user.uid],
-        deletedBy: arrayRemove(user.uid), // Csak a küldő státuszát töröljük
-        archivedBy: arrayRemove(user.uid) // Csak a küldő státuszát töröljük
-      });
-
-      setAudioBlob(null);
-      setRecordingDuration(0);
-      setUploadingImage(false);
-    } catch (error) {
-      console.error('Hangüzenet küldési hiba:', error);
-      setUploadingImage(false);
-      alert('Hiba történt a hangüzenet küldésekor');
-    }
-  };
-
-  const uploadImageToCloudinary = async (file) => {
-    const formData = new FormData();
-    formData.append('file', file);
-
-    try {
-      const response = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Feltöltés sikertelen');
-      }
-
-      const data = await response.json();
-      return data.url;
-    } catch (error) {
-      // Ne dobjunk hibát ha a művelet meg lett szakítva (pl. navigálás)
-      if (error.name === 'AbortError') {
-        console.log('Feltöltés megszakítva');
-        return null;
-      }
-      console.error('Cloudinary feltöltés hiba:', error);
-      throw error;
-    }
-  };
 
   // --- REAKCIÓ KEZELÉSE ---
   const handleLongPressStart = (messageId) => {
@@ -1554,66 +1359,6 @@ export default function ChatRoomPage() {
               }
             }}
           >
-            {/* + gomb - attachment menü */}
-            {!isRecording && !audioBlob && (
-              <div className="relative">
-                <button
-                  type="button"
-                  onMouseDown={(e) => e.preventDefault()}
-                  onTouchStart={(e) => e.preventDefault()}
-                  onClick={() => setShowAttachmentMenu(!showAttachmentMenu)}
-                  className={`p-3 rounded-full transition duration-200 ${
-                    darkMode ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-blue-500 hover:bg-blue-600 text-white'
-                  }`}
-                  title="Csatolmány"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-6 h-6">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                  </svg>
-                </button>
-                
-                {/* Attachment menü */}
-                {showAttachmentMenu && (
-                  <div className={`absolute bottom-14 left-0 ${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl shadow-lg border ${darkMode ? 'border-gray-700' : 'border-gray-200'} p-2 min-w-[180px]`}>
-                    <button
-                      onClick={() => {
-                        fileInputRef.current?.click();
-                        setShowAttachmentMenu(false);
-                      }}
-                      className={`w-full flex items-center gap-3 p-3 rounded-xl transition ${darkMode ? 'hover:bg-gray-700 text-white' : 'hover:bg-gray-100 text-gray-900'}`}
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5 text-green-500">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
-                      </svg>
-                      <span className="text-sm font-medium">Kép</span>
-                    </button>
-                    <button
-                      onClick={() => {
-                        startRecording();
-                        setShowAttachmentMenu(false);
-                      }}
-                      disabled={uploadingImage}
-                      className={`w-full flex items-center gap-3 p-3 rounded-xl transition disabled:opacity-50 ${darkMode ? 'hover:bg-gray-700 text-white' : 'hover:bg-gray-100 text-gray-900'}`}
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5 text-red-500">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 18.75a6 6 0 0 0 6-6v-1.5m-6 7.5a6 6 0 0 1-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 0 1-3-3V4.5a3 3 0 1 1 6 0v8.25a3 3 0 0 1-3 3Z" />
-                      </svg>
-                      <span className="text-sm font-medium">Hang</span>
-                    </button>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Hidden file input */}
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleImageSelect}
-              className="hidden"
-            />
-
             {/* Contenteditable div az iOS accessory bar elkerülésére */}
             <div
               ref={inputRef}
@@ -1646,97 +1391,28 @@ export default function ChatRoomPage() {
               data-placeholder="Írj üzenetet..."
             />
 
-            {/* Felvétel közben - Stop és Cancel gombok */}
-            {isRecording && (
-              <>
-                <div className="flex items-center gap-2 px-3 py-2 bg-red-500/20 rounded-full border border-red-500">
-                  <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
-                  <span className="text-sm font-medium">{Math.floor(recordingDuration / 60)}:{(recordingDuration % 60).toString().padStart(2, '0')}</span>
-                </div>
-                <button
-                  type="button"
-                  onClick={stopRecording}
-                  className="bg-blue-500 hover:bg-blue-600 text-white p-3 rounded-full transition duration-200"
-                  title="Felvétel befejezése"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M5.25 7.5A2.25 2.25 0 0 1 7.5 5.25h9a2.25 2.25 0 0 1 2.25 2.25v9a2.25 2.25 0 0 1-2.25 2.25h-9a2.25 2.25 0 0 1-2.25-2.25v-9Z" />
-                  </svg>
-                </button>
-                <button
-                  type="button"
-                  onClick={cancelRecording}
-                  className={`${darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-200 hover:bg-gray-300'} text-white p-3 rounded-full transition duration-200`}
-                  title="Felvétel törlése"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </>
-            )}
-
-            {/* Felvétel után - Meghallgatás és Küldés */}
-            {audioBlob && !isRecording && (
-              <>
-                <audio controls className="flex-1">
-                  <source src={URL.createObjectURL(audioBlob)} type="audio/webm" />
-                </audio>
-                <button
-                  type="button"
-                  onClick={sendAudioMessage}
-                  disabled={uploadingImage}
-                  className="bg-green-500 hover:bg-green-600 text-white p-3 rounded-full transition duration-200 disabled:opacity-50"
-                  title="Hangüzenet küldése"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5" />
-                  </svg>
-                </button>
-                <button
-                  type="button"
-                  onClick={cancelRecording}
-                  className={`${darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-200 hover:bg-gray-300'} text-white p-3 rounded-full transition duration-200`}
-                  title="Hangüzenet törlése"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </>
-            )}
-
-            {/* Küldés gomb - csak ha nincs hangfelvétel */}
-            {!isRecording && !audioBlob && (
-              <button
-                type="button"
-                onMouseDown={(e) => e.preventDefault()}
-                onTouchStart={(e) => e.preventDefault()}
-                onTouchEnd={(e) => {
-                  e.preventDefault();
-                  handleSendMessage();
-                  setTimeout(() => inputRef.current?.focus(), 10);
-                }}
-                onClick={(e) => {
-                  e.preventDefault();
-                  handleSendMessage();
-                  setTimeout(() => inputRef.current?.focus(), 10);
-                }}
-                disabled={(newMessage.trim() === "" && !selectedImage) || uploadingImage}
-                className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white font-semibold p-3 rounded-full transition duration-200 disabled:bg-gray-600 disabled:opacity-50"
-              >
-                {uploadingImage ? (
-                  <svg className="animate-spin h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                ) : (
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5" />
-                  </svg>
-                )}
-              </button>
-            )}
+            {/* Küldés gomb */}
+            <button
+              type="button"
+              onMouseDown={(e) => e.preventDefault()}
+              onTouchStart={(e) => e.preventDefault()}
+              onTouchEnd={(e) => {
+                e.preventDefault();
+                handleSendMessage();
+                setTimeout(() => inputRef.current?.focus(), 10);
+              }}
+              onClick={(e) => {
+                e.preventDefault();
+                handleSendMessage();
+                setTimeout(() => inputRef.current?.focus(), 10);
+              }}
+              disabled={newMessage.trim() === ""}
+              className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white font-semibold p-3 rounded-full transition duration-200 disabled:bg-gray-600 disabled:opacity-50"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5" />
+              </svg>
+            </button>
           </div>
         </div>
       </div>

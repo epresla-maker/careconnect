@@ -4,7 +4,7 @@
 import { useState, useEffect, useRef } from "react"; 
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { motion, useMotionValue, useTransform, animate } from "framer-motion";
+// Framer-motion eltávolítva a jobb teljesítmény érdekében
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
 import ChatBottomNavigation from "@/app/components/ChatBottomNavigation";
@@ -85,82 +85,94 @@ async function fetchFriendData(friendIds) {
 }
 
 // =================================================================
-// --- "Húzható" Chat Elem Komponens ---
+// --- Megerősítő Modal a Törléshez ---
 // =================================================================
-function SwipeableChatItem({ chat, onArchive, onDelete, onNavigate, isUnread, darkMode, demandInfo }) {
-  const x = useMotionValue(0); 
-  const itemRef = useRef(null);
-  const archiveThreshold = 100;
-  const deleteThreshold = -100;
-  const swipeVelocity = 500;
-
-  const resetPosition = () => {
-    animate(x, 0, { type: "spring", stiffness: 300, damping: 30 });
-  };
-
-  const onDragEnd = (event, info) => {
-    const offset = info.offset.x;
-    const velocity = info.velocity.x;
-
-    if (offset > archiveThreshold || velocity > swipeVelocity) {
-      // --- JOBBRA HÚZÁS (ARCHIVÁLÁS) ---
-      animate(x, itemRef.current.clientWidth * 1.2, {
-        type: "spring",
-        stiffness: 300,
-        damping: 30,
-        onComplete: () => onArchive(chat.id),
-      });
-    } else if (offset < deleteThreshold || velocity < -swipeVelocity) {
-      // --- BALRA HÚZÁS (TÖRLÉS) ---
-      animate(x, -itemRef.current.clientWidth * 1.2, {
-        type: "spring",
-        stiffness: 300,
-        damping: 30,
-        onComplete: () => onDelete(chat.id),
-      });
-    } else {
-      resetPosition();
-    }
-  };
-
-  const bgOpacity = useTransform(x, [-100, 0, 100], [1, 0, 1]);
-  const bgColor = useTransform(x, [-100, 0, 100], ["#ef4444", darkMode ? "#111827" : "#ffffff", "#06b6d4"]); // Piros, Fekete/Fehér, Cián
-  const iconOpacity = useTransform(x, [-100, -50, 0, 50, 100], [1, 0.2, 0, 0.2, 1]);
+function DeleteConfirmModal({ isOpen, onClose, onArchive, onDelete, chatName, darkMode }) {
+  if (!isOpen) return null;
   
   return (
-    <div ref={itemRef} className="relative w-full overflow-hidden">
-      {/* 1. Háttér (A gombok) */}
-      <motion.div
-        className="absolute inset-0 flex justify-between items-center px-6"
-        style={{ opacity: bgOpacity, backgroundColor: bgColor }}
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={onClose}>
+      <div 
+        className={`w-full max-w-sm rounded-2xl p-6 ${darkMode ? 'bg-gray-800' : 'bg-white'} shadow-xl`}
+        onClick={e => e.stopPropagation()}
       >
-        {/* Bal oldali (Törlés) ikon */}
-        <motion.div style={{ opacity: iconOpacity }} className="text-[#111827]">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6">
-            <path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12.576 0H3.398c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125Z" />
-          </svg>
-        </motion.div>
-        {/* Jobb oldali (Archiválás) ikon */}
-        <motion.div style={{ opacity: iconOpacity }} className="text-[#111827]">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6">
-            <path strokeLinecap="round" strokeLinejoin="round" d="m20.25 7.5-.625 10.632a2.25 2.25 0 0 1-2.247 2.118H6.622a2.25 2.25 0 0 1-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125Z" />
-          </svg>
-        </motion.div>
-      </motion.div>
+        <h3 className={`text-lg font-semibold mb-2 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+          Beszélgetés törlése
+        </h3>
+        <p className={`text-sm mb-6 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+          Mit szeretnél tenni a(z) <span className="font-medium">{chatName}</span> beszélgetéssel?
+        </p>
+        
+        <div className="space-y-3">
+          {/* Lomtárba helyezés (archiválás) */}
+          <button
+            onClick={onArchive}
+            className={`w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-medium transition-colors
+              ${darkMode 
+                ? 'bg-cyan-900/50 text-cyan-400 hover:bg-cyan-900' 
+                : 'bg-cyan-50 text-cyan-700 hover:bg-cyan-100'}`}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="m20.25 7.5-.625 10.632a2.25 2.25 0 0 1-2.247 2.118H6.622a2.25 2.25 0 0 1-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125Z" />
+            </svg>
+            Lomtárba helyezés
+          </button>
+          
+          {/* Végleges törlés */}
+          <button
+            onClick={onDelete}
+            className={`w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-medium transition-colors
+              ${darkMode 
+                ? 'bg-red-900/50 text-red-400 hover:bg-red-900' 
+                : 'bg-red-50 text-red-600 hover:bg-red-100'}`}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+            </svg>
+            Végleges törlés
+          </button>
+          
+          {/* Mégse */}
+          <button
+            onClick={onClose}
+            className={`w-full py-3 px-4 rounded-xl font-medium transition-colors
+              ${darkMode 
+                ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+          >
+            Mégse
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
-      {/* 2. Előtér (A "húzható" elem) */}
-      <motion.div
-        drag="x" 
-        dragConstraints={{ left: 0, right: 0 }} 
-        style={{ x }}
-        onDragEnd={onDragEnd}
-        onClick={(e) => {
-          if (x.get() === 0) {
-            onNavigate(chat.id);
-          } else {
-            resetPosition();
-          }
-        }}
+// =================================================================
+// --- Chat Elem Komponens (törlés gombbal) ---
+// =================================================================
+function ChatItem({ chat, onArchive, onDelete, onNavigate, isUnread, darkMode, demandInfo }) {
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  
+  const handleDeleteClick = (e) => {
+    e.stopPropagation();
+    setShowDeleteModal(true);
+  };
+  
+  const handleArchive = () => {
+    setShowDeleteModal(false);
+    onArchive(chat.id);
+  };
+  
+  const handleDelete = () => {
+    setShowDeleteModal(false);
+    onDelete(chat.id);
+  };
+  
+  return (
+    <>
+      <div
+        onClick={() => onNavigate(chat.id)}
         className={`relative flex items-center p-4 ${darkMode ? 'bg-black hover:bg-gray-900' : 'bg-white hover:bg-gray-50'} cursor-pointer transition duration-200`}
       >
         <div className="relative">
@@ -190,16 +202,45 @@ function SwipeableChatItem({ chat, onArchive, onDelete, onNavigate, isUnread, da
             </p>
           )}
         </div>
-        <div className="text-right ml-2 whitespace-nowrap flex flex-col items-end">
-          <p className={`text-xs ${isUnread ? 'text-blue-400 font-semibold' : (darkMode ? 'text-gray-500' : 'text-gray-500')}`}>
-            {formatChatTimestamp(chat.lastMessageAt)}
-          </p>
-          {isUnread && (
-            <div className="w-2 h-2 bg-blue-500 rounded-full mt-1"></div>
-          )}
+        
+        {/* Időpont és törlés gomb */}
+        <div className="flex items-center gap-2 ml-2">
+          <div className="text-right whitespace-nowrap flex flex-col items-end">
+            <p className={`text-xs ${isUnread ? 'text-blue-400 font-semibold' : (darkMode ? 'text-gray-500' : 'text-gray-500')}`}>
+              {formatChatTimestamp(chat.lastMessageAt)}
+            </p>
+            {isUnread && (
+              <div className="w-2 h-2 bg-blue-500 rounded-full mt-1"></div>
+            )}
+          </div>
+          
+          {/* Törlés gomb */}
+          <button
+            onClick={handleDeleteClick}
+            className={`p-2 rounded-full transition-colors ${
+              darkMode 
+                ? 'text-gray-500 hover:text-red-400 hover:bg-gray-800' 
+                : 'text-gray-400 hover:text-red-500 hover:bg-gray-100'
+            }`}
+            title="Beszélgetés törlése"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+            </svg>
+          </button>
         </div>
-      </motion.div>
-    </div>
+      </div>
+      
+      {/* Törlés megerősítő modal */}
+      <DeleteConfirmModal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onArchive={handleArchive}
+        onDelete={handleDelete}
+        chatName={chat.otherUserName}
+        darkMode={darkMode}
+      />
+    </>
   );
 }
 
@@ -739,13 +780,12 @@ export default function ChatListPage() {
           </div>
         )}
 
-        {/* --- MÓDOSÍTOTT CHAT LISTA (SWIPE FUNKCIÓVAL) --- */}
+        {/* --- CHAT LISTA (törlés gombbal) --- */}
         {!searchTerm && filteredChats.length > 0 ? (
           <div className={`${darkMode ? 'bg-gray-900' : 'bg-white'} overflow-hidden`}>
-            {/* A "divide-y" a szülőre került, mert a SwipeableChatItem a közvetlen gyerek */}
             <div className={`divide-y ${darkMode ? 'divide-gray-700' : 'divide-gray-200'}`}>
               {filteredChats.map((chat) => (
-                <SwipeableChatItem
+                <ChatItem
                   key={chat.id}
                   chat={chat}
                   onArchive={handleArchive}
