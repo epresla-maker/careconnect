@@ -41,9 +41,11 @@ export default function PharmaNavbar({ isVisible = true }) {
 
   return (
     <div 
-      className={`fixed bottom-[73px] left-0 right-0 ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-[#E5E7EB]'} border-t transition-transform duration-300 z-50 ${
-        isVisible ? 'translate-y-0' : 'translate-y-full'
-      }`}
+      className={`fixed left-0 right-0 ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-[#E5E7EB]'} border-t transition-all duration-300 z-40`}
+      style={{ 
+        bottom: '73px',
+        transform: isVisible ? 'translateY(0)' : 'translateY(calc(100% + 73px))'
+      }}
     >
       <div className="grid grid-cols-3 gap-1 px-2 py-2">
         {navItems.map((item) => {

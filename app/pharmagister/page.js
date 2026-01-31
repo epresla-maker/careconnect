@@ -82,6 +82,27 @@ function PharmagisterContent() {
 
   // ✅ TÖRÖLVE: Duplikált notification listener - most már useDashboardBadges-ből jön
 
+  // --- SCROLL FIGYELÉS A NAVBAR ELREJTÉSÉHEZ ---
+  const [showNavbar, setShowNavbar] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      
+      if (currentScrollY < lastScrollY) {
+        setShowNavbar(true);
+      } else if (currentScrollY > lastScrollY && currentScrollY > 100) {
+        setShowNavbar(false);
+      }
+      
+      setLastScrollY(currentScrollY);
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [lastScrollY]);
+
   return (
     <RouteGuard>
       <div className={`min-h-screen ${darkMode ? 'bg-gray-900 text-white' : 'bg-[#F9FAFB] text-[#111827]'} ${pharmaRole ? 'pb-[146px]' : 'pb-40'}`}>
@@ -258,7 +279,7 @@ function PharmagisterContent() {
       </div>
       
       {/* Pharma Navbar - csak ha van szerepkör */}
-      {pharmaRole && <PharmaNavbar />}
+      {pharmaRole && <PharmaNavbar isVisible={showNavbar} />}
     </RouteGuard>
   );
 }
