@@ -322,21 +322,43 @@ export default function PharmaDashboard({ pharmaRole, expandDemandId }) {
   };
 
   const handleEditDemand = async (demand) => {
-    const newDate = prompt('Új dátum (ÉÉÉÉ-HH-NN):', demand.date);
-    if (!newDate) return;
-    
+    // Munkaidő
     const newWorkHours = prompt('Munkaidő:', demand.workHours || '');
-    const newHourlyRate = prompt('Órabér (Ft):', demand.hourlyRate || '');
-    const newDescription = prompt('Megjegyzés:', demand.description || '');
+    if (newWorkHours === null) return; // Cancel
+    
+    // Min. tapasztalat
+    const newMinExperience = prompt('Minimum tapasztalat (év):', demand.minExperience || '');
+    if (newMinExperience === null) return;
+    
+    // Szoftverismeret - egyszerűsített
+    const currentSoftware = demand.requiredSoftware?.join(', ') || '';
+    const newRequiredSoftware = prompt('Szoftverismeret (vesszővel elválasztva):', currentSoftware);
+    if (newRequiredSoftware === null) return;
+    
+    // Egyéb szoftver
+    const newOtherSoftware = prompt('Egyéb szoftver:', demand.otherSoftware || '');
+    if (newOtherSoftware === null) return;
+    
+    // Max órabér
+    const newMaxHourlyRate = prompt('Maximum órabér (Ft):', demand.maxHourlyRate || '');
+    if (newMaxHourlyRate === null) return;
+    
+    // Egyéb követelmények
+    const newAdditionalRequirements = prompt('Egyéb követelmények:', demand.additionalRequirements || '');
+    if (newAdditionalRequirements === null) return;
 
     try {
-      await updateDoc(doc(db, 'pharmaDemands', demand.id), {
-        date: newDate,
+      const updateData = {
         workHours: newWorkHours,
-        hourlyRate: newHourlyRate,
-        description: newDescription,
+        minExperience: newMinExperience,
+        requiredSoftware: newRequiredSoftware ? newRequiredSoftware.split(',').map(s => s.trim()) : [],
+        otherSoftware: newOtherSoftware,
+        maxHourlyRate: newMaxHourlyRate ? parseInt(newMaxHourlyRate) : null,
+        additionalRequirements: newAdditionalRequirements,
         updatedAt: new Date().toISOString(),
-      });
+      };
+
+      await updateDoc(doc(db, 'pharmaDemands', demand.id), updateData);
 
       alert('Igény sikeresen módosítva!');
       await loadData();
