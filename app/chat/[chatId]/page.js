@@ -1361,7 +1361,7 @@ export default function ChatRoomPage() {
                 }
               }}
               className={`flex-1 border rounded-3xl py-3 px-4 focus:outline-none focus:border-cyan-500 disabled:opacity-50 transition-all overflow-y-auto min-h-[44px] max-h-32 ${
-                darkMode ? 'bg-gray-800 border-gray-700 text-white placeholder-gray-400' : 'bg-gray-100 border-gray-300 text-gray-900 placeholder-gray-500'
+                darkMode ? 'bg-[#e8f5e9] border-[#a5d6a7] text-gray-900 placeholder-gray-500' : 'bg-gray-100 border-gray-300 text-gray-900 placeholder-gray-500'
               }`}
               style={{ 
                 WebkitUserSelect: 'text',
