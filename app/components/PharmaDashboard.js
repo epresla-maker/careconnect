@@ -520,7 +520,8 @@ export default function PharmaDashboard({ pharmaRole, expandDemandId }) {
                                 <div className="flex-1 min-w-0">
                                   <span className={`font-semibold ${darkMode ? 'text-white' : 'text-[#111827]'} text-sm block truncate`}>{application.applicantName}</span>
                                   <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-[#6B7280]'}`}>
-                                    {new Date(application.createdAt).toLocaleDateString('hu-HU')}
+                                    {application.appliedAt?.toDate ? application.appliedAt.toDate().toLocaleDateString('hu-HU') : 
+                                     application.appliedAt ? new Date(application.appliedAt).toLocaleDateString('hu-HU') : ''}
                                   </p>
                                 </div>
                                 <span className={`px-2 py-0.5 ${darkMode ? 'bg-yellow-900/50 text-yellow-300' : 'bg-yellow-100 text-yellow-700'} rounded text-xs font-medium whitespace-nowrap ml-2`}>
