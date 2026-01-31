@@ -681,8 +681,6 @@ function DemandCard({ demand, pharmaRole, darkMode }) {
   const router = useRouter();
   const [showDetails, setShowDetails] = useState(false);
   const [applying, setApplying] = useState(false);
-  const [showMessageModal, setShowMessageModal] = useState(false);
-  const [messageText, setMessageText] = useState('');
   const [sendingMessage, setSendingMessage] = useState(false);
   
   // Szerepkör ellenőrzés - csak passzó szerepkörrel jelentkezhet/üzenhet
@@ -776,8 +774,8 @@ function DemandCard({ demand, pharmaRole, darkMode }) {
     }
   };
 
-  const handleSendMessage = async () => {
-    if (!user || !messageText.trim()) return;
+  const handleOpenChat = async () => {
+    if (!user) return;
     
     setSendingMessage(true);
     try {
@@ -798,8 +796,11 @@ function DemandCard({ demand, pharmaRole, darkMode }) {
         }
       });
       
-      // If no existing chat, create new one
-      if (!chatId) {
+      if (chatId) {
+        // If chat exists, navigate to it
+        router.push(`/chat/${chatId}`);
+      } else {
+        // Create new chat directly and navigate to it
         const newChatRef = await addDoc(chatsRef, {
           members: [user.uid, demand.pharmacyId],
           memberNames: {
@@ -811,69 +812,23 @@ function DemandCard({ demand, pharmaRole, darkMode }) {
             [demand.pharmacyId]: demand.pharmacyPhotoURL || null
           },
           createdAt: serverTimestamp(),
-          lastMessageAt: serverTimestamp(),
-          lastMessage: messageText.trim(),
+          lastMessageAt: null,
+          lastMessage: null,
+          lastMessageSenderId: null,
           relatedDemandId: demand.id,
           relatedDemandDate: demand.date,
           relatedDemandPosition: demand.position,
           relatedDemandPositionLabel: demand.position === 'pharmacist' ? 'Gyógyszerész' : 'Szakasszisztens',
           archivedBy: [],
-          deletedBy: []
+          deletedBy: [],
+          readBy: []
         });
-        chatId = newChatRef.id;
-      } else {
-        // Update existing chat with last message info
-        const chatDoc = await getDoc(doc(db, 'chats', chatId));
-        const updateData = {
-          lastMessageAt: serverTimestamp(),
-          lastMessage: messageText.trim()
-        };
-        
-        // Csak akkor használjuk az arrayRemove-ot, ha a mezők léteznek
-        const chatData = chatDoc.data();
-        if (chatData?.deletedBy) {
-          updateData.deletedBy = arrayRemove(user.uid);
-        }
-        if (chatData?.archivedBy) {
-          updateData.archivedBy = arrayRemove(user.uid);
-        }
-        
-        await updateDoc(doc(db, 'chats', chatId), updateData);
+        router.push(`/chat/${newChatRef.id}`);
       }
       
-      // Add message to the chat
-      await addDoc(collection(db, 'chats', chatId, 'messages'), {
-        senderId: user.uid,
-        senderName: userData?.displayName || 'Felhasználó',
-        text: messageText.trim(),
-        createdAt: serverTimestamp(),
-        relatedDemandId: demand.id,
-        relatedDemandDate: demand.date
-      });
-      
-      // Send notification with push to pharmacy
-      await createNotificationWithPush({
-        userId: demand.pharmacyId,
-        type: 'new_message',
-        title: 'Új üzenet érkezett! 💬',
-        message: `${userData?.displayName || 'Valaki'} üzenetet küldött a ${new Date(demand.date).toLocaleDateString('hu-HU')}-i igényeddel kapcsolatban.`,
-        data: {
-          chatId: chatId,
-          senderId: user.uid,
-        },
-        url: `/chat/${chatId}`
-      });
-      
-      setShowMessageModal(false);
-      setMessageText('');
-      alert('Üzenet sikeresen elküldve!');
-      
-      // Navigate to chat
-      router.push(`/chat/${chatId}`);
-      
     } catch (err) {
-      console.error('Error sending message:', err);
-      alert('Hiba történt az üzenet küldése során.');
+      console.error('Error opening chat:', err);
+      alert('Hiba történt a chat megnyitása során.');
     } finally {
       setSendingMessage(false);
     }
@@ -957,11 +912,12 @@ function DemandCard({ demand, pharmaRole, darkMode }) {
               {applying ? 'Jelentkezés...' : 'Jelentkezem'}
             </button>
             <button 
-              onClick={() => setShowMessageModal(true)}
-              className="px-3 py-2 bg-[#6B46C1] hover:bg-[#5a3aa3] text-white rounded-xl transition-colors text-sm font-medium flex items-center gap-1"
+              onClick={handleOpenChat}
+              disabled={sendingMessage}
+              className="px-3 py-2 bg-[#6B46C1] hover:bg-[#5a3aa3] text-white rounded-xl transition-colors text-sm font-medium flex items-center gap-1 disabled:bg-gray-400 disabled:cursor-not-allowed"
             >
               <MessageCircle className="w-4 h-4" />
-              Üzenet
+              {sendingMessage ? 'Megnyitás...' : 'Üzenet'}
             </button>
           </>
         ) : (
@@ -976,63 +932,6 @@ function DemandCard({ demand, pharmaRole, darkMode }) {
           Részletek
         </button>
       </div>
-
-      {/* Message Modal */}
-      {showMessageModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-4" onClick={() => setShowMessageModal(false)}>
-          <div 
-            className={`w-full max-w-lg ${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-t-2xl sm:rounded-2xl p-6`}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between mb-4">
-              <h3 className={`text-lg font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                Üzenet - {demand.pharmacyName}
-              </h3>
-              <button
-                onClick={() => setShowMessageModal(false)}
-                className={`p-2 rounded-full ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            
-            <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'} mb-4`}>
-              Írj üzenetet a gyógyszertárnak a {new Date(demand.date).toLocaleDateString('hu-HU')}-i igénnyel kapcsolatban.
-            </p>
-            
-            <textarea
-              value={messageText}
-              onChange={(e) => setMessageText(e.target.value)}
-              placeholder="Îrd ide az üzeneted..."
-              rows={4}
-              className={`w-full px-4 py-3 rounded-xl border ${darkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'bg-white border-gray-200 text-gray-900 placeholder-gray-400'} focus:ring-2 focus:ring-[#6B46C1] focus:border-transparent resize-none`}
-            />
-            
-            <div className="flex gap-3 mt-4">
-              <button
-                onClick={() => setShowMessageModal(false)}
-                className={`flex-1 py-3 px-4 rounded-xl font-medium ${darkMode ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
-              >
-                Mégsem
-              </button>
-              <button
-                onClick={handleSendMessage}
-                disabled={!messageText.trim() || sendingMessage}
-                className="flex-1 py-3 px-4 rounded-xl font-medium bg-[#6B46C1] hover:bg-[#5a3aa3] text-white disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-              >
-                {sendingMessage ? (
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                ) : (
-                  <>
-                    <Send className="w-4 h-4" />
-                    Küldés
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
