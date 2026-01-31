@@ -685,6 +685,9 @@ function DemandCard({ demand, pharmaRole, darkMode }) {
   const [messageText, setMessageText] = useState('');
   const [sendingMessage, setSendingMessage] = useState(false);
   
+  // Szerepkör ellenőrzés - csak passzó szerepkörrel jelentkezhet/üzenhet
+  const roleMatches = userData?.pharmagisterRole === demand.position;
+  
   const handleApply = async () => {
     if (!user || !userData) {
       alert('Kérlek jelentkezz be!');
@@ -944,20 +947,28 @@ function DemandCard({ demand, pharmaRole, darkMode }) {
         </div>
       </div>
       <div className="mt-4 flex gap-2">
-        <button 
-          onClick={handleApply}
-          disabled={applying}
-          className="flex-1 px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded-xl transition-colors text-sm font-medium disabled:bg-gray-400 disabled:cursor-not-allowed"
-        >
-          {applying ? 'Jelentkezés...' : 'Jelentkezem'}
-        </button>
-        <button 
-          onClick={() => setShowMessageModal(true)}
-          className="px-3 py-2 bg-[#6B46C1] hover:bg-[#5a3aa3] text-white rounded-xl transition-colors text-sm font-medium flex items-center gap-1"
-        >
-          <MessageCircle className="w-4 h-4" />
-          Üzenet
-        </button>
+        {roleMatches ? (
+          <>
+            <button 
+              onClick={handleApply}
+              disabled={applying}
+              className="flex-1 px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded-xl transition-colors text-sm font-medium disabled:bg-gray-400 disabled:cursor-not-allowed"
+            >
+              {applying ? 'Jelentkezés...' : 'Jelentkezem'}
+            </button>
+            <button 
+              onClick={() => setShowMessageModal(true)}
+              className="px-3 py-2 bg-[#6B46C1] hover:bg-[#5a3aa3] text-white rounded-xl transition-colors text-sm font-medium flex items-center gap-1"
+            >
+              <MessageCircle className="w-4 h-4" />
+              Üzenet
+            </button>
+          </>
+        ) : (
+          <div className={`flex-1 px-3 py-2 rounded-xl text-sm font-medium text-center ${darkMode ? 'bg-gray-700 text-gray-400' : 'bg-gray-100 text-gray-500'}`}>
+            {demand.position === 'pharmacist' ? '👨‍⚕️ Csak gyógyszerészeknek' : '🧑‍⚕️ Csak szakasszisztenseknek'}
+          </div>
+        )}
         <button 
           onClick={() => router.push(`/pharmagister/demand/${demand.id}`)}
           className={`px-3 py-2 border ${darkMode ? 'border-gray-600 text-white hover:bg-gray-700' : 'border-[#E5E7EB] text-[#111827] hover:bg-[#F3F4F6]'} rounded-xl transition-colors text-sm font-medium`}
