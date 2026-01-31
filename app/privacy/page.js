@@ -180,14 +180,6 @@ export default function PrivacySettingsPage() {
       description: 'Kapcsolattartó személy megjelenítése',
       color: 'text-purple-600',
       bgColor: darkMode ? 'bg-purple-900/30' : 'bg-purple-100'
-    },
-    {
-      key: 'shareWorkHours',
-      icon: Clock,
-      title: 'Munkaidő részletek',
-      description: 'Pontos munkaidő és műszak információk',
-      color: 'text-orange-600',
-      bgColor: darkMode ? 'bg-orange-900/30' : 'bg-orange-100'
     }
   ];
 
