@@ -329,7 +329,7 @@ export default function DemandDetailPage() {
 
   return (
     <RouteGuard>
-      <div className={`min-h-screen ${darkMode ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'} pb-24`}>
+      <div className={`min-h-screen ${darkMode ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'} pb-32`}>
         {/* Header */}
         <div className={`${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border-b sticky top-0 z-10`}>
           <div className="max-w-lg mx-auto px-4 py-3 flex items-center gap-4">
@@ -615,7 +615,7 @@ export default function DemandDetailPage() {
 
         {/* Action Buttons - Fixed Bottom */}
         {!isOwnDemand && demand.status === 'open' && (
-          <div className={`fixed bottom-0 left-0 right-0 ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border-t p-4 z-10`}>
+          <div className={`fixed bottom-20 left-0 right-0 ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border-t p-4 z-10 shadow-lg`}>
             <div className="max-w-lg mx-auto flex gap-3">
               {roleMatches ? (
                 <>
