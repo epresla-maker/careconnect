@@ -374,18 +374,6 @@ export default function ChatRoomPage() {
       if (unsubscribeChatDoc) unsubscribeChatDoc();
       if (unsubscribePartner) unsubscribePartner();
       
-      // Hangfelvétel leállítása ha fut
-      if (mediaRecorderRef.current && isRecording) {
-        try {
-          mediaRecorderRef.current.stop();
-          if (recordingTimerRef.current) {
-            clearInterval(recordingTimerRef.current);
-          }
-        } catch (e) {
-          console.log('MediaRecorder cleanup error:', e);
-        }
-      }
-      
       // Long press timer törlése
       if (longPressTimer) {
         clearTimeout(longPressTimer);
@@ -686,7 +674,7 @@ export default function ChatRoomPage() {
     }
   };
 
-  // --- ÜZENETKÜLDÉS (MÓDOSÍTVA KÉPPEL) ---
+  // --- ÜZENETKÜLDÉS ---
   const handleSendMessage = async (e) => {
     if (e) {
       e.preventDefault();
@@ -694,10 +682,9 @@ export default function ChatRoomPage() {
     }
     
     const text = newMessage.trim();
-    const imageToUpload = selectedImage; // Mentjük a referenciát
     
-    // Ha nincs se szöveg, se kép, return
-    if (text === "" && !imageToUpload) return;
+    // Ha nincs szöveg, return
+    if (text === "") return;
     if (!user || !chatId) return;
 
     // Jelöljük hogy mi küldtünk üzenetet (ne scrollozzon automatikusan)
@@ -712,7 +699,6 @@ export default function ChatRoomPage() {
     if (inputElement && inputElement.textContent) {
       inputElement.textContent = '';
     }
-    removeImage();
     setReplyTo(null); // Töröljük a válasz referenciát
     
     // Töröljük az időzítőt, mert üzenetküldés = gépelés vége
@@ -721,31 +707,13 @@ export default function ChatRoomPage() {
     }
 
     try {
-      let imageUrl = null;
-      
-      // Ha van kép, feltöltjük
-      if (imageToUpload) {
-        setUploadingImage(true);
-        imageUrl = await uploadImageToCloudinary(imageToUpload);
-        setUploadingImage(false);
-      }
-
       const messagesRef = collection(db, "chats", chatId, "messages");
       const messageData = {
         senderId: user.uid,
         createdAt: serverTimestamp(),
         readBy: [user.uid], // Kezdetben csak a küldő olvasta
+        text: text
       };
-
-      // Hozzáadjuk a szöveget ha van
-      if (text) {
-        messageData.text = text;
-      }
-
-      // Hozzáadjuk a képet ha van
-      if (imageUrl) {
-        messageData.imageUrl = imageUrl;
-      }
 
       // Hozzáadjuk a reply információt ha van
       if (replyTo) {
@@ -761,7 +729,7 @@ export default function ChatRoomPage() {
 
       const chatDocRef = doc(db, "chats", chatId);
       await updateDoc(chatDocRef, {
-        lastMessage: imageUrl ? '📷 Kép' : text,
+        lastMessage: text,
         lastMessageAt: serverTimestamp(),
         lastMessageSenderId: user.uid,
         typing: arrayRemove(user.uid),
@@ -782,7 +750,6 @@ export default function ChatRoomPage() {
     } catch (error) {
       console.error("Hiba az üzenet küldésekor:", error);
       setNewMessage(text);
-      setUploadingImage(false);
       alert('Hiba történt az üzenet küldésekor');
     }
   };
@@ -1327,24 +1294,6 @@ export default function ChatRoomPage() {
             </div>
           )}
           
-          {/* Képelőnézet */}
-          {imagePreview && (
-            <div className="mb-3 relative inline-block">
-              <img 
-                src={imagePreview} 
-                alt="Előnézet" 
-                className="h-24 rounded-lg border-2 border-gray-600"
-              />
-              <button
-                type="button"
-                onClick={removeImage}
-                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600"
-              >
-                ✕
-              </button>
-            </div>
-          )}
-          
           <div 
             className="flex space-x-2 items-end"
             onMouseDown={(e) => {
@@ -1362,7 +1311,7 @@ export default function ChatRoomPage() {
             {/* Contenteditable div az iOS accessory bar elkerülésére */}
             <div
               ref={inputRef}
-              contentEditable={!uploadingImage && !editingMessage}
+              contentEditable={!editingMessage}
               suppressContentEditableWarning={true}
               onInput={(e) => setNewMessage(e.currentTarget.textContent)}
               onFocus={() => {
