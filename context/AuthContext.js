@@ -4,7 +4,6 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 import { onAuthStateChanged, signOut as authSignOut } from "firebase/auth";
 import { auth, db } from "@/lib/firebase";
 import { doc, onSnapshot, updateDoc, serverTimestamp } from "firebase/firestore";
-import { trackWrite, trackSnapshot } from "@/lib/firestoreMonitor";
 
 const AuthContext = createContext();
 
@@ -29,7 +28,6 @@ export const AuthProvider = ({ children }) => {
         unsubscribeSnapshot = onSnapshot(
           userDocRef,
           (docSnap) => {
-            trackSnapshot();
             if (docSnap.exists()) {
               setUserData(docSnap.data());
               // NE frissítsük itt a lastSeen-t - végtelen ciklust okoz!
@@ -65,12 +63,12 @@ export const AuthProvider = ({ children }) => {
     const userDocRef = doc(db, "users", user.uid);
     updateDoc(userDocRef, {
       lastSeen: serverTimestamp()
-    }).then(() => trackWrite()).catch(() => {});
+    }).catch(() => {});
 
     const interval = setInterval(() => {
       updateDoc(userDocRef, {
         lastSeen: serverTimestamp()
-      }).then(() => trackWrite()).catch(() => {});
+      }).catch(() => {});
     }, 600000); // 10 perc (600000ms)
 
     return () => clearInterval(interval);

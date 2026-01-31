@@ -10,7 +10,6 @@ import PWARegister from "@/app/components/PWARegister";
 import GlobalBottomNav from "@/app/components/GlobalBottomNav";
 import StartupRedirect from "@/app/components/StartupRedirect";
 import PWAInstallBanner from "@/app/components/PWAInstallBanner";
-import FirestoreMonitor from "@/app/components/FirestoreMonitor";
 import BadgeManager from "@/app/components/BadgeManager";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -54,7 +53,6 @@ export default function RootLayout({ children }) {
               {children}
               <GlobalBottomNav />
               <PWAInstallBanner />
-              <FirestoreMonitor />
             </ToastProvider>
           </ThemeProvider>
         </AuthProvider>
