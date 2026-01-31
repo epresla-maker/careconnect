@@ -49,8 +49,11 @@ async function getChatPartnerDetails(chats, currentUserId) {
       const userDoc = await getDoc(doc(db, "users", id));
       if (userDoc.exists()) {
         const data = userDoc.data();
-        const name = data.displayName || "Ismeretlen";
-        const photoURL = data.photoURL || `https://api.dicebear.com/8.x/initials/svg?seed=${name.replace(/\s/g, '%20')}`;
+        // Gyógyszertár esetén a pharmacyName-et használjuk, egyébként displayName
+        const name = data.pharmagisterRole === 'pharmacy' && data.pharmacyName 
+          ? data.pharmacyName 
+          : (data.displayName || "Ismeretlen");
+        const photoURL = data.pharmaPhotoURL || data.photoURL || `https://api.dicebear.com/8.x/initials/svg?seed=${name.replace(/\s/g, '%20')}`;
         partnerDataMap.set(id, { name, photoURL });
       }
     } catch (error) {
