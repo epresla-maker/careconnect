@@ -5,6 +5,7 @@ import { AuthProvider } from "@/context/AuthContext";
 import { ThemeProvider } from "@/context/ThemeContext";
 import { ToastProvider } from "@/context/ToastContext";
 import PushNotificationSetup from "@/app/components/PushNotificationSetup";
+import PushNotificationBanner from "@/app/components/PushNotificationBanner";
 import PWARegister from "@/app/components/PWARegister";
 import GlobalBottomNav from "@/app/components/GlobalBottomNav";
 import StartupRedirect from "@/app/components/StartupRedirect";
@@ -45,6 +46,7 @@ export default function RootLayout({ children }) {
           <PWARegister />
           <StartupRedirect />
           <PushNotificationSetup />
+          <PushNotificationBanner />
           <ThemeProvider>
             <ToastProvider>
               {children}
