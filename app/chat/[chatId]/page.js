@@ -163,7 +163,7 @@ export default function ChatRoomPage() {
   // Apply dark mode to body - azonnal alkalmazzuk
   useEffect(() => {
     // Azonnal állítsuk be a háttérszínt
-    document.body.style.backgroundColor = darkMode ? '#000000' : '';
+    document.body.style.backgroundColor = darkMode ? '#f0f5f0' : '';
     
     // Cleanup when leaving page
     return () => {
@@ -757,7 +757,7 @@ export default function ChatRoomPage() {
   // Betöltő képernyő
   if (loading || isLoading) {
     return (
-      <main className={`min-h-screen ${darkMode ? 'bg-black text-white' : 'bg-gray-100 text-gray-900'} flex items-center justify-center`}>
+      <main className={`min-h-screen ${darkMode ? 'bg-[#f0f5f0] text-gray-900' : 'bg-gray-100 text-gray-900'} flex items-center justify-center`}>
         <p className="text-xl">Üzenetek betöltése...</p>
       </main>
     );
@@ -765,11 +765,11 @@ export default function ChatRoomPage() {
 
   // --- KÉPERNYŐ TARTALOM ---
   return (
-    <main className={`h-screen w-screen overflow-hidden ${darkMode ? 'bg-black text-white' : 'bg-gray-100 text-gray-900'}`}>
+    <main className={`h-screen w-screen overflow-hidden ${darkMode ? 'bg-[#f0f5f0] text-gray-900' : 'bg-gray-100 text-gray-900'}`}>
       
       {/* --- FEJLÉC (FIXED a tetején) --- */}
       <header 
-        className={`fixed top-0 left-0 right-0 ${darkMode ? 'bg-black border-gray-900' : 'bg-white border-gray-300'} border-b-2 shadow-lg`}
+        className={`fixed top-0 left-0 right-0 ${darkMode ? 'bg-[#f0f5f0] border-gray-200' : 'bg-white border-gray-300'} border-b-2 shadow-lg`}
         style={{ 
           zIndex: 9999,
           padding: '0.5rem 1rem',
@@ -1036,7 +1036,7 @@ export default function ChatRoomPage() {
       {/* --- ÜZENETEK ABLAK (a fejléc alatt, input felett) --- */}
       <div 
         ref={messagesContainerRef} 
-        className={`absolute left-0 right-0 overflow-y-auto p-4 space-y-2 ${darkMode ? 'bg-black' : 'bg-gradient-to-br from-gray-50 via-white to-gray-100'}`}
+        className={`absolute left-0 right-0 overflow-y-auto p-4 space-y-2 ${darkMode ? 'bg-[#f0f5f0]' : 'bg-gradient-to-br from-gray-50 via-white to-gray-100'}`}
         style={{ 
           top: 'calc(90px + env(safe-area-inset-top, 0px))',
           bottom: '80px',
@@ -1255,7 +1255,7 @@ export default function ChatRoomPage() {
       <div
         ref={formRef}
         className={`fixed bottom-0 left-0 right-0 p-4 border-t-2 z-50 ${
-          darkMode ? 'bg-black border-gray-800' : 'bg-white border-gray-200'
+          darkMode ? 'bg-[#f0f5f0] border-gray-200' : 'bg-white border-gray-200'
         }`}
         style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}
         onTouchStart={(e) => {
