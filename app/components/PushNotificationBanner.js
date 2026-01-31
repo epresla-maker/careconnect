@@ -24,34 +24,61 @@ export default function PushNotificationBanner() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (!user) return;
+    console.log('🔔 PushNotificationBanner mounted');
+    console.log('🔔 User:', user?.uid);
+    console.log('🔔 VAPID_PUBLIC_KEY:', VAPID_PUBLIC_KEY?.substring(0, 20) + '...');
+    
+    if (!user) {
+      console.log('🔔 No user, waiting...');
+      return;
+    }
     
     // Check if user dismissed the banner
     const dismissed = localStorage.getItem('push-banner-dismissed');
+    console.log('🔔 Banner dismissed?', dismissed);
     if (dismissed) return;
     
-    // Check if notifications are supported and not already granted
-    if ('Notification' in window && Notification.permission === 'default') {
+    // Check if notifications are supported
+    if (!('Notification' in window)) {
+      console.log('🔔 Notifications not supported');
+      return;
+    }
+    
+    console.log('🔔 Notification permission:', Notification.permission);
+    
+    if (Notification.permission === 'default') {
       // Check if already subscribed
+      checkSubscription();
+    } else if (Notification.permission === 'granted') {
+      // Already granted, check subscription
       checkSubscription();
     }
   }, [user]);
 
   const checkSubscription = async () => {
+    console.log('🔔 Checking subscription...');
+    
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+      console.log('🔔 Service Worker or PushManager not supported');
       return;
     }
 
     try {
       const registration = await navigator.serviceWorker.ready;
-      const subscription = await registration.pushManager.getSubscription();
+      console.log('🔔 Service Worker ready:', registration);
       
-      // Only show banner if not subscribed
-      if (!subscription) {
+      const subscription = await registration.pushManager.getSubscription();
+      console.log('🔔 Current subscription:', subscription);
+      
+      // Show banner if not subscribed OR if permission is default
+      if (!subscription || Notification.permission === 'default') {
+        console.log('🔔 Showing banner!');
         setShowBanner(true);
+      } else {
+        console.log('🔔 Already subscribed, not showing banner');
       }
     } catch (error) {
-      console.error('Error checking subscription:', error);
+      console.error('🔔 Error checking subscription:', error);
     }
   };
 
