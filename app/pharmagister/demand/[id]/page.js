@@ -219,51 +219,22 @@ export default function DemandDetailPage() {
         }
       });
       
-      // If no existing chat, create new one
-      if (!chatId) {
-        const newChatRef = await addDoc(chatsRef, {
-          members: [user.uid, demand.pharmacyId],
-          memberNames: {
-            [user.uid]: userData?.displayName || 'Felhasználó',
-            [demand.pharmacyId]: demand.pharmacyName || 'Gyógyszertár'
-          },
-          memberPhotos: {
-            [user.uid]: userData?.photoURL || null,
-            [demand.pharmacyId]: pharmacyData?.pharmaPhotoURL || pharmacyData?.photoURL || null
-          },
-          createdAt: serverTimestamp(),
-          lastMessageAt: serverTimestamp(),
-          lastMessage: '',
-          lastMessageSenderId: null, // Ghost chat - no message yet
-          relatedDemandId: demandId,
-          relatedDemandDate: demand.date,
-          relatedDemandPosition: demand.position,
-          relatedDemandPositionLabel: demand.position === 'pharmacist' ? 'Gyógyszerész' : 'Szakasszisztens',
-          readBy: [user.uid], // Mark as read for creator
-          archivedBy: [],
-          deletedBy: []
-        });
-        chatId = newChatRef.id;
+      if (chatId) {
+        // If chat exists, navigate to it
+        router.push(`/chat/${chatId}`);
       } else {
-        // If chat exists, just restore it if archived/deleted
-        const chatDoc = await getDoc(doc(db, 'chats', chatId));
-        const chatData = chatDoc.data();
-        const updateData = {};
-        
-        if (chatData?.deletedBy?.includes(user.uid)) {
-          updateData.deletedBy = arrayRemove(user.uid);
-        }
-        if (chatData?.archivedBy?.includes(user.uid)) {
-          updateData.archivedBy = arrayRemove(user.uid);
-        }
-        
-        if (Object.keys(updateData).length > 0) {
-          await updateDoc(doc(db, 'chats', chatId), updateData);
-        }
+        // If no chat exists, navigate with query params to create on first message
+        const params = new URLSearchParams({
+          recipientId: demand.pharmacyId,
+          recipientName: demand.pharmacyName || 'Gyógyszertár',
+          recipientPhoto: pharmacyData?.pharmaPhotoURL || pharmacyData?.photoURL || '',
+          demandId: demandId,
+          demandDate: demand.date,
+          demandPosition: demand.position,
+          demandPositionLabel: demand.position === 'pharmacist' ? 'Gyógyszerész' : 'Szakasszisztens'
+        });
+        router.push(`/chat/new?${params.toString()}`);
       }
-      
-      // Navigate to chat
-      router.push(`/chat/${chatId}`);
       
     } catch (err) {
       console.error('Error opening chat:', err);
@@ -679,10 +650,15 @@ export default function DemandDetailPage() {
                     ✅ Már jelentkeztél
                   </div>
                   <button
-                    onClick={() => setShowMessageModal(true)}
-                    className="flex items-center gap-2 px-4 py-3 bg-[#6B46C1] hover:bg-[#5a3aa3] text-white font-semibold rounded-xl transition-colors"
+                    onClick={handleOpenChat}
+                    disabled={openingChat}
+                    className="flex items-center gap-2 px-4 py-3 bg-[#6B46C1] hover:bg-[#5a3aa3] text-white font-semibold rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <MessageCircle className="w-5 h-5" />
+                    {openingChat ? (
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                    ) : (
+                      <MessageCircle className="w-5 h-5" />
+                    )}
                     Üzenet
                   </button>
                 </div>
@@ -697,10 +673,15 @@ export default function DemandDetailPage() {
                     🚫 Csak {demand.position === 'pharmacist' ? 'gyógyszerészek' : 'szakasszisztensek'} jelentkezhetnek
                   </div>
                   <button
-                    onClick={() => setShowMessageModal(true)}
-                    className="flex items-center gap-2 px-4 py-3 bg-[#6B46C1] hover:bg-[#5a3aa3] text-white font-semibold rounded-xl transition-colors"
+                    onClick={handleOpenChat}
+                    disabled={openingChat}
+                    className="flex items-center gap-2 px-4 py-3 bg-[#6B46C1] hover:bg-[#5a3aa3] text-white font-semibold rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <MessageCircle className="w-5 h-5" />
+                    {openingChat ? (
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                    ) : (
+                      <MessageCircle className="w-5 h-5" />
+                    )}
                     Üzenet
                   </button>
                 </div>
@@ -724,10 +705,15 @@ export default function DemandDetailPage() {
                     )}
                   </button>
                   <button
-                    onClick={() => setShowMessageModal(true)}
-                    className="flex items-center gap-2 px-4 py-3 bg-[#6B46C1] hover:bg-[#5a3aa3] text-white font-semibold rounded-xl transition-colors"
+                    onClick={handleOpenChat}
+                    disabled={openingChat}
+                    className="flex items-center gap-2 px-4 py-3 bg-[#6B46C1] hover:bg-[#5a3aa3] text-white font-semibold rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <MessageCircle className="w-5 h-5" />
+                    {openingChat ? (
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                    ) : (
+                      <MessageCircle className="w-5 h-5" />
+                    )}
                     Üzenet
                   </button>
                 </div>

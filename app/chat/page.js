@@ -320,14 +320,15 @@ export default function ChatListPage() {
         ...doc.data() 
       }));
       
-      // --- JAVÍTOTT: Az újonnan létrehozott (üres) chatek is látszódjanak ---
+      // --- SZŰRÉS: Csak azok a chatek jelenjenek meg, ahol van üzenet ---
       const filteredRawChats = rawChats.filter(chat => {
         const isArchived = chat.archivedBy?.includes(user.uid);
         const isDeleted = chat.deletedBy?.includes(user.uid);
-        // Szellem chatet (lastMessageSenderId === null) is megtartjuk, ha nincs archiválva/törölve
-        return !isArchived && !isDeleted;
+        // Chat csak akkor látszik, ha van legalább egy üzenet (lastMessage nem üres)
+        const hasMessages = chat.lastMessage && chat.lastMessage.trim() !== '';
+        return !isArchived && !isDeleted && hasMessages;
       });
-      // --- VÉGE: JAVÍTOTT SZŰRÉS ---
+      // --- VÉGE: SZŰRÉS ---
 
       // A partner adatokat már csak a szűrt lista alapján kérjük le
       const partnerDetailsMap = await getChatPartnerDetails(filteredRawChats, user.uid);
