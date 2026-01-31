@@ -6,7 +6,7 @@ import { useTheme } from '@/context/ThemeContext';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import RouteGuard from '@/app/components/RouteGuard';
-import { ArrowLeft, User, Phone, Mail, MapPin, Clock, Code, DollarSign, FileText, Shield, Loader2 } from 'lucide-react';
+import { ArrowLeft, User, Phone, Mail, MapPin, Clock, Code, DollarSign, FileText, Shield, Loader2, Pencil } from 'lucide-react';
 
 export default function ProfilePage() {
   const params = useParams();
@@ -66,20 +66,40 @@ export default function ProfilePage() {
   const isSubstitute = profileData.pharmagisterRole === 'pharmacist' || profileData.pharmagisterRole === 'assistant';
   const roleLabel = profileData.pharmagisterRole === 'pharmacist' ? 'Gyógyszerész' : 
                     profileData.pharmagisterRole === 'assistant' ? 'Szakasszisztens' : 'Gyógyszertár';
+  
+  // Ellenőrizzük, hogy saját profilunkat nézzük-e
+  const isOwnProfile = user?.uid === userId;
 
   return (
     <RouteGuard>
       <div className={`min-h-screen ${darkMode ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'} pb-20`}>
         <div className="max-w-2xl mx-auto px-4 py-6">
           {/* Header */}
-          <div className="flex items-center gap-3 mb-6">
-            <button
-              onClick={() => router.back()}
-              className={`p-2 rounded-lg ${darkMode ? 'hover:bg-gray-800' : 'hover:bg-gray-200'}`}
-            >
-              <ArrowLeft className="w-5 h-5" />
-            </button>
-            <h1 className="text-2xl font-bold">Adatlap</h1>
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => router.back()}
+                className={`p-2 rounded-lg ${darkMode ? 'hover:bg-gray-800' : 'hover:bg-gray-200'}`}
+              >
+                <ArrowLeft className="w-5 h-5" />
+              </button>
+              <h1 className="text-2xl font-bold">{isOwnProfile ? 'Profilom' : 'Adatlap'}</h1>
+            </div>
+            
+            {/* Szerkesztés gomb - csak saját profilnál */}
+            {isOwnProfile && (
+              <button
+                onClick={() => router.push('/profile/edit')}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${
+                  darkMode 
+                    ? 'bg-purple-600 hover:bg-purple-700 text-white' 
+                    : 'bg-purple-100 hover:bg-purple-200 text-purple-700'
+                }`}
+              >
+                <Pencil className="w-4 h-4" />
+                Szerkesztés
+              </button>
+            )}
           </div>
 
           {/* Profile Card */}

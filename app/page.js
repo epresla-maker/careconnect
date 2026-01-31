@@ -4,12 +4,13 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import RouteGuard from './components/RouteGuard';
 import ModernServiceFeed from './components/ModernServiceFeed';
-import { LayoutGrid } from 'lucide-react';
+import { LayoutGrid, Pencil } from 'lucide-react';
 
 export default function HomePage() {
   const { user, userData, loading } = useAuth();
   const router = useRouter();
   const [showMiClyps, setShowMiClyps] = useState(true);
+  const [showProfileModal, setShowProfileModal] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -36,23 +37,25 @@ export default function HomePage() {
               <span className="text-cyan-500"> vF</span>
             </h1>
 
-            {/* Profile Button */}
-            <button
-              onClick={() => router.push('/notifications')}
-              className="w-10 h-10 rounded-full overflow-hidden border-2 border-green-500 hover:border-green-600 transition-colors"
-            >
-              {userData?.photoURL ? (
-                <img 
-                  src={userData.photoURL} 
-                  alt="Profile" 
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <div className="w-full h-full bg-green-500 flex items-center justify-center text-white font-bold">
-                  {userData?.displayName?.[0] || 'P'}
-                </div>
-              )}
-            </button>
+            {/* Profile Button - navigál a saját profilra */}
+            <div className="relative">
+              <button
+                onClick={() => user && router.push(`/profil/${user.uid}`)}
+                className="w-10 h-10 rounded-full overflow-hidden border-2 border-green-500 hover:border-green-600 transition-colors"
+              >
+                {userData?.photoURL ? (
+                  <img 
+                    src={userData.photoURL} 
+                    alt="Profile" 
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-green-500 flex items-center justify-center text-white font-bold">
+                    {userData?.displayName?.[0] || 'P'}
+                  </div>
+                )}
+              </button>
+            </div>
           </div>
         </div>
 
