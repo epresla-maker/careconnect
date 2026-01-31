@@ -130,29 +130,6 @@ export default function ChatRoomPage() {
   const justSentMessageRef = useRef(false); // Követjük hogy mi küldtünk-e épp üzenetet
   const formRef = useRef(null);
   const messagesContainerRef = useRef(null);
-  const headerRef = useRef(null);
-  
-  // iOS header fix - mindig a viewport tetején tartja (azonnal, animáció nélkül)
-  useEffect(() => {
-    if (typeof window === 'undefined' || !window.visualViewport) return;
-    
-    const fixHeader = () => {
-      if (headerRef.current) {
-        const offsetTop = window.visualViewport.offsetTop;
-        // Azonnal állítjuk be, transition nélkül
-        headerRef.current.style.transition = 'none';
-        headerRef.current.style.transform = `translateY(${offsetTop}px)`;
-      }
-    };
-    
-    window.visualViewport.addEventListener('scroll', fixHeader);
-    window.visualViewport.addEventListener('resize', fixHeader);
-    
-    return () => {
-      window.visualViewport.removeEventListener('scroll', fixHeader);
-      window.visualViewport.removeEventListener('resize', fixHeader);
-    };
-  }, []);
   
   // Automatikus görgetés
   const scrollToBottom = (options = { behavior: "smooth" }) => {
@@ -1020,13 +997,11 @@ export default function ChatRoomPage() {
       
       {/* --- FEJLÉC (FIXED a tetején) --- */}
       <header 
-        ref={headerRef}
         className={`fixed top-0 left-0 right-0 ${darkMode ? 'bg-black border-gray-900' : 'bg-white border-gray-300'} border-b-2 shadow-lg`}
         style={{ 
           zIndex: 9999,
           padding: '0.5rem 1rem',
-          paddingTop: 'max(0.5rem, env(safe-area-inset-top))',
-          willChange: 'transform'
+          paddingTop: 'max(0.5rem, env(safe-area-inset-top))'
         }}
       >
         <div className="max-w-4xl mx-auto flex items-center">
