@@ -194,7 +194,7 @@ export default function ChatRoomPage() {
   // Apply dark mode to body - azonnal alkalmazzuk
   useEffect(() => {
     // Azonnal állítsuk be a háttérszínt
-    document.body.style.backgroundColor = darkMode ? '#f0f5f0' : '';
+    document.body.style.backgroundColor = darkMode ? '#e8f5e9' : '';
     
     // Cleanup when leaving page
     return () => {
@@ -788,7 +788,7 @@ export default function ChatRoomPage() {
   // Betöltő képernyő
   if (loading || isLoading) {
     return (
-      <main className={`min-h-screen ${darkMode ? 'bg-[#f0f5f0] text-gray-900' : 'bg-gray-100 text-gray-900'} flex items-center justify-center`}>
+      <main className={`min-h-screen ${darkMode ? 'bg-[#e8f5e9] text-gray-900' : 'bg-gray-100 text-gray-900'} flex items-center justify-center`}>
         <p className="text-xl">Üzenetek betöltése...</p>
       </main>
     );
@@ -796,12 +796,12 @@ export default function ChatRoomPage() {
 
   // --- KÉPERNYŐ TARTALOM ---
   return (
-    <main className={`h-screen w-screen overflow-hidden ${darkMode ? 'bg-[#f0f5f0] text-gray-900' : 'bg-gray-100 text-gray-900'}`}>
+    <main className={`h-screen w-screen overflow-hidden ${darkMode ? 'bg-[#e8f5e9] text-gray-900' : 'bg-gray-100 text-gray-900'}`}>
       
       {/* --- FEJLÉC (FIXED a tetején) --- */}
       <header 
         ref={headerRef}
-        className={`fixed top-0 left-0 right-0 ${darkMode ? 'bg-[#f0f5f0] border-gray-200' : 'bg-white border-gray-300'} border-b-2 shadow-lg`}
+        className={`fixed top-0 left-0 right-0 ${darkMode ? 'bg-[#c8e6c9] border-[#a5d6a7]' : 'bg-white border-gray-300'} border-b-2 shadow-lg`}
         style={{ 
           zIndex: 9999,
           padding: '0.5rem 1rem',
@@ -811,7 +811,7 @@ export default function ChatRoomPage() {
         <div className="max-w-4xl mx-auto flex items-center">
           <button
             onClick={() => router.push("/chat")} 
-            className={`mr-3 ${darkMode ? 'text-gray-400 hover:text-white hover:bg-gray-700' : 'text-gray-700 hover:text-black hover:bg-gray-100'} p-2 rounded-full transition-all duration-200`}
+            className={`mr-3 ${darkMode ? 'text-gray-700 hover:text-gray-900 hover:bg-[#a5d6a7]' : 'text-gray-700 hover:text-black hover:bg-gray-100'} p-2 rounded-full transition-all duration-200`}
           >
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-6 h-6">
               <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
@@ -830,15 +830,15 @@ export default function ChatRoomPage() {
           )}
           
           <div>
-            <h1 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+            <h1 className={`text-xl font-bold ${darkMode ? 'text-gray-900' : 'text-gray-900'}`}>
               {partnerData.name}
               {chatDemandInfo && (
-                <span className={`ml-2 text-sm font-normal ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                <span className={`ml-2 text-sm font-normal ${darkMode ? 'text-gray-600' : 'text-gray-500'}`}>
                   - {chatDemandInfo.positionLabel} {new Date(chatDemandInfo.date).toLocaleDateString('hu-HU', { month: '2-digit', day: '2-digit' }).replace('. ', '.').replace('.', '.')}
                 </span>
               )}
             </h1>
-            <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+            <p className={`text-xs ${darkMode ? 'text-gray-600' : 'text-gray-600'}`}>
               {isPartnerOnline ? (
                 <span className="flex items-center gap-1">
                   <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
@@ -1068,7 +1068,7 @@ export default function ChatRoomPage() {
       {/* --- ÜZENETEK ABLAK (a fejléc alatt, input felett) --- */}
       <div 
         ref={messagesContainerRef} 
-        className={`absolute left-0 right-0 overflow-y-auto p-4 space-y-2 ${darkMode ? 'bg-[#f0f5f0]' : 'bg-gradient-to-br from-gray-50 via-white to-gray-100'}`}
+        className={`absolute left-0 right-0 overflow-y-auto p-4 space-y-2 ${darkMode ? 'bg-[#e8f5e9]' : 'bg-gradient-to-br from-gray-50 via-white to-gray-100'}`}
         style={{ 
           top: `${headerHeight}px`,
           bottom: '80px',
@@ -1154,7 +1154,7 @@ export default function ChatRoomPage() {
                     isSentByMe
                       ? "bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-br-none"
                       : darkMode 
-                        ? "bg-gray-800 text-white border-2 border-gray-700 rounded-bl-none"
+                        ? "bg-gray-200 text-gray-900 border border-gray-300 rounded-bl-none"
                         : "bg-white text-gray-900 border-2 border-gray-300 rounded-bl-none"
                   } ${msg.imageUrl && !msg.text ? 'p-1' : 'px-2.5 py-2'} ${(highlightedMessage === msg.id || highlightedMessageId === msg.id) ? 'ring-4 ring-yellow-400 animate-pulse' : ''}`}
                   style={{ 
@@ -1287,7 +1287,7 @@ export default function ChatRoomPage() {
       <div
         ref={formRef}
         className={`fixed bottom-0 left-0 right-0 p-4 border-t-2 z-50 ${
-          darkMode ? 'bg-[#f0f5f0] border-gray-200' : 'bg-white border-gray-200'
+          darkMode ? 'bg-[#c8e6c9] border-[#a5d6a7]' : 'bg-white border-gray-200'
         }`}
         style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}
         onTouchStart={(e) => {
