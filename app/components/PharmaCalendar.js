@@ -146,6 +146,15 @@ export default function PharmaCalendar({ pharmaRole }) {
     if (!confirm('Biztosan törölni szeretnéd ezt az igényt?')) return;
     
     try {
+      // Töröljük a serviceFeedPosts-ból is
+      const feedPostsQuery = query(
+        collection(db, 'serviceFeedPosts'),
+        where('pharmaDemandId', '==', demandId)
+      );
+      const feedPostsSnapshot = await getDocs(feedPostsQuery);
+      await Promise.all(feedPostsSnapshot.docs.map(doc => deleteDoc(doc.ref)));
+      
+      // Igény törlése
       await deleteDoc(doc(db, 'pharmaDemands', demandId));
       await loadDemands();
       alert('Igény sikeresen törölve!');

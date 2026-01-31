@@ -289,6 +289,14 @@ export default function PharmaDashboard({ pharmaRole, expandDemandId }) {
       // Összes jelentkezés törlése
       await Promise.all(applicationsSnapshot.docs.map(doc => deleteDoc(doc.ref)));
       
+      // Töröljük a serviceFeedPosts-ból is (főoldal)
+      const feedPostsQuery = query(
+        collection(db, 'serviceFeedPosts'),
+        where('pharmaDemandId', '==', demandId)
+      );
+      const feedPostsSnapshot = await getDocs(feedPostsQuery);
+      await Promise.all(feedPostsSnapshot.docs.map(doc => deleteDoc(doc.ref)));
+      
       // Igény törlése
       await deleteDoc(doc(db, 'pharmaDemands', demandId));
       
