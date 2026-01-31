@@ -165,6 +165,18 @@ export default function PharmaDashboard({ pharmaRole, expandDemandId }) {
         updatedAt: new Date().toISOString(),
       });
 
+      // ServiceFeedPosts státuszának frissítése is, hogy eltűnjön a főoldalról
+      const feedPostsQuery = query(
+        collection(db, 'serviceFeedPosts'),
+        where('pharmaDemandId', '==', demandId)
+      );
+      const feedPostsSnapshot = await getDocs(feedPostsQuery);
+      for (const feedDoc of feedPostsSnapshot.docs) {
+        await updateDoc(doc(db, 'serviceFeedPosts', feedDoc.id), {
+          status: 'filled'
+        });
+      }
+
       // Get demand details for notification
       const demandDoc = await getDoc(doc(db, 'pharmaDemands', demandId));
       const demandData = demandDoc.data();
@@ -755,7 +767,7 @@ export default function PharmaDashboard({ pharmaRole, expandDemandId }) {
                           Visszavonás
                         </button>
                       )}
-                      {(application.status === 'accepted' || application.status === 'rejected') && (
+                      {application.status === 'rejected' && (
                         <button
                           onClick={() => handleDeleteApplication(application.id)}
                           className="flex items-center gap-1 px-3 py-1.5 text-xs bg-red-100 text-red-600 hover:bg-red-200 rounded-lg transition-colors"
