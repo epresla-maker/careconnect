@@ -115,11 +115,42 @@ export default function ChatRoomPage() {
   const justSentMessageRef = useRef(false); // Követjük hogy mi küldtünk-e épp üzenetet
   const formRef = useRef(null);
   const messagesContainerRef = useRef(null);
+  const headerRef = useRef(null);
+  
+  // --- FEJLÉC MAGASSÁG DINAMIKUS KÖVETÉSE ---
+  const [headerHeight, setHeaderHeight] = useState(110);
   
   // Automatikus görgetés
   const scrollToBottom = (options = { behavior: "smooth" }) => {
     messagesEndRef.current?.scrollIntoView(options);
   };
+  
+  // --- FEJLÉC MAGASSÁG FIGYELÉSE ---
+  useEffect(() => {
+    const updateHeaderHeight = () => {
+      if (headerRef.current) {
+        const height = headerRef.current.getBoundingClientRect().height;
+        setHeaderHeight(height);
+      }
+    };
+    
+    // Kezdeti mérés
+    updateHeaderHeight();
+    
+    // ResizeObserver a dinamikus változások követéséhez
+    const resizeObserver = new ResizeObserver(updateHeaderHeight);
+    if (headerRef.current) {
+      resizeObserver.observe(headerRef.current);
+    }
+    
+    // Window resize figyelése is
+    window.addEventListener('resize', updateHeaderHeight);
+    
+    return () => {
+      resizeObserver.disconnect();
+      window.removeEventListener('resize', updateHeaderHeight);
+    };
+  }, []);
   
   // Scroll pozíció figyelése - scroll to bottom gomb megjelenítéséhez
   useEffect(() => {
@@ -769,6 +800,7 @@ export default function ChatRoomPage() {
       
       {/* --- FEJLÉC (FIXED a tetején) --- */}
       <header 
+        ref={headerRef}
         className={`fixed top-0 left-0 right-0 ${darkMode ? 'bg-[#f0f5f0] border-gray-200' : 'bg-white border-gray-300'} border-b-2 shadow-lg`}
         style={{ 
           zIndex: 9999,
@@ -1038,7 +1070,7 @@ export default function ChatRoomPage() {
         ref={messagesContainerRef} 
         className={`absolute left-0 right-0 overflow-y-auto p-4 space-y-2 ${darkMode ? 'bg-[#f0f5f0]' : 'bg-gradient-to-br from-gray-50 via-white to-gray-100'}`}
         style={{ 
-          top: 'calc(110px + env(safe-area-inset-top, 0px))',
+          top: `${headerHeight}px`,
           bottom: '80px',
           overscrollBehavior: 'contain'
         }}
